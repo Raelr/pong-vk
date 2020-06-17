@@ -10,8 +10,8 @@ int main() {
     vec.y = 11;
     vec.z = 12;
     vec.a = 13;
-
-    std::cout << "x: " << vec.x << " y: " << vec.y << " z: " << vec.z << std::endl;
+  
+    std::cout << "( x: " << vec.x << " y: " << vec.y << " z: " << vec.z << " )" << std::endl;
     
     return 0;
 }
