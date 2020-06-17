@@ -1,0 +1,7 @@
+bin
+bin-int
+obj
+Makefile*
+.DS_Store
+.vscode
+*.make
