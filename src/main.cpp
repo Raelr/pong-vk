@@ -4,6 +4,7 @@
 
 int main() {
 
+    VkInstance instance;
     glm::vec4 vec;
     vec.x = 10;
     vec.y = 11;
@@ -11,5 +12,6 @@ int main() {
     vec.a = 13;
 
     std::cout << "x: " << vec.x << " y: " << vec.y << " z: " << vec.z << std::endl;
+    
     return 0;
 }
