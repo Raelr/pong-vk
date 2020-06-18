@@ -2,6 +2,9 @@
 workspace "Pong"
 configurations { "Debug", "Release" }
 
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+include "vendor/GLFW/"
+
 project "Pong"
 kind "ConsoleApp"
 language "C++"
@@ -10,7 +13,15 @@ targetdir "bin/%{cfg.buildcfg}"
 
 files { "src/**.h", "src/**.cpp" }
 
-includedirs { "$(VULKAN_SDK)/include", "vendor/glm" }
+links {
+     "GLFW"
+}
+
+includedirs { 
+     "$(VULKAN_SDK)/include", 
+     "vendor/glm",
+     "vendor/GLFW/glfw/include"
+}
 
 filter "configurations:Debug"
      defines { "DEBUG" }
