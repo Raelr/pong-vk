@@ -14,19 +14,36 @@ targetdir "bin/%{cfg.buildcfg}"
 files { "src/**.h", "src/**.cpp" }
 
 links {
-     "GLFW"
+     "GLFW",
 }
 
 includedirs { 
-     "$(VULKAN_SDK)/include", 
+     "$(VULKAN_SDK)/include",
      "vendor/glm",
-     "vendor/GLFW/glfw/include"
+     "vendor/GLFW/glfw/include",
 }
+
+filter "system:macosx"
+    systemversion "latest"
+    staticruntime "on"
+
+    libdirs {
+         "$(VULKAN_SDK)/lib**"
+    }
+    
+    linkoptions { "/usr/local/Caskroom/vulkan-sdk/1.2.135.0/macOS/lib/libvulkan.1.2.135.dylib" }
+
+    links {
+      "Cocoa.framework",
+      "IOKit.framework",
+      "CoreFoundation.framework",
+    }
 
 filter "configurations:Debug"
      defines { "DEBUG" }
      symbols "On"
 
 filter "configurations:Release"
-    defines { "NDEBUG" }
+    defines { "RELEASE" }
     optimize "On"
+
