@@ -31,7 +31,7 @@ filter "system:macosx"
          "$(VULKAN_SDK)/lib**"
     }
     
-    linkoptions { "/usr/local/Caskroom/vulkan-sdk/1.2.135.0/macOS/lib/libvulkan.1.2.135.dylib" }
+    linkoptions { os.getenv("VULKAN_SDK") .. "lib/libvulkan.1.2.135.dylib" }
 
     links {
       "Cocoa.framework",
