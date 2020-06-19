@@ -26,12 +26,13 @@ includedirs {
 filter "system:macosx"
     systemversion "latest"
     staticruntime "on"
-
-    libdirs {
-         "$(VULKAN_SDK)/lib**"
-    }
     
     linkoptions { os.getenv("VULKAN_SDK") .. "lib/libvulkan.1.2.135.dylib" }
+
+    defines { 
+         "VK_ICD_FILENAMES=" .. os.getenv("VULKAN_SDK") .. "share/vulkan/icd.d/MoltenVK_icd.json",
+         "VK_LAYER_PATH=" .. os.getenv("VULKAN_SDK") .. "share/vulkan/explicit_layer.d"
+     }
 
     links {
       "Cocoa.framework",
