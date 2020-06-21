@@ -10,7 +10,7 @@ const int WINDOW_WIDTH = 800;
 
 // An array to specify the vaidation layers we want to use.
 const char* validationLayers[] = {
-"VK_LAYER_KHRONOS_validation"
+    "VK_LAYER_KHRONOS_validation"
 };
 
 // Number of layers we want to use (the number of values in the validationLayers array)
@@ -41,22 +41,21 @@ int main() {
 
     // ------------------ VALIDATION LAYER SUPPORT CHECKING ------------------
 
+    uint32_t layerCount = 0;
+
+    // Get the number of layers available for vulkan.
+    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+    VkLayerProperties layerProps[layerCount];
+
     if (enableValidationLayers) {
         
-        uint32_t layerCount = 0;
-
-        // Get the number of layers available for vulkan.
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-        VkLayerProperties layerProps[layerCount];
-
         // Get the layer names themselves USING the count variable.
         vkEnumerateInstanceLayerProperties(&layerCount, layerProps);
 
         uint8_t foundCount = 0;
 
         // Search to see whether the validation layers requested are supported by Vulkan.
-        // TODO(Aryeh): Move this into a function (since it's used multiple times).
         for (size_t i = 0; i < validationLayersCount; i++) {
             for (size_t j = 0; j < layerCount; j++) {
                 if (strcmp(validationLayers[i], layerProps[j].layerName) == 0) {
@@ -68,7 +67,6 @@ int main() {
         // Throw an error and end the program if the validation layers aren't found. 
         if (!(foundCount == validationLayersCount)) {
             std::cout << "Requested validation layers are not available!" << std::endl;
-            // TODO(Aryeh): Move this into a function or macro.
             return EXIT_FAILURE;
         }
 
@@ -145,8 +143,13 @@ int main() {
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-    // Set validation layer count to 0 for now.
-    createInfo.enabledLayerCount = 0;
+    // Only enable the layer names in Vulkan if we're using validationlayers
+    if (enableValidationLayers) {
+        createInfo.ppEnabledLayerNames = validationLayers;
+        createInfo.enabledLayerCount = validationLayersCount;
+    } else {
+        createInfo.enabledLayerCount = 0;
+    }
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
         printf("FAILED TO CREATE VULKAN INSTANCE!");
