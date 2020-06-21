@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 // Const variables to determine initial window height ad 
 const int WINDOW_HEIGHT = 600;
@@ -63,7 +64,26 @@ int main() {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
 
+    // Get the names of all glfw extensions.
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    size_t foundCount = 0;
+    // Check if the GLFW extensions match the supported extensions by Vulkan.
+    for (size_t i = 0; i < glfwExtensionCount; i++) {
+        for (size_t j = 0; j < vulkanExtensionCount; j++) {
+            if (strcmp(vkExtensions[j].extensionName, glfwExtensions[i]) == 0) {
+                foundCount++;
+            }
+        }
+    }
+
+    // Check if all GLFW extensions are supported by Vulkan.
+    if (foundCount == glfwExtensionCount) {
+        std::cout << "GLFW extensions are supported by Vulkan!" << std::endl;
+    } else {
+        std::cout << "GLFW extensions are NOT supported by Vulkan!";
+        return EXIT_FAILURE;
+    }
 
     // Set the extensions in the configuration struct. 
     createInfo.enabledExtensionCount = glfwExtensionCount;
