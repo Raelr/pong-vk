@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 // Const variables to determine initial window height ad 
 const int WINDOW_HEIGHT = 600;
@@ -137,11 +138,20 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    // A combined vector for all extensions.
+    // TODO: Maybe find an alternative to the vector class? Not a priority at the moment.
+    std::vector<const char*> extensions(glfwExtensions + 0, glfwExtensions + glfwExtensionCount);
+
+    if (enableValidationLayers) {
+        // Push back the debug utils extension for Vulkan ONLY if validation layers are enabled
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
     // --------------------- CONTINUE INSTANCE CREATION ------------------------
 
     // Set the extensions in the configuration struct. 
-    createInfo.enabledExtensionCount = glfwExtensionCount;
-    createInfo.ppEnabledExtensionNames = glfwExtensions;
+    createInfo.enabledExtensionCount = extensions.size();
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     // Only enable the layer names in Vulkan if we're using validationlayers
     if (enableValidationLayers) {
