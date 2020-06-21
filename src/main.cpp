@@ -23,7 +23,7 @@ int main() {
     // Actually make the window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", nullptr, nullptr);
 
-    // ------------------ Initialise Vulkan instance ---------------------
+    // ------------------ INITIALISE VULKAN INSTANCE ---------------------
 
     // Initialise the Vulkan instance struct. 
     VkInstance instance; 
@@ -41,6 +41,8 @@ int main() {
     VkInstanceCreateInfo createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
+
+    // -------------------- VULKAN EXTENSION VERIFICATION -------------------------------
 
     // Get all supported extensions by Vulkan:
     uint32_t vulkanExtensionCount = 0;
@@ -85,6 +87,8 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    // --------------------- CONTINUE INSTANCE CREATION ------------------------
+
     // Set the extensions in the configuration struct. 
     createInfo.enabledExtensionCount = glfwExtensionCount;
     createInfo.ppEnabledExtensionNames = glfwExtensions;
@@ -107,6 +111,11 @@ int main() {
     // --------------------------- CLEANUP ------------------------------
 
     // Cleaning up memory
+
+    // Vulkan cleanup
+    vkDestroyInstance(instance, nullptr);
+
+    // GLFW cleanup
     glfwDestroyWindow(window);
     glfwTerminate();
 
