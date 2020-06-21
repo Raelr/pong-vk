@@ -41,6 +41,24 @@ int main() {
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
+    // Get all supported extensions by Vulkan:
+    uint32_t vulkanExtensionCount = 0;
+
+    // This instance of the method will return the number of supported extensions. 
+    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, nullptr);
+
+    VkExtensionProperties vkExtensions[vulkanExtensionCount];
+
+    // This instance of the method will return the exact extensions supported
+    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions);
+
+    // Print out and display all extensions.
+    std::cout << "Checking extensions..." << std::endl;
+
+    for (size_t i = 0; i < vulkanExtensionCount; i++) {
+        std::cout << '\t' << vkExtensions[i].extensionName << std::endl;
+    }
+
     // Now we need to get the extensions required by GLFW in order for it to work with Vulkan.
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
