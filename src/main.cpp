@@ -8,6 +8,22 @@
 const int WINDOW_HEIGHT = 600;
 const int WINDOW_WIDTH = 800;
 
+// An array to specify the vaidation layers we want to use.
+const char* validationLayers[] = {
+"VK_LAYER_KHRONOS_validation"
+};
+
+// Number of layers we want to use (the number of values in the validationLayers array)
+// REMEMBER TO UPDATE THIS IF NEW LAYERS ARE ADDED!
+const uint32_t validationLayersCount = 1;
+
+// Only enable validation layers when the program is run in DEBUG mode.
+#ifdef DEBUG
+    const bool enableValidationLayers = true;
+#else
+    const bool enableValidationLayers = false;
+#endif
+
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
@@ -22,6 +38,42 @@ int main() {
 
     // Actually make the window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", nullptr, nullptr);
+
+    // ------------------ VALIDATION LAYER SUPPORT CHECKING ------------------
+
+    if (enableValidationLayers) {
+        
+        uint32_t layerCount = 0;
+
+        // Get the number of layers available for vulkan.
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+        VkLayerProperties layerProps[layerCount];
+
+        // Get the layer names themselves USING the count variable.
+        vkEnumerateInstanceLayerProperties(&layerCount, layerProps);
+
+        uint8_t foundCount = 0;
+
+        // Search to see whether the validation layers requested are supported by Vulkan.
+        // TODO(Aryeh): Move this into a function (since it's used multiple times).
+        for (size_t i = 0; i < validationLayersCount; i++) {
+            for (size_t j = 0; j < layerCount; j++) {
+                if (strcmp(validationLayers[i], layerProps[j].layerName) == 0) {
+                    foundCount++;
+                }
+            }
+        }
+
+        // Throw an error and end the program if the validation layers aren't found. 
+        if (!(foundCount == validationLayersCount)) {
+            std::cout << "Requested validation layers are not available!" << std::endl;
+            // TODO(Aryeh): Move this into a function or macro.
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "Requested Validation layers exist!" << std::endl;
+    }
 
     // ------------------ INITIALISE VULKAN INSTANCE ---------------------
 

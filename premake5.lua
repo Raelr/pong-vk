@@ -1,8 +1,8 @@
 
 workspace "Pong"
      configurations { 
-          "Debug", 
-          "Release" 
+          "DEBUG", 
+          "RELEASE" 
      }
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
