@@ -27,13 +27,40 @@ const uint32_t validationLayersCount = 1;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    VkDebugUtilsMessageTypeFlagsEXT messageType, 
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    
+    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
-        return VK_FALSE;
+    return VK_FALSE;
+}
+
+static VkResult createDebugUtilsMessengerEXT(VkInstance instance, 
+    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+    VkDebugUtilsMessengerEXT* pDebugMessenger) {
+
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+        instance, "vkCreateDebugUtilsMessengerEXT");
+
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    } else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
+}
+
+static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger
+    , const VkAllocationCallbacks* pAllocator) {
+
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+        instance, "vkDestroyDebugUtilsMessengerEXT");
+
+    if (func != nullptr) {
+        func(instance, debugMessenger, pAllocator);
+    }
+}
+
 
 int main() {  
 
@@ -178,9 +205,10 @@ int main() {
 
     // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
 
-    if (enableValidationLayers) {
-        VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT debugMessenger;
 
+    if (enableValidationLayers) {
+        
         VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
         messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
@@ -192,6 +220,12 @@ int main() {
         messengerInfo.pfnUserCallback = debugCallback;
         messengerInfo.pUserData = nullptr;
 
+        if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, &debugMessenger)
+            != VK_SUCCESS) {
+            
+            std::cout << "Failed to set up DEBUG messenger!" << std::endl;
+            return EXIT_FAILURE;
+        }
     }
 
     // ------------------------- MAIN LOOP ------------------------------
@@ -204,6 +238,10 @@ int main() {
     // --------------------------- CLEANUP ------------------------------
 
     // Cleaning up memory
+
+    if(enableValidationLayers) {
+        destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    }
 
     // Vulkan cleanup
     vkDestroyInstance(instance, nullptr);
