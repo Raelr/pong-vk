@@ -176,6 +176,24 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
+
+    if (enableValidationLayers) {
+        VkDebugUtilsMessengerEXT debugMessenger;
+
+        VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
+        messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
+                                        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
+                                        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
+                                        | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                        | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        messengerInfo.pfnUserCallback = debugCallback;
+        messengerInfo.pUserData = nullptr;
+
+    }
+
     // ------------------------- MAIN LOOP ------------------------------
 
     // Start the loop and only stop when a close event happens.
