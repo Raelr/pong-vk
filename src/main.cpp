@@ -25,55 +25,79 @@ const uint32_t validationLayersCount = 1;
     const bool enableValidationLayers = false;
 #endif
 
+// A debug function callback - where the message data actually goes when triggered by the 
+// validation layer. 
+// This function uses three mactros to define it's signature (used to help Vulkan know that
+// this method is valid).
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType, 
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData) {
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,     // The severity of the message
+    VkDebugUtilsMessageTypeFlagsEXT messageType,                // The actual TYPE of message
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,  // Struct with data of the message
+    void* pUserData) {                                          // User defined data (optional)
     
+    // In this case we simply print out the message itself to the console. 
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
+    // Return value determines whether the call that triggers this message should be aborted.
+    // Generally these should return false. 
     return VK_FALSE;
 }
 
+// A proxy function which calls the vkCreateDebugUtilsMessengerEXT function. 
+// The reason we need this function is because 'vkCreateDebugUtilsMessengerEXT' is an
+// extension function - meaning that it isn't automatically loaded into memory. As such,
+// we need to manually look up it's memory and call it from there. Vulkan provides us
+// with a utility function: 'vkGetInstanceProcAddr' for this exact purpose.
 static VkResult createDebugUtilsMessengerEXT(VkInstance instance, 
     const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
     VkDebugUtilsMessengerEXT* pDebugMessenger) {
-
+    
+    // Store the function in a variable 'func'.
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
         instance, "vkCreateDebugUtilsMessengerEXT");
 
+    // Make sure we got the correct function.
     if (func != nullptr) {
+        // Call the function
         return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
     } else {
+        // Return an error
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 }
 
+// Simply accepts a reference to a messenger config struct and fills it with data.
 void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
     messengerInfo = {};
-    messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    // Specify the type of struct that's being populated
+    messengerInfo.sType =           VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    // You can specify the severity levels of logs that this struct will accept. 
     messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
                                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
                                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    // You can also limit the actual message type to specific types. 
     messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
                                     | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
                                     | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    // Finally, you can store the actual debug callback in the struct
     messengerInfo.pfnUserCallback = debugCallback;
     messengerInfo.pUserData = nullptr;
 }
 
+// Similar to messenger creation - destroying the messenger also requires the calling of
+// an unloaded message. We need to do the same thing as before and load the method from memory.
+// In this case we want to get a method for cleaning up messenger memory.
 static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger
     , const VkAllocationCallbacks* pAllocator) {
-
+    // Load the method from memory
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
         instance, "vkDestroyDebugUtilsMessengerEXT");
 
     if (func != nullptr) {
+        // Call the method if it was returned successfully.
         func(instance, debugMessenger, pAllocator);
     }
 }
-
 
 int main() {  
 
@@ -203,12 +227,18 @@ int main() {
     createInfo.enabledExtensionCount = extensions.size();
     createInfo.ppEnabledExtensionNames = extensions.data();
 
+    // If we want to see DEBUG messages from instance creation, we need to manually create a new
+    // debug messenger that can be used in the function.
     VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
+
     // Only enable the layer names in Vulkan if we're using validationlayers
     if (enableValidationLayers) {
         createInfo.ppEnabledLayerNames = validationLayers;
+        // populate the messenger with our callback data.
         populateDebugMessengerCreateInfo(debugInfo);
         createInfo.enabledLayerCount = validationLayersCount;
+        // pNext is an extension field. This is where pointers to callbacks and 
+        // messengers can be stored.
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
     } else {
         createInfo.enabledLayerCount = 0;
@@ -222,16 +252,19 @@ int main() {
 
         // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
 
+    // Struct for holding the debug callback
     VkDebugUtilsMessengerEXT debugMessenger;
 
+    // We only care about debug messages if we're using validation layers. 
     if (enableValidationLayers) {
-        
+        // Messengers also have a configuration struct that needs to be filled in. 
         VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
+        // Fill the struct with configuration data.
         populateDebugMessengerCreateInfo(messengerInfo);
-
+        // Now we need to create the messenger and ensure it was successful:
         if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, &debugMessenger)
         != VK_SUCCESS) {
-            
+            // Throw an error and then stop execution if we weren't able to create the messenger
             std::cout << "Failed to set up DEBUG messenger!" << std::endl;
             return EXIT_FAILURE;
         }
@@ -247,7 +280,6 @@ int main() {
     // --------------------------- CLEANUP ------------------------------
 
     // Cleaning up memory
-
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
