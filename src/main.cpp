@@ -25,6 +25,16 @@ const uint32_t validationLayersCount = 1;
     const bool enableValidationLayers = false;
 #endif
 
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData) {
+        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+        return VK_FALSE;
+    }
+
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
