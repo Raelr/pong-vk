@@ -50,6 +50,19 @@ static VkResult createDebugUtilsMessengerEXT(VkInstance instance,
     }
 }
 
+void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
+    messengerInfo = {};
+    messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
+                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
+                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
+                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    messengerInfo.pfnUserCallback = debugCallback;
+    messengerInfo.pUserData = nullptr;
+}
+
 static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger
     , const VkAllocationCallbacks* pAllocator) {
 
@@ -190,12 +203,16 @@ int main() {
     createInfo.enabledExtensionCount = extensions.size();
     createInfo.ppEnabledExtensionNames = extensions.data();
 
+    VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
     // Only enable the layer names in Vulkan if we're using validationlayers
     if (enableValidationLayers) {
         createInfo.ppEnabledLayerNames = validationLayers;
+        populateDebugMessengerCreateInfo(debugInfo);
         createInfo.enabledLayerCount = validationLayersCount;
+        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
     } else {
         createInfo.enabledLayerCount = 0;
+        createInfo.pNext = nullptr;
     }
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
@@ -203,25 +220,17 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
+        // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
 
     VkDebugUtilsMessengerEXT debugMessenger;
 
     if (enableValidationLayers) {
         
         VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
-        messengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
-                                        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
-                                        | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
-                                        | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                                        | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        messengerInfo.pfnUserCallback = debugCallback;
-        messengerInfo.pUserData = nullptr;
+        populateDebugMessengerCreateInfo(messengerInfo);
 
         if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, &debugMessenger)
-            != VK_SUCCESS) {
+        != VK_SUCCESS) {
             
             std::cout << "Failed to set up DEBUG messenger!" << std::endl;
             return EXIT_FAILURE;
