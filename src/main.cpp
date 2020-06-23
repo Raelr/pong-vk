@@ -302,6 +302,19 @@ int main() {
         }
     }
 
+    // --------------- WINDOW SYSTEM INTEGRATION SETUP ------------------
+
+    // Vulkan doesn't handle integrating with window systems automatically. We need
+    // to manually set this up wth our windowing system (which is GLFW).
+
+    // Create a surface extension object.
+    VkSurfaceKHR surface;
+
+    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+        std::cout << "Failed to create window surface!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
     // ------------------- PHYSICAL DEVICE SETUP ------------------------
 
     // Vulkan requires us to specify the device that we'll be using for our rendering. 
@@ -390,6 +403,7 @@ int main() {
     // Now we create the logical device using the data we've accumulated thus far. 
     if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
         std::cout << "Failed to create logical device!" << std::endl;
+        return EXIT_FAILURE;
     }
 
     // Now we just need to create the queue which will be used for our commands.
@@ -415,6 +429,9 @@ int main() {
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
+
+    // Destroy window surface
+    vkDestroySurfaceKHR(instance, surface, nullptr);
 
     // Destroy logical device
     vkDestroyDevice(device, nullptr);
