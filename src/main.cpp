@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <optional>
 
 // Const variables to determine initial window height ad 
 const int WINDOW_HEIGHT = 600;
@@ -24,6 +25,12 @@ const uint32_t validationLayersCount = 1;
 #else
     const bool enableValidationLayers = false;
 #endif
+
+struct QueueFamilyIndices
+{
+    std::optional<uint32_t> graphicsFamily;
+};
+
 
 // A debug function callback - where the message data actually goes when triggered by the 
 // validation layer. 
@@ -268,6 +275,49 @@ int main() {
             std::cout << "Failed to set up DEBUG messenger!" << std::endl;
             return EXIT_FAILURE;
         }
+    }
+
+    // ------------------- PHYSICAL DEVICE SETUP ------------------------
+
+    // Vulkan requires us to specify the device that we'll be using for our rendering. 
+    // Generally this means the GPUs that are available to us. 
+
+    // The device struct - used to hold the physical device data.
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0) {
+        std::cout << "Failed to find GPUs that support Vulkan!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    VkPhysicalDevice devices[deviceCount];
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
+
+    for (size_t i = 0; i < deviceCount; i++) {
+        VkPhysicalDevice device = devices[i];
+        QueueFamilyIndices indices;
+
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        VkQueueFamilyProperties queueFamilies[queueFamilyCount];
+
+        for (size_t i = 0; i < queueFamilyCount; i++) {
+            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                indices.graphicsFamily = i;
+            }
+        }
+
+        if (indices.graphicsFamily.has_value()) {
+            physicalDevice = device;
+            break;
+        }
+    }
+
+    if (physicalDevice == VK_NULL_HANDLE) {
+        std::cout << "Failed to find a suitable GPU for Vulkan!" << std::endl;
     }
 
     // ------------------------- MAIN LOOP ------------------------------
