@@ -24,6 +24,7 @@ project "Pong"
           "$(VULKAN_SDK)/include",
           "vendor/glm",
           "vendor/GLFW/glfw/include",
+          "vendor/spdlog/include"
      }
 
      filter "system:macosx"

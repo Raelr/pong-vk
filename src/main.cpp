@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <optional>
+#include "log.h"
 
 // Const variables to determine initial window height ad 
 const int WINDOW_HEIGHT = 600;
