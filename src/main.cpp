@@ -285,37 +285,62 @@ int main() {
     // The device struct - used to hold the physical device data.
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
+    // Following a similar pattern as before - we need to query for the number of supported 
+    // devices and get the actual counts.
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
+    // Make sure at least one device is supported. 
     if (deviceCount == 0) {
         std::cout << "Failed to find GPUs that support Vulkan!" << std::endl;
         return EXIT_FAILURE;
     }
 
+    // Get the actual device details.
     VkPhysicalDevice devices[deviceCount];
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
+    // Now we need to actually find a device to use. This can be done using a number of
+    // methods. One such method is to assign a rating to each GPU and pick the best rated one. 
+    // In this case, since this is a tutorial, we'll just take the first GPU we find. 
     for (size_t i = 0; i < deviceCount; i++) {
         VkPhysicalDevice device = devices[i];
+
+        // Now we need to actually find the exact queue families that this device uses. 
+        // In Vulkan, all commands are executed in a queue of similar types. 
+        // We need to find exactly which queues this device uses so we can use them
+        // to execute commands. 
+        
+        // A struct for storing the index of the queue family that the device will be using
         QueueFamilyIndices indices;
 
+        // Again, get the queue families that the device uses.
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
         VkQueueFamilyProperties queueFamilies[queueFamilyCount];
 
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
+
+        // Now that we know the families, we can now assess the suitability of this device.
         for (size_t i = 0; i < queueFamilyCount; i++) {
+            // We search for a flag which specifies that the queue supports graphics operations.
+            // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
             if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
             }
         }
 
+        // Finally, we check if the current device has a valid graphics queue. If so then we just
+        // use it (at least for now).
+        // TODO: Add some sort of function to get a graphics card that's most suitable for us.
         if (indices.graphicsFamily.has_value()) {
             physicalDevice = device;
             break;
         }
     }
 
+    // Finally, we just need to make sure that an actual valid device was returned to us from 
+    // our search.
     if (physicalDevice == VK_NULL_HANDLE) {
         std::cout << "Failed to find a suitable GPU for Vulkan!" << std::endl;
     }
