@@ -362,19 +362,24 @@ int main() {
     // We start by creating a device.
     VkDevice device;
 
+    // Get the queue families from the physical device that we got previously. 
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
+    // Now we need to actually configure the queue family that we'll be using.
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
     queueCreateInfo.queueCount = 1;
 
+    // Set a priority on the queue.
     float queuePriority = 1.0f;
     queueCreateInfo.pQueuePriorities = &queuePriority;
 
     // Leave this empty for now - can add things later when we need.
     VkPhysicalDeviceFeatures deviceFeatures{};
 
+    // Now we need to actually configure the logical device (note that it uses the queue info
+    // and the device features we defined earlier).
     VkDeviceCreateInfo logicalDeviceInfo{};
     logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     logicalDeviceInfo.pQueueCreateInfos = &queueCreateInfo;
@@ -382,19 +387,17 @@ int main() {
     logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
     logicalDeviceInfo.enabledExtensionCount = 0;
 
-    if (enableValidationLayers) {
-        createInfo.enabledLayerCount = validationLayersCount;
-        createInfo.ppEnabledExtensionNames = validationLayers;
-    } else {
-        createInfo.enabledLayerCount = 0;
-    }
-
+    // Now we create the logical device using the data we've accumulated thus far. 
     if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
         std::cout << "Failed to create logical device!" << std::endl;
     }
 
+    // Now we just need to create the queue which will be used for our commands.
+
+    // Create the queue struct.
     VkQueue graphicsQueue;
 
+    // Create the queue using the struct and logical device we created eariler.
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 
     // ======================= END OF SETUP =============================
