@@ -144,6 +144,8 @@ int main() {
     // Actually make the window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", nullptr, nullptr);
 
+    // ========================= VULKAN SETUP ================================
+
     // ------------------ VALIDATION LAYER SUPPORT CHECKING ------------------
 
     uint32_t layerCount = 0;
@@ -360,7 +362,42 @@ int main() {
     // We start by creating a device.
     VkDevice device;
 
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
+    VkDeviceQueueCreateInfo queueCreateInfo{};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    queueCreateInfo.queueCount = 1;
+
+    float queuePriority = 1.0f;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    // Leave this empty for now - can add things later when we need.
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo logicalDeviceInfo{};
+    logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    logicalDeviceInfo.pQueueCreateInfos = &queueCreateInfo;
+    logicalDeviceInfo.queueCreateInfoCount = 1;
+    logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
+    logicalDeviceInfo.enabledExtensionCount = 0;
+
+    if (enableValidationLayers) {
+        createInfo.enabledLayerCount = validationLayersCount;
+        createInfo.ppEnabledExtensionNames = validationLayers;
+    } else {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
+        std::cout << "Failed to create logical device!" << std::endl;
+    }
+
+    VkQueue graphicsQueue;
+
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+
+    // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
 
@@ -376,9 +413,12 @@ int main() {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
+    // Destroy logical device
+    vkDestroyDevice(device, nullptr);
+
     // Vulkan cleanup
     vkDestroyInstance(instance, nullptr);
-
+    
     // GLFW cleanup
     glfwDestroyWindow(window);
     glfwTerminate();
