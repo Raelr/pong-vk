@@ -31,6 +31,29 @@ struct QueueFamilyIndices
     std::optional<uint32_t> graphicsFamily;
 };
 
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+    // A struct for storing the index of the queue family that the device will be using
+    QueueFamilyIndices indices;
+
+    // Again, get the queue families that the device uses.
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+    VkQueueFamilyProperties queueFamilies[queueFamilyCount];
+
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
+
+    // Now that we know the families, we can now assess the suitability of this device.
+    for (size_t i = 0; i < queueFamilyCount; i++) {
+        // We search for a flag which specifies that the queue supports graphics operations.
+        // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+    }
+
+    return indices;
+}
+
 
 // A debug function callback - where the message data actually goes when triggered by the 
 // validation layer. 
@@ -311,24 +334,7 @@ int main() {
         // We need to find exactly which queues this device uses so we can use them
         // to execute commands. 
         
-        // A struct for storing the index of the queue family that the device will be using
-        QueueFamilyIndices indices;
-
-        // Again, get the queue families that the device uses.
-        uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-        VkQueueFamilyProperties queueFamilies[queueFamilyCount];
-
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
-
-        // Now that we know the families, we can now assess the suitability of this device.
-        for (size_t i = 0; i < queueFamilyCount; i++) {
-            // We search for a flag which specifies that the queue supports graphics operations.
-            // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
-            if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
-            }
-        }
+        QueueFamilyIndices indices = findQueueFamilies(device);
 
         // Finally, we check if the current device has a valid graphics queue. If so then we just
         // use it (at least for now).
@@ -344,6 +350,17 @@ int main() {
     if (physicalDevice == VK_NULL_HANDLE) {
         std::cout << "Failed to find a suitable GPU for Vulkan!" << std::endl;
     }
+
+    // --------------------- LOGICAL DEVICE SETUP -----------------------
+
+    // Once a physical device has been set up we then need to setup a logical device.
+    // A logical device interfaces with the physical device and is used to actually execute
+    // commands to the hardware. 
+
+    // We start by creating a device.
+    VkDevice device;
+
+
 
     // ------------------------- MAIN LOOP ------------------------------
 
