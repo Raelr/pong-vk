@@ -6,6 +6,9 @@
 #include <vector>
 #include <optional>
 #include "log.h"
+#include <string>
+
+#define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
 // Const variables to determine initial window height ad 
 const int WINDOW_HEIGHT = 600;
@@ -67,7 +70,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     void* pUserData) {                                          // User defined data (optional)
     
     // In this case we simply print out the message itself to the console. 
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    ERROR(pCallbackData->pMessage);
 
     // Return value determines whether the call that triggers this message should be aborted.
     // Generally these should return false. 
@@ -133,6 +136,8 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
+    
+    initLogger();
 
     // Initialise GLFW
     glfwInit();
@@ -144,6 +149,8 @@ int main() {
 
     // Actually make the window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", nullptr, nullptr);
+
+    INFO("Created GLFW window");
 
     // ========================= VULKAN SETUP ================================
 
@@ -174,11 +181,10 @@ int main() {
 
         // Throw an error and end the program if the validation layers aren't found. 
         if (!(foundCount == validationLayersCount)) {
-            std::cout << "Requested validation layers are not available!" << std::endl;
-            return EXIT_FAILURE;
+            PONG_FATAL_ERROR("Requested validation layers are not available!");
         }
 
-        std::cout << "Requested Validation layers exist!" << std::endl;
+        INFO("Requested Validation layers exist!");
     }
 
     // ------------------ INITIALISE VULKAN INSTANCE ---------------------
@@ -214,11 +220,14 @@ int main() {
     vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions);
 
     // Print out and display all extensions.
-    std::cout << "Checking extensions..." << std::endl;
+    INFO("Checking Extensions: ");
 
+    std::string extensionStr = "\n";
     for (size_t i = 0; i < vulkanExtensionCount; i++) {
-        std::cout << '\t' << vkExtensions[i].extensionName << std::endl;
+        std::string str = vkExtensions[i].extensionName;
+        extensionStr += '\t' + str + '\n';
     }
+    INFO(extensionStr);
 
     // Now we need to get the extensions required by GLFW in order for it to work with Vulkan.
     uint32_t glfwExtensionCount = 0;
@@ -239,10 +248,9 @@ int main() {
 
     // Check if all GLFW extensions are supported by Vulkan.
     if (foundCount == glfwExtensionCount) {
-        std::cout << "GLFW extensions are supported by Vulkan!" << std::endl;
+        INFO("GLFW extensions are supported by Vulkan!");
     } else {
-        std::cout << "GLFW extensions are NOT supported by Vulkan!";
-        return EXIT_FAILURE;
+        PONG_FATAL_ERROR("GLFW extensions are NOT supported by Vulkan!");
     }
 
     // A combined vector for all extensions.
@@ -279,8 +287,7 @@ int main() {
     }
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        printf("FAILED TO CREATE VULKAN INSTANCE!");
-        return EXIT_FAILURE;
+        PONG_FATAL_ERROR("FAILED TO CREATE VULKAN INSTANCE!");
     }
 
         // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
@@ -298,8 +305,7 @@ int main() {
         if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, &debugMessenger)
         != VK_SUCCESS) {
             // Throw an error and then stop execution if we weren't able to create the messenger
-            std::cout << "Failed to set up DEBUG messenger!" << std::endl;
-            return EXIT_FAILURE;
+            PONG_FATAL_ERROR("Failed to set up DEBUG messenger!");
         }
     }
 
@@ -312,8 +318,7 @@ int main() {
     VkSurfaceKHR surface;
 
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-        std::cout << "Failed to create window surface!" << std::endl;
-        return EXIT_FAILURE;
+        PONG_FATAL_ERROR("Failed to create window surface!");
     }
 
     // ------------------- PHYSICAL DEVICE SETUP ------------------------
@@ -331,8 +336,7 @@ int main() {
 
     // Make sure at least one device is supported. 
     if (deviceCount == 0) {
-        std::cout << "Failed to find GPUs that support Vulkan!" << std::endl;
-        return EXIT_FAILURE;
+        PONG_FATAL_ERROR("Failed to find GPUs that support Vulkan!");
     }
 
     // Get the actual device details.
@@ -364,7 +368,7 @@ int main() {
     // Finally, we just need to make sure that an actual valid device was returned to us from 
     // our search.
     if (physicalDevice == VK_NULL_HANDLE) {
-        std::cout << "Failed to find a suitable GPU for Vulkan!" << std::endl;
+        PONG_FATAL_ERROR("Failed to find a suitable GPU for Vulkan!");
     }
 
     // --------------------- LOGICAL DEVICE SETUP -----------------------
@@ -403,8 +407,7 @@ int main() {
 
     // Now we create the logical device using the data we've accumulated thus far. 
     if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
-        std::cout << "Failed to create logical device!" << std::endl;
-        return EXIT_FAILURE;
+        PONG_FATAL_ERROR("Failed to create logical device!");
     }
 
     // Now we just need to create the queue which will be used for our commands.
