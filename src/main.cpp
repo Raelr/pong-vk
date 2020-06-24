@@ -20,9 +20,15 @@ const char* validationLayers[] = {
     "VK_LAYER_KHRONOS_validation"
 };
 
+const char* deviceExtensions[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 // Number of layers we want to use (the number of values in the validationLayers array)
 // REMEMBER TO UPDATE THIS IF NEW LAYERS ARE ADDED!
 const uint32_t validationLayersCount = 1;
+
+const uint32_t deviceExtensionsCount = 1;
 
 // Only enable validation layers when the program is run in DEBUG mode.
 #ifdef DEBUG
@@ -363,10 +369,24 @@ int main() {
         
         QueueFamilyIndices indices = findQueueFamilies(device, surface);
 
+        uint32_t extensionCount = 0;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+        VkExtensionProperties availableExtensions[extensionCount];
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions);
+
+        std::set<std::string> requiredExtensions(deviceExtensions+0, deviceExtensions+deviceExtensionsCount);
+
+        for (size_t i = 0; i < extensionCount; i++) {
+            requiredExtensions.erase(availableExtensions[i].extensionName);
+        }
+
+        bool is_supported = indices.graphicsFamily.has_value() && indices.presentFamily.has_value();
+
         // Finally, we check if the current device has a valid graphics queue. If so then we just
         // use it (at least for now).
         // TODO: Add some sort of function to get a graphics card that's most suitable for us.
-        if (indices.graphicsFamily.has_value() && indices.presentFamily.has_value()) {
+        if (is_supported && requiredExtensions.empty()) {
             physicalDevice = device;
             break;
         }
