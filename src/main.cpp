@@ -5,7 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <optional>
-#include "log.h"
+#include "logger.h"
 #include <string>
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
@@ -33,9 +33,10 @@ const uint32_t validationLayersCount = 1;
 struct QueueFamilyIndices
 {
     std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
 };
 
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
     // A struct for storing the index of the queue family that the device will be using
     QueueFamilyIndices indices;
 
@@ -52,6 +53,12 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
         // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;
+        }
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+        if (presentSupport) {
+            indices.presentFamily = i;
         }
     }
 
@@ -136,7 +143,6 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
-    
     initLogger();
 
     // Initialise GLFW
@@ -354,12 +360,12 @@ int main() {
         // We need to find exactly which queues this device uses so we can use them
         // to execute commands. 
         
-        QueueFamilyIndices indices = findQueueFamilies(device);
+        QueueFamilyIndices indices = findQueueFamilies(device, surface);
 
         // Finally, we check if the current device has a valid graphics queue. If so then we just
         // use it (at least for now).
         // TODO: Add some sort of function to get a graphics card that's most suitable for us.
-        if (indices.graphicsFamily.has_value()) {
+        if (indices.graphicsFamily.has_value() && indices.presentFamily.has_value()) {
             physicalDevice = device;
             break;
         }
@@ -381,7 +387,7 @@ int main() {
     VkDevice device;
 
     // Get the queue families from the physical device that we got previously. 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
 
     // Now we need to actually configure the queue family that we'll be using.
     VkDeviceQueueCreateInfo queueCreateInfo{};
