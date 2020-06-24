@@ -369,24 +369,35 @@ int main() {
         
         QueueFamilyIndices indices = findQueueFamilies(device, surface);
 
+        // Now we need to check whether our physical device supports drawing images to the screen.
+
+        // Get the number of extensions
         uint32_t extensionCount = 0;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
         VkExtensionProperties availableExtensions[extensionCount];
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions);
 
+        // Store the unique extensions in a set so we can quickly remove duplicates.
         std::set<std::string> requiredExtensions(deviceExtensions+0, deviceExtensions+deviceExtensionsCount);
 
         for (size_t i = 0; i < extensionCount; i++) {
+            // If all required extensions are available from our GPU then we know we have full 
+            // Vulkan support!
             requiredExtensions.erase(availableExtensions[i].extensionName);
         }
 
-        bool is_supported = indices.graphicsFamily.has_value() && indices.presentFamily.has_value();
+        bool is_supported = (
+            indices.graphicsFamily.has_value() 
+            && indices.presentFamily.has_value()) 
+            // If all available extensions were 'ticked off' the set then we know we have all
+            // required extensions.
+            && requiredExtensions.empty();
 
         // Finally, we check if the current device has a valid graphics queue. If so then we just
         // use it (at least for now).
         // TODO: Add some sort of function to get a graphics card that's most suitable for us.
-        if (is_supported && requiredExtensions.empty()) {
+        if (is_supported) {
             physicalDevice = device;
             break;
         }
