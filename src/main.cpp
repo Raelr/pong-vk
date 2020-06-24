@@ -399,6 +399,8 @@ int main() {
 
     // Set a priority for these queues - for now we'll set to maximum.
     float priority = 1.0f;
+
+    // Create a queue creation struct for each unique queue family we have
     for (auto& queueFamily : uniqueFamilies) {
         VkDeviceQueueCreateInfo queueCreateInfo{};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -435,6 +437,7 @@ int main() {
 
     // Create the queue using the struct and logical device we created eariler.
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    // Create the presentation queue using the struct.
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 
     // ======================= END OF SETUP =============================
