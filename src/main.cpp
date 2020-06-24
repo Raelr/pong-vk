@@ -77,14 +77,20 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
     return indices;
 }
 
+// Checks whether our physical device has swapchain support. Returned a struct with multiple
+// configuration details
 SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    // instantiate a struct to store swapchain details.
     SwapChainSupportDetails details;
 
+    // Now follow a familiar pattern and query all the support details from Vulkan...
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
     uint32_t formatCount = 0;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
 
+    // Using a vector for the utility functions - statically resize the data within it to hold 
+    // the data we need.
     if (formatCount != 0) {
         details.formats.resize(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
@@ -93,11 +99,13 @@ SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurface
     uint32_t presentModeCount = 0;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
+    // Same as above ^
     if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
     }
 
+    // Return the details we need
     return details;
 }
 
@@ -417,10 +425,15 @@ int main() {
         }
 
         bool extensionsSupported = requiredExtensions.empty();
+        
+        // Check if we have support for swapchains!
         bool swapChainAdequate = false;
 
+        // Only check if we have supported extensions.
         if (extensionsSupported) {
+            // Get the swapchain details
             SwapChainSupportDetails supportDetails = querySwapChainSupport(device, surface);
+            // Make sure that we have at least one supported format and one supported presentation mode.
             swapChainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
         }
 
