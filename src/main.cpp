@@ -37,10 +37,15 @@ const uint32_t deviceExtensionsCount = 1;
     const bool enableValidationLayers = false;
 #endif
 
-struct QueueFamilyIndices
-{
+struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
+};
+
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
 };
 
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
@@ -70,6 +75,30 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
     }
 
     return indices;
+}
+
+SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    SwapChainSupportDetails details;
+
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+    uint32_t formatCount = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+
+    if (formatCount != 0) {
+        details.formats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+    }
+
+    uint32_t presentModeCount = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+    if (presentModeCount != 0) {
+        details.presentModes.resize(presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+    }
+
+    return details;
 }
 
 
@@ -387,12 +416,21 @@ int main() {
             requiredExtensions.erase(availableExtensions[i].extensionName);
         }
 
+        bool extensionsSupported = requiredExtensions.empty();
+        bool swapChainAdequate = false;
+
+        if (extensionsSupported) {
+            SwapChainSupportDetails supportDetails = querySwapChainSupport(device, surface);
+            swapChainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
+        }
+
         bool is_supported = (
             indices.graphicsFamily.has_value() 
             && indices.presentFamily.has_value()) 
             // If all available extensions were 'ticked off' the set then we know we have all
             // required extensions.
-            && requiredExtensions.empty();
+            && extensionsSupported
+            && swapChainAdequate;
 
         // Finally, we check if the current device has a valid graphics queue. If so then we just
         // use it (at least for now).
@@ -451,7 +489,8 @@ int main() {
     logicalDeviceInfo.pQueueCreateInfos = createInfos.data();
     logicalDeviceInfo.queueCreateInfoCount = createInfos.size();
     logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
-    logicalDeviceInfo.enabledExtensionCount = 0;
+    logicalDeviceInfo.enabledExtensionCount = deviceExtensionsCount;
+    logicalDeviceInfo.ppEnabledExtensionNames = deviceExtensions;
 
     // Now we create the logical device using the data we've accumulated thus far. 
     if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
