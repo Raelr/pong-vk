@@ -7,6 +7,7 @@
 #include <optional>
 #include "logger.h"
 #include <string>
+#include <set>
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -389,15 +390,23 @@ int main() {
     // Get the queue families from the physical device that we got previously. 
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
 
-    // Now we need to actually configure the queue family that we'll be using.
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
+    // TODO: There's probably a way to do this with an array rather than a vector + set.
+    std::vector<VkDeviceQueueCreateInfo> createInfos;
+    // Create a set so we can store queue families by their unique index (stops us from 
+    // using the same index twice.)
+    std::set<uint32_t> uniqueFamilies = {
+        indices.graphicsFamily.value(), indices.presentFamily.value()};
 
-    // Set a priority on the queue.
-    float queuePriority = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+    // Set a priority for these queues - for now we'll set to maximum.
+    float priority = 1.0f;
+    for (auto& queueFamily : uniqueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &priority;
+        createInfos.push_back(queueCreateInfo);
+    }
 
     // Leave this empty for now - can add things later when we need.
     VkPhysicalDeviceFeatures deviceFeatures{};
@@ -406,8 +415,8 @@ int main() {
     // and the device features we defined earlier).
     VkDeviceCreateInfo logicalDeviceInfo{};
     logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    logicalDeviceInfo.pQueueCreateInfos = &queueCreateInfo;
-    logicalDeviceInfo.queueCreateInfoCount = 1;
+    logicalDeviceInfo.pQueueCreateInfos = createInfos.data();
+    logicalDeviceInfo.queueCreateInfoCount = createInfos.size();
     logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
     logicalDeviceInfo.enabledExtensionCount = 0;
 
@@ -421,8 +430,12 @@ int main() {
     // Create the queue struct.
     VkQueue graphicsQueue;
 
+    // Instantiate the presentation queue.
+    VkQueue presentQueue;
+
     // Create the queue using the struct and logical device we created eariler.
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 
     // ======================= END OF SETUP =============================
 
