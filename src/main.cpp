@@ -523,6 +523,21 @@ int main() {
     // Create the presentation queue using the struct.
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 
+    // --------------------- SWAP CHAIN CREATION ------------------------
+
+    // Get the surface format for the swapchain:
+    SwapChainSupportDetails swapChainDetails= querySwapChainSupport(physicalDevice, surface);
+
+    VkSurfaceFormatKHR chosenformat = swapChainDetails.formats[0];
+
+    for (auto& format : swapChainDetails.formats) {
+        if (format.format == VK_FORMAT_B8G8R8A8_SRGB 
+            && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+
+            chosenformat = format;
+        }
+    }
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
