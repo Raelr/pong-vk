@@ -8,6 +8,7 @@
 #include "logger.h"
 #include <string>
 #include <set>
+#include <cstdint>
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -536,6 +537,30 @@ int main() {
 
             chosenformat = format;
         }
+    }
+
+    // Now we search for available present modes:
+    VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+    for (auto& presentMode: swapChainDetails.presentModes) {
+        if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+            chosenPresentMode = presentMode;
+        }
+    }
+
+    VkExtent2D chosenExtent = {WINDOW_WIDTH, WINDOW_HEIGHT};
+
+    chosenExtent.width = std::clamp(chosenExtent.width, 
+        swapChainDetails.capabilities.minImageExtent.width, 
+        swapChainDetails.capabilities.maxImageExtent.width);
+
+    chosenExtent.height = std::clamp(chosenExtent.height, 
+        swapChainDetails.capabilities.minImageExtent.height, 
+        swapChainDetails.capabilities.maxImageExtent.height);
+
+    // Set Swap Extent:
+    if (swapChainDetails.capabilities.currentExtent.width != UINT32_MAX) {
+        chosenExtent = swapChainDetails.capabilities.currentExtent;
     }
 
     // ======================= END OF SETUP =============================
