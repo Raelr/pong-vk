@@ -529,27 +529,62 @@ int main() {
     // Get the surface format for the swapchain:
     SwapChainSupportDetails swapChainDetails= querySwapChainSupport(physicalDevice, surface);
 
+    // We want to find three settings for our swapchain:
+    // 1. We want to find the surface format (color depth).
+    // 2. Presentation Mode (conditions for 'swapping' images to the screen - kinda like vSync).
+    // 3. Swap Extent (resolution of images in the swapchain)
+
+    // First lets get the format, we'll set it to the first format in the list to start.
     VkSurfaceFormatKHR chosenformat = swapChainDetails.formats[0];
 
+    // The Format struct contains two variables that should be set:
+    // 1. Format - The color channels and types used by the Vulkan.
+    // 2. Colorspace - Checks of the SRGB colo space is supported or not
+
     for (auto& format : swapChainDetails.formats) {
+        // In our case we'll be looking for the SRGB color space since it results in
+        // more accurate percieved colors. 
+        // We'll also store each color channel as an 8-bit integer (resulting in 32 bits total).
+        // Format is also going to be: B G R A - in that order.
         if (format.format == VK_FORMAT_B8G8R8A8_SRGB 
             && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-
             chosenformat = format;
-        }
+            INFO("Found SRGB channel for the rendering format.");
+            break;
+        } // TODO: If this fails then might be good to rank other formats depending on their desirability. 
     }
 
+    // The present mode details the conditions for showing images on screen, this comes with a few
+    // settings:
+
+    // 1. VK_PRESENT_MODE_IMMEDIATE_KHR - images are transferred to screen right away (might result
+    // in screen tear).
+    // 2. VK_PRESENT_MODE_FIFO_KHR - Similar to Vsync (uses a queue to process images). Essentially
+    // processes images in the queue in batches. Application is also blocked when the queue is full.
+    // 3. VK_PRESENT_MODE_FIFO_RELAXED_KHR - Sends an image to screen if the queue is empty.
+    // 4. VK_PRESENT_MODE_MAILBOX_KHR - Same as 2, except that it doesn't block when the queue
+    // is full. Older images are simply replaced with newer ones. This results in triple buffering
+    // (which avoids screen tear and latency issues caused by standard Vsync).
+
     // Now we search for available present modes:
+    
+    // Set present mode to Vsync as default.
     VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
     for (auto& presentMode: swapChainDetails.presentModes) {
+        // If we can, we should try and get triple buffering as a configuration.
         if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             chosenPresentMode = presentMode;
+            INFO("Triple buffering enabled for Present mode.");
+            break;
         }
     }
-
+    
+    // Finally, we need to set the swap extent. The Swap extent is the resolution of the images in
+    // the swapchain. Generally speaking, its recommended to set this to the window width/height.
     VkExtent2D chosenExtent = {WINDOW_WIDTH, WINDOW_HEIGHT};
 
+    // Make sure to clamp both the x and y values between the min and max
     chosenExtent.width = std::clamp(chosenExtent.width, 
         swapChainDetails.capabilities.minImageExtent.width, 
         swapChainDetails.capabilities.maxImageExtent.width);
@@ -558,10 +593,14 @@ int main() {
         swapChainDetails.capabilities.minImageExtent.height, 
         swapChainDetails.capabilities.maxImageExtent.height);
 
-    // Set Swap Extent:
+    // If the extent is already the maximum of t_uint32 then we simply set the extent
+    // to the default returned by our physical device. 
     if (swapChainDetails.capabilities.currentExtent.width != UINT32_MAX) {
         chosenExtent = swapChainDetails.capabilities.currentExtent;
     }
+
+    INFO("Device extent has been set to: [ " 
+        + std::to_string(chosenExtent.width) + ", " + std::to_string(chosenExtent.height) + " ]");
 
     // ======================= END OF SETUP =============================
 
