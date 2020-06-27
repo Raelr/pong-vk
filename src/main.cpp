@@ -669,6 +669,18 @@ int main() {
         PONG_FATAL_ERROR("Failed to create swapchain!");
     }
 
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+    VkImage swapchainImages[imageCount];
+
+    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages);
+
+    VkFormat swapchainFormat;
+
+    swapchainFormat = chosenformat.format;
+
+    VkExtent2D swapChainExtent = chosenExtent;
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
