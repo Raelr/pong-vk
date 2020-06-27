@@ -602,11 +602,77 @@ int main() {
     INFO("Device extent has been set to: [ " 
         + std::to_string(chosenExtent.width) + ", " + std::to_string(chosenExtent.height) + " ]");
 
+    // --------------------- CREATE SWAPCHAIN ---------------------------
+
+    // Lets get the number of image that we'd like the Swapchain to have:
+
+
+    // Start the loop and only stop when a close event happens. We'll get the minimum 
+    // images to start with and add 1 to the end (just to allow one more image in!)
+    uint32_t imageCount = swapChainDetails.capabilities.minImageCount + 1;
+
+    // Make sure that we aren't assigning more images to the queue than it can handle.
+    // NOTE: A max imagecount of 0 implies that there is no max.
+    if (swapChainDetails.capabilities.maxImageCount > 0 
+        && imageCount > swapChainDetails.capabilities.maxImageCount) {
+        
+        imageCount = swapChainDetails.capabilities.maxImageCount;
+    }
+
+    // Create the swapchain creation struct and assign all the previous values to it.
+    VkSwapchainCreateInfoKHR swapchainCreateInfo {};
+    swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchainCreateInfo.surface = surface;
+    swapchainCreateInfo.minImageCount = imageCount;
+    swapchainCreateInfo.imageFormat = chosenformat.format;
+    swapchainCreateInfo.imageColorSpace = chosenformat.colorSpace;
+    swapchainCreateInfo.imageExtent = chosenExtent;
+    // Specifies tbe number of layers the image will consist of. 
+    swapchainCreateInfo.imageArrayLayers = 1;
+    // Specifies the kind of operations the images in the swapchain will be used for.
+    swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    uint32_t QueueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+
+    // 
+    if (indices.graphicsFamily != indices.presentFamily) {
+        // Images can be owned by multiple queue families without explicit changes in ownership.
+        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        swapchainCreateInfo.queueFamilyIndexCount = 2;
+        swapchainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
+    } else {
+        // This specifies that the image can only be owned by a single queue family at a time. 
+        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        swapchainCreateInfo.queueFamilyIndexCount = 0;
+        swapchainCreateInfo.pQueueFamilyIndices = nullptr;
+    }
+
+    // Can be used to specify a transform that all images in the swapchain will follow. 
+    // In this case we'll just set it to the default.
+    swapchainCreateInfo.preTransform = swapChainDetails.capabilities.currentTransform;
+
+    // Specifies if the alpha channel should be used for blending with other windows.
+    // We'll be ifnoring this for now.
+    swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+    swapchainCreateInfo.presentMode = chosenPresentMode;
+
+    // Vulkan swapchains can become irrelevant when certain details are met (such as if the 
+    // screen is resized). In this case we need to specify the old swapchain.
+    swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    // Now we can create the swapchain:
+    VkSwapchainKHR swapchain;
+
+    // Create the swapchain and stop the program if the creation fails.
+    if (vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain) != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create swapchain!");
+    }
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
 
-    // Start the loop and only stop when a close event happens.
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
@@ -617,6 +683,9 @@ int main() {
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
+
+    // Destroy the Swapchain
+    vkDestroySwapchainKHR(device, swapchain, nullptr);
 
     // Destroy window surface
     vkDestroySurfaceKHR(instance, surface, nullptr);
