@@ -9,6 +9,7 @@
 #include <string>
 #include <set>
 #include <cstdint>
+#include "utils.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -718,6 +719,20 @@ int main() {
         }
     }
 
+    // --------------------- GRAPHICS PIPELINE --------------------------
+    
+    // Vulkan requires that you define your own graphics pipelines when you
+    // want to use different combinations of shaders. This is because the 
+    // graphics pipeline in Vulkan is almost completely immutable. This means
+    // that the pipeline can be very well optimised (but will also require
+    // a complete rewrite if you need anything different).
+    //
+    // In this case we'll set up a vertex and fragment shader so we can get
+    // a triangle showing on screen.
+    
+    auto vert = readFile("src/shaders/vert.spv");
+    auto frag = readFile("src/shaders/frag.spv");
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
@@ -737,6 +752,9 @@ int main() {
     for (size_t i = 0; i < imageCount; i++) {
         vkDestroyImageView(device, swapChainImageViews[i], nullptr);
     }
+
+    delete [] vert;
+    delete [] frag;
 
     // Destroy the Swapchain
     vkDestroySwapchainKHR(device, swapchain, nullptr);
