@@ -681,6 +681,41 @@ int main() {
 
     VkExtent2D swapChainExtent = chosenExtent;
 
+    // --------------------- Create Image Views -------------------------
+
+    // A VkImageView object is required to use any Images in Vulkan.
+    // A view describes how to access an image and which part of an image should be accessed. 
+
+    // Store all images in an array.
+    VkImageView swapChainImageViews[imageCount];
+
+    for (size_t i = 0; i < imageCount; i++) {
+        // We need to create a view for every image that we stored for the swapChain.
+        VkImageViewCreateInfo imageViewCreateInfo{};
+        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.image = swapchainImages[i];
+        // Allows you to specify whether the image will be viewed as a 1D, 2D, or 3D texture.
+        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewCreateInfo.format = swapchainFormat;
+        // Components field allow us to swizzle values around (force them to assume certain
+        // values).
+        // In this case we'll set the components to their default values.
+        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        // The subresourceRange field describes an image's purpose. 
+        // In our case our images will be used as color targets with no mipmapping levels
+        // or layers. 
+        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        imageViewCreateInfo.subresourceRange.levelCount = 1;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.layerCount = 1;
+
+        
+    }
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
