@@ -712,8 +712,11 @@ int main() {
         imageViewCreateInfo.subresourceRange.levelCount = 1;
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
-
-        
+        // Create the image view and store it in the swapChainImageViews array.
+        if (vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i]) 
+            != VK_SUCCESS) {
+            PONG_FATAL_ERROR("Failed to create image view!");
+        }
     }
 
     // ======================= END OF SETUP =============================
@@ -729,6 +732,11 @@ int main() {
     // Cleaning up memory
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+    }
+
+    // Destroy image views
+    for (size_t i = 0; i < imageCount; i++) {
+        vkDestroyImageView(device, swapChainImageViews[i], nullptr);
     }
 
     // Destroy the Swapchain
