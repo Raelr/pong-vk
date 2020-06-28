@@ -634,7 +634,6 @@ int main() {
 
     uint32_t QueueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
-    // 
     if (indices.graphicsFamily != indices.presentFamily) {
         // Images can be owned by multiple queue families without explicit changes in ownership.
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
