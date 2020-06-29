@@ -751,10 +751,40 @@ int main() {
     // machine-readable bytecode)
     auto vert = readFile("src/shaders/vert.spv");
     auto frag = readFile("src/shaders/frag.spv");
-
+    
+    // Wrap the file contents in a shadermodule.
     VkShaderModule vertShaderModule = createShaderModule(vert, device);
     VkShaderModule fragShaderModule = createShaderModule(frag, device);
+    
+    // Shaders need to be manually added to a stage in the rendering 
+    // pipeline. This is generally achieved using a VkPipelineShaderStageCreateInfo
+    // struct. 
+    
+    // Vertex shader create info:
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    // This variable tells Vulkan to insert this into the vertex shader stage
+    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    // Specify the shader module to be used.
+    vertShaderStageInfo.module = vertShaderModule;
+    // Specify the entrypoint to the shader (i.e: the main function)
+    vertShaderStageInfo.pName = "main";
+    
+    // Frag shader create info:
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    // This variable tells Vulkan to insert this into the fragment shader stage
+    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // Specify the shader module to be used.
+    fragShaderStageInfo.module = fragShaderModule;
+    // Specify the entrypoint to the shader (i.e: the main function)
+    fragShaderStageInfo.pName = "main";
 
+    // Store the stage information in an array for now - will be used later.
+    VkPipelineShaderStageCreateInfo shaderStages[] = {
+        vertShaderStageInfo,
+        fragShaderStageInfo
+    };
     
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
@@ -762,6 +792,7 @@ int main() {
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
     
     // Delete the vertex and frag shaders (at least for now)
+    // TODO: move this into it's own method
     delete [] vert.p_byteCode;
     delete [] frag.p_byteCode;
 
