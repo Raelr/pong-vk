@@ -25,7 +25,6 @@ const char* validationLayers[] = {
 const char* deviceExtensions[] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
-
 // Number of layers we want to use (the number of values in the validationLayers array)
 // REMEMBER TO UPDATE THIS IF NEW LAYERS ARE ADDED!
 const uint32_t validationLayersCount = 1;
