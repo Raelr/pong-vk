@@ -3,7 +3,12 @@
 
 #include <string>
 
+struct FileContents {
+    char* p_byteCode;
+    uint32_t fileSize;
+};
+
 // Utility function used to read a file name (usually a shader).
-char* readFile(const std::string &fileName); 
+FileContents readFile(const std::string &fileName); 
 
 #endif

@@ -103,7 +103,8 @@ SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurface
     // Same as above ^
     if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, 
+            details.presentModes.data());
     }
 
     // Return the details we need
@@ -173,8 +174,8 @@ void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messen
 // Similar to messenger creation - destroying the messenger also requires the calling of
 // an unloaded message. We need to do the same thing as before and load the method from memory.
 // In this case we want to get a method for cleaning up messenger memory.
-static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger
-    , const VkAllocationCallbacks* pAllocator) {
+static void destroyDebugUtilsMessengerEXT(VkInstance instance, 
+     VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
     // Load the method from memory
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
         instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -183,6 +184,22 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
         // Call the method if it was returned successfully.
         func(instance, debugMessenger, pAllocator);
     }
+}
+
+// All shaders must be wrapped in a shader module. This is a helper function
+// for wrapping the shader. 
+VkShaderModule createShaderModule(FileContents buffer, VkDevice &device) {
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = buffer.fileSize;
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.p_byteCode);
+
+    VkShaderModule shader;
+    if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS) {
+        printf("Unsable to create shader module!\n");
+    }
+
+    return shader;
 }
 
 int main() {  
@@ -199,7 +216,8 @@ int main() {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     // Actually make the window
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", 
+        nullptr, nullptr);
 
     INFO("Created GLFW window");
 
@@ -729,8 +747,23 @@ int main() {
     // In this case we'll set up a vertex and fragment shader so we can get
     // a triangle showing on screen.
     
+    // To begin, lets load in our vertex and fragment shaders (in 
+    // machine-readable bytecode)
     auto vert = readFile("src/shaders/vert.spv");
     auto frag = readFile("src/shaders/frag.spv");
+
+    VkShaderModule vertShaderModule = createShaderModule(vert, device);
+    VkShaderModule fragShaderModule = createShaderModule(frag, device);
+
+    
+    // Delete the shader modules (doesn't need to happen during device cleanup
+    // phase)
+    vkDestroyShaderModule(device, vertShaderModule, nullptr); 
+    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    
+    // Delete the vertex and frag shaders (at least for now)
+    delete [] vert.p_byteCode;
+    delete [] frag.p_byteCode;
 
     // ======================= END OF SETUP =============================
 
@@ -751,9 +784,6 @@ int main() {
     for (size_t i = 0; i < imageCount; i++) {
         vkDestroyImageView(device, swapChainImageViews[i], nullptr);
     }
-
-    delete [] vert;
-    delete [] frag;
 
     // Destroy the Swapchain
     vkDestroySwapchainKHR(device, swapchain, nullptr);
