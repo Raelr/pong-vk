@@ -807,6 +807,45 @@ int main() {
     // Describes details for loading vertex data.
     vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
+    // Now define the input assembly. This defines the kind of geometry drawn
+    // from the vertices and if primitive restart is enabled. 
+    // Geometry (specified by the topology) member has the options:
+    // VK_PRIMITIVE_TOPOLOGY_POINT_LIST - builds geometry from points of vertices. 
+    // VK_PRIMITIVE_TOPOLOGY_LINE_LIST - line from every 2 vertices without reuse.
+    // VK_PRIMITIVE_TOPOLOGY_LINE_STRIP - The end of every vertex line is used as
+    //                                    the start vertex of the next line
+    // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST - Create a triangle from every 3 vertices
+    //                                      without reuse.
+    // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP - the 2nd and 3rd vertex of every
+    //                                        triangle are used as the first two
+    //                                        vertices of the next.
+
+    // For us, we'll use the TRIANGLE_LIST option to help us draw a triangle:
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+    // Now, we need to create a viewport. A viewport defines the region of the 
+    // framebuffer that the output will be rendered to. In this case the viewport
+    // will range between (0,0) and (width, height):
+    
+    VkViewport viewPort{};
+    viewPort.x = 0.0f;
+    viewPort.y = 0.0f;
+    viewPort.width = (float) chosenExtent.width;
+    viewPort.height = (float) chosenExtent.height;
+    viewPort.minDepth = 0.0f;
+    viewPort.maxDepth = 1.0f;
+
+    // Now we need to define scissors. Scissors define which regions the pixels
+    // will actually be stored. These regions are generally specified as 
+    // rectangles where anything in the rectangle is rendered whilst anything 
+    // outside the window is discarded. 
+
+    // In this case, we'll just draw it over the entire screen.
+    VkRect2D scissor{};
+
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
     vkDestroyShaderModule(device, vertShaderModule, nullptr); 
