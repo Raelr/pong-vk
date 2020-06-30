@@ -905,7 +905,18 @@ int main() {
     //
     // Multisampling works by combining the fragment shader results into of
     // multiple polygons and rasterize them to the same pixel. This usually 
-    // occurs along edges where we get the most artifacting. 
+    // occurs along edges where we get the most artifacting.
+    
+    // Enabling multisampling requires a GPU feauture to be enabled. 
+    // For now we'll disable multi-sampling and revisit it at a later stage. 
+    VkPipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO; 
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling.minSampleShading = 1.0f;
+    multisampling.pSampleMask = nullptr;
+    multisampling.alphaToCoverageEnable = VK_FALSE;
+    multisampling.alphaToOneEnable = VK_FALSE;
 
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
