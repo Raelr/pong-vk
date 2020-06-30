@@ -896,9 +896,9 @@ int main() {
     // Alters the depth values by adding a constant value or biasing depth 
     // values. Can be useful for shadow mapping. 
     rasterizer.depthBiasEnable = VK_FALSE;
-    rasterizer.depthBiasConstantFactor = 0.0f; // optional
-    rasterizer.depthBiasClamp = 0.0f; // optional
-    rasterizer.depthBiasSlopeFactor = 0.0f; // optional
+    rasterizer.depthBiasConstantFactor = 0.0f;  // optional
+    rasterizer.depthBiasClamp = 0.0f;           // optional
+    rasterizer.depthBiasSlopeFactor = 0.0f;     // optional
 
     // We also need to specify a MultiSampling struct. Multisampling allows us
     // to create effects like anti-aliasing in our programs. 
@@ -913,10 +913,33 @@ int main() {
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO; 
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    multisampling.minSampleShading = 1.0f;
-    multisampling.pSampleMask = nullptr;
-    multisampling.alphaToCoverageEnable = VK_FALSE;
-    multisampling.alphaToOneEnable = VK_FALSE;
+    multisampling.minSampleShading = 1.0f;          // optional
+    multisampling.pSampleMask = nullptr;            // optional
+    multisampling.alphaToCoverageEnable = VK_FALSE; // optional
+    multisampling.alphaToOneEnable = VK_FALSE;      // optional
+
+    // The next stage is to define how color blending works. The color blending 
+    // stage happens once a fragment shader returns a color. This color is then
+    // combined with a color that's already in the frame-buffer. 
+    
+    // Color blending can happen in one of two ways:
+    // 1) Mix the old and new values to produce a final color. 
+    // 2) Use a bitwise operation to combine the old and new colors. 
+
+    // First, we need to create a BlendAttachmentState struct. This struct 
+    // contains configuration per attached framebuffer:
+    
+    // We'll follow the first method of color blending:
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | 
+        VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_FALSE;   
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // optional
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // optional
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;                // optional
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // optional
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // optional
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // optional
 
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
