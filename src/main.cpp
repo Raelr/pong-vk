@@ -845,6 +845,67 @@ int main() {
 
     // In this case, we'll just draw it over the entire screen.
     VkRect2D scissor{};
+    scissor.offset = {0,0};
+    scissor.extent = chosenExtent;
+
+    // Now, the scissor and Viewport need to be combined into a single struct.
+    // This struct is known as a ViewportState: 
+    
+    VkPipelineViewportStateCreateInfo viewportState{};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.viewportCount = 1;
+    // This takes in an array of viewports. Some GPUs allow multiple viewports
+    // to be specified, but this must be enabled as a device feature (in logical
+    // device section)
+    viewportState.pViewports = &viewPort;
+    viewportState.scissorCount = 1;
+    // Same as with viewports - this takes in an array of scissors. 
+    viewportState.pScissors = &scissor;
+
+    // Now that we have a viewport, we can start building out the rasterizer. 
+    // The rasterizer takes in the geometry shaped by the shader's vertices 
+    // and turns them into fragments. These fragments are then colored by the 
+    // fragment shader. 
+    // The rasterizer also performs face culling and depth testing. 
+    
+    VkPipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    // This means that fragments below the near/far plane are clamped to the planes
+    // as opposed to discarding them. This requires a GPU feature in order for it
+    // to work. 
+    rasterizer.depthClampEnable = VK_FALSE;
+    // Checks if geometry should pass through the rasterizer stage. We only skip
+    // the stage if this is set to VK_TRUE.
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    // Determines how fragments are generated for geometry. 
+    // VK_POLYGON_MODE_FILL - fill the area of the polygon with fragments.
+    // VK_POLYGON_MODE_LINE - Polygon edges are drawn as lines.
+    // VK_POLYGON_MODE_POINT - Polygon vertices are drawn as points.
+    //
+    // NOTE: The use of anything other than FILL requires a GPU feature to be
+    // enabled. 
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    // Describes the thickness of lines. Any lines thicker than 1.0f requires 
+    // a GPU feature to be enabled. 
+    rasterizer.lineWidth = 1.0f;
+    // Determines the type of face-culling to use.
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    // Determines the vertex order for faces. Determines which are front-facing 
+    // and which re back-facing. Can be clockwise or counter-clockwise. 
+    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    // Alters the depth values by adding a constant value or biasing depth 
+    // values. Can be useful for shadow mapping. 
+    rasterizer.depthBiasEnable = VK_FALSE;
+    rasterizer.depthBiasConstantFactor = 0.0f; // optional
+    rasterizer.depthBiasClamp = 0.0f; // optional
+    rasterizer.depthBiasSlopeFactor = 0.0f; // optional
+
+    // We also need to specify a MultiSampling struct. Multisampling allows us
+    // to create effects like anti-aliasing in our programs. 
+    //
+    // Multisampling works by combining the fragment shader results into of
+    // multiple polygons and rasterize them to the same pixel. This usually 
+    // occurs along edges where we get the most artifacting. 
 
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
