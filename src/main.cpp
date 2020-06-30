@@ -793,6 +793,20 @@ int main() {
         fragShaderStageInfo
     };
     
+    // ------------------------ PIPELINE STRUCTS ----------------------------
+    
+    // Create a struct for detailing how vertex data will be formatted in the
+    // vertex shader.
+
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = 0;
+    // Describes details for loading vertex data.
+    vertexInputInfo.pVertexBindingDescriptions = nullptr;
+    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    // Describes details for loading vertex data.
+    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
     vkDestroyShaderModule(device, vertShaderModule, nullptr); 
@@ -802,7 +816,7 @@ int main() {
     // TODO: move this into it's own method
     delete [] vert.p_byteCode;
     delete [] frag.p_byteCode;
-
+ 
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
