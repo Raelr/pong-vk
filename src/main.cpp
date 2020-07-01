@@ -941,6 +941,28 @@ int main() {
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // optional
     colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // optional
 
+    // Now we need to actually build the createInfo struct. 
+    VkPipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    // Set this to VK_TRUE to enable bitwise blending.
+    colorBlending.logicOpEnable = VK_FALSE;
+    // This is where the bitwise combination is set (if logicOpEnable is set to true)
+    colorBlending.logicOp = VK_LOGIC_OP_COPY;           // optional
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+    colorBlending.blendConstants[0] = 0.0f;             // optional
+    colorBlending.blendConstants[1] = 0.0f;             // optional
+    colorBlending.blendConstants[2] = 0.0f;             // optional
+    colorBlending.blendConstants[3] = 0.0f;             // optional
+
+    // At this point it is possible to create a VkDynamicState struct. This will 
+    // allow certain data to be modified without requiring the pipeline to be remade. 
+    // We won't implement this now, but we might do so at a later stage. 
+    
+    // PLACEHOLDER: VkDynamicState state;
+   
+    
+
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
     vkDestroyShaderModule(device, vertShaderModule, nullptr); 
