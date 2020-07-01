@@ -741,6 +741,58 @@ int main() {
         }
     }
 
+    // ------------------------ RENDER PASS -----------------------------
+    
+    // In Vulkan, a render pass represents all information that our framebuffers. 
+    // This is primarily done by specifying the framebuffer attachments. 
+
+    // To do this, we need to specify how many color and depth buffers there 
+    // will be, how amny samples to use for them, and how these contents will
+    // be handled in the rendering operations. This info is all wrapped in a 
+    // render pass object. 
+
+    // In this case, we'll have a single color buffer attachment which is 
+    // represented by one of the images in our swapchain:
+
+    VkAttachmentDescription colorAttachment{};
+    // Set this to the imageFormat we chose earlier for the swapchain. 
+    colorAttachment.format = swapchainFormat;
+    // If we were using multi-sampling we'd set this to more than one bit. 
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    // loadOp determines what happens to the contents of an attachment before
+    // rendering. It has the following options:
+    // 1. VK_ATTACHMENT_LOAD_OP_LOAD - preserve existing contents of the attachment. 
+    // 2. VK_ATTACHMENT_LOAD_OP_CLEAR - clears values to a constant at the start. 
+    // 3. VK_ATTACHMENT_LOAD_OP_DONT_CARE - existing contents are undefined. 
+    //                                      We don't care about them.
+    // In our case we're going to clear the buffer to black before drawing a 
+    // new frame. 
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    // storeOp defines what will happen AFTER rendering:
+    // 1. VK_ATTACHMENT_STORE_OP_STORE - render contents will be stored in memory. 
+    // 2. VK_ATTACHMENT_STORE_OP_DONT_CARE - render contents will be undefined after
+    //                                       rendering. 
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // For now we aren't going to use stencil data, so we'll let that data be 
+    // undefined. 
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE; 
+    // The layout defines how an image is formatted in memory. The most common
+    // layouts include:
+    // 1. VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL - Images are used as color attachments. 
+    // 2. VK_IMAGE_LAYOUT_PRESENT_SRC_KHR - Images represented in a swapchain.
+    // 3. VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL - Images used as a destination for a memory copy
+    //                                           operation.
+    // Essentially, images need to be transitioned into whatever layout suits the 
+    // operation they'll be involved in next. 
+    
+    // This field specifies the layout the image is in before the render pass begins. 
+    // In our case we don't really care what layout it is at the start.
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    // Sine the image needs to be ready for representation in the swapchain, we 
+    // make sure the final layout of this image is suitable for that: 
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
     // --------------------- GRAPHICS PIPELINE --------------------------
     
     // Vulkan requires that you define your own graphics pipelines when you
