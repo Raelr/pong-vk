@@ -830,7 +830,24 @@ int main() {
 
     // Now that we have a basic subpass defined, we can finally create our 
     // renderpass! 
-    // 
+   
+    // Create the render pass struct.
+    VkRenderPass renderPass;
+    
+    // Create the render pass creation struct and pass all the previous data 
+    // into it.
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    
+    // Create the render pass object using the info we created previously.
+    if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) 
+            != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create render pass!");
+    }
 
     // --------------------- GRAPHICS PIPELINE --------------------------
     
@@ -1097,7 +1114,8 @@ int main() {
 
     // Clean up pipeline memory
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
+    // Destroy the render pass
+    vkDestroyRenderPass(device, renderPass, nullptr);
     // Cleaning up memory
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
