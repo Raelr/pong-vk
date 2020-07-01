@@ -793,6 +793,45 @@ int main() {
     // make sure the final layout of this image is suitable for that: 
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+    // Next, we need to specify any subpasses that will be used by the framebuffer. 
+    // Every render pass is made up of subpasses. These subpasses are then bundled
+    // into a single pass where Vulkan is then re-order them to conserve memory 
+    // bandwidth.
+    
+    // In our case we'll just use one subpass since we want to just render a triangle. 
+    // Each subpass uses a reference to a color attachment, these are represented
+    // by a VkAttachmentReference struct. 
+    VkAttachmentReference colorAttachmentRef{};
+    // This field specifies which attachment to reference. This is usually done
+    // by index since our color descriptions are typically stored in one. Since 
+    // we only have a single attachment we specify the index as 0.
+    colorAttachmentRef.attachment = 0; 
+    // This field specifies which layout we want the attachment to have during 
+    // the subpass. In our case, we want this to act as a color buffer and 
+    // VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL will provide the most optimal
+    // performance for that function. 
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // Now that we've specified a reference, we can create the subpass itself:
+    VkSubpassDescription subpass{};
+    // Here we specify that this subpass is used for graphics rendering.
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    // Specify the count of color attachments that we're using here.
+    subpass.colorAttachmentCount = 1;
+    // Pass the attachments reference into the struct. 
+    subpass.pColorAttachments = &colorAttachmentRef;
+
+    // A subpass can also store the following attachments:
+    // 1. pInputAttachments - attachments that are read from a shader.
+    // 2. pResolveAttachments - attachments used for multisampling color attachments.
+    // 3. pDepthStencilAttachment - attachment for depth and stencil data.
+    // 4. pPreserveAttachments - attachments not used by this subpass, but which 
+    //                           need their data to be preserved.
+
+    // Now that we have a basic subpass defined, we can finally create our 
+    // renderpass! 
+    // 
+
     // --------------------- GRAPHICS PIPELINE --------------------------
     
     // Vulkan requires that you define your own graphics pipelines when you
