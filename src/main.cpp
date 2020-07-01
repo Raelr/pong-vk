@@ -961,7 +961,28 @@ int main() {
     
     // PLACEHOLDER: VkDynamicState state;
    
+    // The next (and final) struct we need for now is to create a PipelineLayout
+    // struct. The PipelineLayout struct details all the uniform values within
+    // our shaders. This is required to be specified at the time of creation of
+    // the pipeline.
     
+    // First create an empty pipeline layout struct. 
+    VkPipelineLayout pipelineLayout{};
+
+    // Then instantiate the createInfo struct for that object:
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.setLayoutCount = 0;
+    pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+    // Now create the pipeline layout using the usual method:
+    if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) 
+            != VK_SUCCESS) {
+    
+        PONG_FATAL_ERROR("Failed to create pipeline layout");
+    }
 
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
@@ -982,6 +1003,9 @@ int main() {
     }
 
     // --------------------------- CLEANUP ------------------------------
+
+    // Clean up pipeline memory
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
     // Cleaning up memory
     if(enableValidationLayers) {
