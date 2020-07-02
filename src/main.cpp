@@ -1118,13 +1118,24 @@ int main() {
     
     // In our case we'll provide no base pipeline since we're not going to be
     // changing the pipeline much.
+    
+    // NOTE: These fields are only used if we've specified VK_PIPELINE_CREATE_DERIVATIVE_BIT
+    // as a flag to the struct. 
 
     // You can reference it with either a handle of an existing pipeline.
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // optional
     // Or you can reference that pipeline by index. 
     pipelineInfo.basePipelineIndex = -1;                // optional
 
+    // Now we can create a pipeline!
+    VkPipeline graphicsPipeline;
 
+    // Create the graphics pipeline.
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, 
+            nullptr, &graphicsPipeline) 
+            != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create graphics pipeline!");
+    }
 
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
@@ -1145,7 +1156,8 @@ int main() {
     }
 
     // --------------------------- CLEANUP ------------------------------
-
+    // Destroy the graphics pipeline  
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
     // Clean up pipeline memory
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     // Destroy the render pass
