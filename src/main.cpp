@@ -1092,6 +1092,40 @@ int main() {
         PONG_FATAL_ERROR("Failed to create pipeline layout");
     }
 
+    // Finally, we can no create out graphics pipeline:
+    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    // Now we input all the structs that we defined previously into this one:
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState; 
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = nullptr;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pDynamicState = nullptr;
+    // Then we reference the layout struct. 
+    pipelineInfo.layout = pipelineLayout;
+    // Now we pass the renderPass into this.
+    pipelineInfo.renderPass = renderPass;
+    // We reference the subpass by index. 
+    pipelineInfo.subpass = 0;
+    // This field allows us to specify a pipeline that this one can be pased off. 
+    // Since we need to re-create a pipeline whenever a property changes, Vulkan
+    // allows us to specify an existing pipeline to act as a base for this one. 
+    
+    // In our case we'll provide no base pipeline since we're not going to be
+    // changing the pipeline much.
+
+    // You can reference it with either a handle of an existing pipeline.
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // optional
+    // Or you can reference that pipeline by index. 
+    pipelineInfo.basePipelineIndex = -1;                // optional
+
+
+
     // Delete the shader modules (doesn't need to happen during device cleanup
     // phase)
     vkDestroyShaderModule(device, vertShaderModule, nullptr); 
