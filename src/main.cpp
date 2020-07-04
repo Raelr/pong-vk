@@ -655,13 +655,13 @@ int main() {
     // Specifies the kind of operations the images in the swapchain will be used for.
     swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    uint32_t QueueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily) {
         // Images can be owned by multiple queue families without explicit changes in ownership.
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchainCreateInfo.queueFamilyIndexCount = 2;
-        swapchainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
+        swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
     } else {
         // This specifies that the image can only be owned by a single queue family at a time. 
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -1195,6 +1195,44 @@ int main() {
         }
     }
  
+    // ------------------- COMMAND POOL CREATION ------------------------
+
+    // In vulkan, all steps and operations that happen are not handled via
+    // function calls. Rather, these steps are recorded in a CommandBuffer 
+    // object which are then executed later in runtime. As such, commands
+    // allow us to set everything up in advance and in multiple threds if 
+    // need be. These commands are then handled by Vulkan in the main loop. 
+    
+    // First, we need to create a command pool, which manage the memory used 
+    // to allocate and store the command buffers which are given to them. We do
+    // this with the VkCommandPool struct:
+    VkCommandPool commandPool;
+
+    // Command buffers are generally executed by submitting them to one of the 
+    // device queues (such as the graphics and presentation queues we set earlier).
+    // Command pools can only submit buffers to a single type of queue. Since 
+    // we're going to be submitting data for drawing, we'll use the graphics 
+    // queue. 
+
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    // Flags is set to nothing for now. Usually there are two options:
+    // 1. VK_COMMAND_POOL_CREATE_TRANSIENT_BIT - Command buffers are re-recorded
+    // with new commands often. 
+    // 2. VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT - allow command buffers
+    // to be re-recorded individually. 
+    // Since we only recored these buffers in the beginning and executing them
+    // many times in the same loop, we won't need either of these flags. 
+    poolInfo.flags = 0; // optional
+    
+    // Create the command pool
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create command pool!");
+    }
+
+
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
@@ -1202,8 +1240,11 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
-
+    
     // --------------------------- CLEANUP ------------------------------
+    
+    vkDestroyCommandPool(device, commandPool, nullptr);
+
     for (size_t i = 0; i < imageCount; i++) {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
     }
