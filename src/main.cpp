@@ -1263,6 +1263,33 @@ int main() {
         PONG_FATAL_ERROR("Failed to allocate command buffers!");
     }
 
+    // Now we need to start recording the command buffer. Recording a framebuffer
+    // entails taking the draw commands and recording the same set of commands into
+    // them. 
+
+    for (size_t i = 0; i < imageCount; i++) {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        // This parameter specifies how the command buffer will be used. This can
+        // be:
+        // 1. VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT - The buffer will be
+        // re-recorded after executing it once.
+        // 2. VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT - This is a secondary 
+        // command buffer that will be entirely within a single render pass. 
+        // 3. VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT - the buffer can be 
+        // re-submitted while its pending execution. 
+
+        // None of these flags are applicable to us so we'll set this to 0. 
+        beginInfo.flags = 0; // optional
+        // This is only applicable to secondary command buffers. It specifies 
+        // which state to inherit from the primary command buffers.
+        beginInfo.pInheritanceInfo = nullptr; // optional
+
+        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+            PONG_FATAL_ERROR("Failed to begin recording command buffer!");
+        }
+    }
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
