@@ -1288,6 +1288,37 @@ int main() {
         if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to begin recording command buffer!");
         }
+        
+        // Now we can start setting up our render pass. Render passes are configured
+        // using a RenderPassBeginInfo struct:
+
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        // Pass in our renderPass
+        renderPassInfo.renderPass = renderPass;
+        // Get the specific renderpass.
+        renderPassInfo.framebuffer = swapChainFramebuffers[i];
+        // These parameters define the size of the render area. Pixels outside 
+        // the specified regions will have undefined values. For best performance, 
+        // the render extent should match the size of the attachments.
+        renderPassInfo.renderArea.offset = {0,0};
+        renderPassInfo.renderArea.extent = chosenExtent;
+        // Now we can define a clear color. This color is used as a load operation
+        // for the color attachment. In our case we're setting it to black.
+        VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+        renderPassInfo.clearValueCount = 1;
+        renderPassInfo.pClearValues = &clearColor;
+        
+        // Now we can finally start the render pass! We pass in the specified command buffer,
+        // the render pass info, and an enum which controls how the drawing commands will
+        // be provided. It can be one of the following:
+        // 1. VK_SUBPASS_CONTENTS_INLINE - Render pass commands will be embedded in the primary
+        // command buffer. No secondary command buffers will be executed. 
+        // 2. VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS - the render pass will be exectuted
+        // from the secondary command buffers. 
+
+        // Since we're not using secondary buffers we'll just stick to the first option.
+        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
 
     // ======================= END OF SETUP =============================
