@@ -1231,7 +1231,37 @@ int main() {
         PONG_FATAL_ERROR("Failed to create command pool!");
     }
 
+    // ------------------ COMMAND BUFFER CREATION -----------------------
 
+    // With the command pool created, we can now start creating and allocating
+    // command buffers. Because these commands involve allocating a frambuffer,
+    // we'll need to record a command buffer for every image in the swap chain.
+    
+    // Make this the same size as our images. 
+    VkCommandBuffer commandBuffers[imageCount];
+
+    // It should be notes that command buffers are automatically cleaned up when
+    // the commandpool is destroyed. As such they require no explicit cleanup. 
+
+    // We alocate command buffers by using a CommandBufferAllocationInfo struct. 
+    // This struct specifies a command pool, as well as the number of buffers to
+    // allocate. 
+    
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    // Specifies if the command buffers are primary or secondary:
+    // VK_COMMAND_BUFFER_LEVEL_PRIMARY - Can be submitted to a queue for execution,
+    // but can't be called from other command buffers.
+    // VK_COMMAND_BUFFER_LEVEL_SECONDARY - cannot be submitted directly, but can 
+    // be called from other command buffers. 
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = imageCount;
+
+    // Now we can start allocating our command buffers!
+    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers) != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to allocate command buffers!");
+    }
 
     // ======================= END OF SETUP =============================
 
