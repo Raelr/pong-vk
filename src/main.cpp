@@ -1175,11 +1175,16 @@ int main() {
         // Create a new framebuffer which uses our renderpass and image.
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        // specify the renderpass - can only be done with a compatible render pass. 
+        // This means that the number of attachments in the renderpass must be 
+        // the same as the number of attachments in the framebuffer. 
         framebufferInfo.renderPass = renderPass;
+        // Now we specify the image views associated with this framebuffer.
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
         framebufferInfo.width = chosenExtent.width;
         framebufferInfo.height = chosenExtent.height;
+        // Refers the the number of layers in image arrays. 
         framebufferInfo.layers = 1;
         
         // Create the framebuffer itself
