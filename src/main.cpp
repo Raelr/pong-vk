@@ -1166,11 +1166,13 @@ int main() {
     VkFramebuffer swapChainFramebuffers[imageCount];
 
     for (size_t i = 0; i < imageCount; i++) {
-    
+        
+        // Get the image stored previously by our swapchain
         VkImageView attachments[] = {
             swapChainImageViews[i]
         };
-
+        
+        // Create a new framebuffer which uses our renderpass and image.
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
@@ -1179,7 +1181,8 @@ int main() {
         framebufferInfo.width = chosenExtent.width;
         framebufferInfo.height = chosenExtent.height;
         framebufferInfo.layers = 1;
-
+        
+        // Create the framebuffer itself
         if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) 
                 != VK_SUCCESS) {
 
@@ -1196,6 +1199,10 @@ int main() {
     }
 
     // --------------------------- CLEANUP ------------------------------
+    for (size_t i = 0; i < imageCount; i++) {
+        vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+    }
+
     // Destroy the graphics pipeline  
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     // Clean up pipeline memory
