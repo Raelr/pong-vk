@@ -1131,6 +1131,10 @@ int main() {
     VkPipeline graphicsPipeline;
 
     // Create the graphics pipeline.
+    // This function is designed to take in multiple pipelineCreateInfos
+    // and create multiple pipelines with them. 
+    // This function alos allows us to pass in a VkPipelineCache, which is
+    // used to store and reuse data relevant to pipeline creation. 
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, 
             nullptr, &graphicsPipeline) 
             != VK_SUCCESS) {
@@ -1146,6 +1150,42 @@ int main() {
     // TODO: move this into it's own method
     delete [] vert.p_byteCode;
     delete [] frag.p_byteCode;
+
+    // --------------------- FRAMEBUFFER SETUP --------------------------
+    
+    // At this point, we now need to create the framebuffers which will be 
+    // used for our renderpass. These framebuffers should be used in the 
+    // format as our swapchain images (which we defined before).
+
+    // We use a VkFramebuffer object to store the attachments which were specified
+    // during the render pass. A framebuffer references all the image views that
+    // represent these attachments. In our case, we only have one to reference, 
+    // namely the color attachment. 
+
+    // First, we create an array to hold our framebuffers. 
+    VkFramebuffer swapChainFramebuffers[imageCount];
+
+    for (size_t i = 0; i < imageCount; i++) {
+    
+        VkImageView attachments[] = {
+            swapChainImageViews[i]
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = chosenExtent.width;
+        framebufferInfo.height = chosenExtent.height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) 
+                != VK_SUCCESS) {
+
+            PONG_FATAL_ERROR("Failed to create framebuffer!");
+        }
+    }
  
     // ======================= END OF SETUP =============================
 
