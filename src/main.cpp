@@ -1319,6 +1319,28 @@ int main() {
 
         // Since we're not using secondary buffers we'll just stick to the first option.
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        // Once the render pass has started, we can now attach the graphics pipeline. The second 
+        // parameter of this function call specifies whether this pipeline object is a graphics 
+        // or compute pipeline. 
+        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+        // Now we can tell Vulkan to draw our triangle. This function has the parameters:
+        // 1. the command buffer.
+        // 2. The number of vertices - We can do this even without a vertex buffer.
+        // 3. instanceCount - used for instanced rendering, can use 1 if you aren't using that.
+        // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value 
+        // of gl_vertexIndex.
+        // 5. firstInstance - Used as an offset for instanced rendering.
+        vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+        // Now we can end the render pass:
+        vkCmdEndRenderPass(commandBuffers[i]);
+
+        //  Now we can end the command buffer recording
+        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+            PONG_FATAL_ERROR("Failed to record command buffer!");
+        }
     }
 
     // ======================= END OF SETUP =============================
