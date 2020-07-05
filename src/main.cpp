@@ -1344,15 +1344,36 @@ int main() {
     }
 
     // --------------------- SEMAPHORE CREATION -------------------------
+    
+    // In Vulkan, drawing every frame can be done in a few simple function 
+    // calls. These function calls are executed asynchronously - they are 
+    // executed and returned in no particular order. As such, we aren't always
+    // guaranteed to get the images we need to execute the next frame. This 
+    // would then lead to serious memory violations. 
+
+    // As such, Vulkan requires us to synchronise our swap chain events, namely
+    // through the use of semaphores and fences. In both cases, our program will
+    // be forced to stop execution until a certain resource is made available
+    // to it (when the semaphore moves from 'signalled' to 'unsignalled'). 
+    
+    // The main difference between semaphores and fences is that fences can be 
+    // accessed by our program through a number of function calls. Semaphores, 
+    // on the other hand, cannot. Semaphores are primarily used to synchornise 
+    // operations within or across command queues. 
+    
+    // For now, we'll be using sempahores to get a triangle rendering!
 
     // Create two semaphores - one which signals when an image is ready to be
     // used, another for when the render pass has finished. 
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
-
+    
+    // The semaphore info struct only has one field
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+    // Now we simply create both semaphores, making sure that both succeed before we 
+    // move on. 
     if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) 
         != VK_SUCCESS 
         || 
@@ -1368,10 +1389,19 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        // In each frame of the main loop, we'll need to perform the following
+        // operations:
+        // 1. acquire an image from the swapchain.
+        // 2. execute the command buffer with that image as an attachment.
+        // 3. Return the image to the swapchain for presentation.
+
+        
     }
     
     // --------------------------- CLEANUP ------------------------------
     
+    // Clean up the semaphores we created earlier. 
     vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
     vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 
