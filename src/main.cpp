@@ -1396,7 +1396,44 @@ int main() {
         // 2. execute the command buffer with that image as an attachment.
         // 3. Return the image to the swapchain for presentation.
 
+        uint32_t imageIndex;
+        // First we need to acquire an image from the swapchain. For this we need
+        // our logical device and swapchain. The third parameter is a timeout period
+        // which we disable using the max of a 64-bit integer. Next we provide our
+        // semaphore, and finally a variable to output the image index to. 
+        vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphore,
+            VK_NULL_HANDLE, &imageIndex);
+
+        // Once we have that, we now need to submit the image to the queue:
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         
+        // We need to specify which semaphores to wait on before executing the frame.
+        VkSemaphore waitSemaphores[] = { imageAvailableSemaphore };
+        // We also need to specify which stages of the pipeline need to be done so we can move
+        // on.
+        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        // A count of all semaphores.
+        submitInfo.waitSemaphoreCount = 1;
+        // Finaly, input the semaphores and stages. 
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages; 
+        // Now we need to specify which command buffers to submit to. In our
+        // case we need to submit to the buffer which corresponds to our image.
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+        // Now we specify which semaphores we need to signal once our command buffers
+        // have finished execution. 
+        VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+       
+        // Finally, we submit the buffer to the graphics queue 
+        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+            PONG_FATAL_ERROR("Failed to submit draw command buffer!");
+        }
+
     }
     
     // --------------------------- CLEANUP ------------------------------
