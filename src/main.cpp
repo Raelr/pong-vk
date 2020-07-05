@@ -1343,6 +1343,25 @@ int main() {
         }
     }
 
+    // --------------------- SEMAPHORE CREATION -------------------------
+
+    // Create two semaphores - one which signals when an image is ready to be
+    // used, another for when the render pass has finished. 
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) 
+        != VK_SUCCESS 
+        || 
+        vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore)
+        != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create semaphore!");
+    }
+
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
@@ -1353,6 +1372,9 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
     
+    vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
+    vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+
     vkDestroyCommandPool(device, commandPool, nullptr);
 
     for (size_t i = 0; i < imageCount; i++) {
