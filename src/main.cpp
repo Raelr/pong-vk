@@ -828,6 +828,22 @@ int main() {
     // 4. pPreserveAttachments - attachments not used by this subpass, but which 
     //                           need their data to be preserved.
 
+    // Now that we have a subpass defined, we can create a dependency for the
+    // subpass. This will create a delay in the subpass where it must wait for
+    // some stage in the pipeline to be over before it executes again.
+
+    VkSubpassDependency dependency{};
+    // Specifies the dependent subpass. This refers to the implicit subpass
+    // before or after the render pass. 
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    // The index of the subpass. Since we only have one, we'll pass in the first
+    // index
+    dependency.dstSubpass = 0;
+    // Specifies which operations to wait on before executing. We specify the
+    // color attachment stage as the stage to wait on in this case. 
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+
     // Now that we have a basic subpass defined, we can finally create our 
     // renderpass! 
    
@@ -842,6 +858,9 @@ int main() {
     renderPassInfo.pAttachments = &colorAttachment;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
+    // Here we specify the subpass dependencies.
+    renderPassInfo.dependencyCount = 1; 
+    renderPassInfo.pDependencies = &dependency;
     
     // Create the render pass object using the info we created previously.
     if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) 
@@ -1433,6 +1452,29 @@ int main() {
         if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
+        
+        // The final step to drawing a frame is resubmitting the the result back
+        // to the swapchain. This is done by configuring our swapchain presentation.
+
+        // Start with a PresentInfo struct:
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        // First we specify how many semaphores we need to wait on.
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+        // Next we need to specify which swapchains we're using:
+        VkSwapchainKHR swapchains[] = { swapchain };
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapchains;
+        // Get the index of the image we're using:
+        presentInfo.pImageIndices = &imageIndex;
+        // Allows you to get an array of VK_RESULTs which tell you if presentation
+        // of every swapchain was successful. 
+        presentInfo.pResults = nullptr; // optional
+        
+        // Now we submit a request to present an image to the swapchain. 
+        vkQueuePresentKHR(presentQueue, &presentInfo);
+
 
     }
     
