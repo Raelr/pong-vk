@@ -843,6 +843,10 @@ int main() {
     // color attachment stage as the stage to wait on in this case. 
     dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.srcAccessMask = 0;
+    // Specifies which stage to wait on. These will ensure the transition only 
+    // happens when absolutely necessary (or allowed).
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
     // Now that we have a basic subpass defined, we can finally create our 
     // renderpass! 
@@ -1475,8 +1479,12 @@ int main() {
         // Now we submit a request to present an image to the swapchain. 
         vkQueuePresentKHR(presentQueue, &presentInfo);
 
-
+        vkQueueWaitIdle(presentQueue);
     }
+
+    // Since our image drawing is asynchronous, we need to make sure that
+    // our resources aren't in use when trying to clean them up:
+    vkDeviceWaitIdle(device);
     
     // --------------------------- CLEANUP ------------------------------
     
