@@ -31,6 +31,9 @@ const uint32_t validationLayersCount = 1;
 
 const uint32_t deviceExtensionsCount = 1;
 
+// Specifying how many frames we allow to re-use for the next frame.
+const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
 // Only enable validation layers when the program is run in DEBUG mode.
 #ifdef DEBUG
     const bool enableValidationLayers = true;
@@ -1388,27 +1391,31 @@ int main() {
 
     // Create two semaphores - one which signals when an image is ready to be
     // used, another for when the render pass has finished. 
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
+    VkSemaphore imageAvailableSemaphores [MAX_FRAMES_IN_FLIGHT];
+    VkSemaphore renderFinishedSemaphores [MAX_FRAMES_IN_FLIGHT];
     
     // The semaphore info struct only has one field
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
     // Now we simply create both semaphores, making sure that both succeed before we 
-    // move on. 
-    if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) 
-        != VK_SUCCESS 
-        || 
-        vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore)
-        != VK_SUCCESS) {
+    // move on.
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) 
+            != VK_SUCCESS 
+            || 
+            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i])
+            != VK_SUCCESS) {
 
-        PONG_FATAL_ERROR("Failed to create semaphore!");
+            PONG_FATAL_ERROR("Failed to create semaphore!");
+        }
     }
 
     // ======================= END OF SETUP =============================
 
     // ------------------------- MAIN LOOP ------------------------------
+
+    size_t currentFrame = 0;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -1424,7 +1431,7 @@ int main() {
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
-        vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphore,
+        vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
 
         // Once we have that, we now need to submit the image to the queue:
@@ -1433,7 +1440,7 @@ int main() {
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         
         // We need to specify which semaphores to wait on before executing the frame.
-        VkSemaphore waitSemaphores[] = { imageAvailableSemaphore };
+        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
         // We also need to specify which stages of the pipeline need to be done so we can move
         // on.
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -1448,7 +1455,7 @@ int main() {
         submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution. 
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
        
@@ -1478,8 +1485,11 @@ int main() {
         
         // Now we submit a request to present an image to the swapchain. 
         vkQueuePresentKHR(presentQueue, &presentInfo);
-
+        // NOTE: Remember to remove this once we have frames in flight complete. 
         vkQueueWaitIdle(presentQueue);
+        
+        // This should clamp the value of currentFrame between 0 and 1.
+        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     // Since our image drawing is asynchronous, we need to make sure that
@@ -1488,9 +1498,11 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
     
-    // Clean up the semaphores we created earlier. 
-    vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-    vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+    // Clean up the semaphores we created earlier.
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+    }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
