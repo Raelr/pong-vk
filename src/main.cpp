@@ -1402,9 +1402,20 @@ int main() {
     // another. Fences are similar to semaphores, with their main difference 
     // being that you must wait for them in code. 
     VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
+    // We'll have a second array of fences to track whether an image is being
+    // used by a fence. 
+    VkFence imagesInFlight[imageCount];
 
+    // Initialise all these images to 0 to start with. 
+    for (size_t i = 0; i < imageCount; i++) {
+        imagesInFlight[i] = VK_NULL_HANDLE;
+    }
+    // As always with Vulkan, we create a create info struct to handle the 
+    // configuration.
     VkFenceCreateInfo fenceInfo{};
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    // Specify that the fence should be started in a signalled state.
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     // Now we simply create both semaphores, making sure that both succeed before we 
     // move on.
@@ -1430,6 +1441,13 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
+        // This function takes an array of fences and waits for either one or all
+        // of them to be signalled. The fourth parameter specifies that we're 
+        // waiting for all fences to be signalled before moving on. The last 
+        // parameter takes a timeout period which we set really high (effectively
+        // making it null)
+        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
         // In each frame of the main loop, we'll need to perform the following
         // operations:
         // 1. acquire an image from the swapchain.
@@ -1443,6 +1461,15 @@ int main() {
         // semaphore, and finally a variable to output the image index to. 
         vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
+        
+        // Check if a previous frame is using this image. I.e: we're waiting on 
+        // it's fence to be signalled. 
+        if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+            // Wait for the fence to signal that it's available for usage.
+            vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        }
+        // Now, use the image in this frame!.
+        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         // Once we have that, we now need to submit the image to the queue:
 
@@ -1468,9 +1495,13 @@ int main() {
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
+
+        // We need to reset the fence to an unsignalled state before moving on.
+        vkResetFences(device, 1, &inFlightFences[currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) 
+            != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
         
@@ -1495,8 +1526,6 @@ int main() {
         
         // Now we submit a request to present an image to the swapchain. 
         vkQueuePresentKHR(presentQueue, &presentInfo);
-        // NOTE: Remember to remove this once we have frames in flight complete. 
-        vkQueueWaitIdle(presentQueue);
         
         // This should clamp the value of currentFrame between 0 and 1.
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
