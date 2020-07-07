@@ -1369,7 +1369,7 @@ int main() {
         }
     }
 
-    // --------------------- SEMAPHORE CREATION -------------------------
+    // --------------------- SYNC OBJECT CREATION -------------------------
     
     // In Vulkan, drawing every frame can be done in a few simple function 
     // calls. These function calls are executed asynchronously - they are 
@@ -1398,6 +1398,14 @@ int main() {
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
+    // We'll also create a fence to keep our CPU and GPU fully synced with one
+    // another. Fences are similar to semaphores, with their main difference 
+    // being that you must wait for them in code. 
+    VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
+
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
     // Now we simply create both semaphores, making sure that both succeed before we 
     // move on.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -1405,9 +1413,11 @@ int main() {
             != VK_SUCCESS 
             || 
             vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i])
-            != VK_SUCCESS) {
+            != VK_SUCCESS 
+            ||
+            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
 
-            PONG_FATAL_ERROR("Failed to create semaphore!");
+            PONG_FATAL_ERROR("Failed to create synchronisation objects for frame!");
         }
     }
 
@@ -1502,6 +1512,7 @@ int main() {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(device, inFlightFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device, commandPool, nullptr);
