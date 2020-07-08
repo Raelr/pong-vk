@@ -10,6 +10,7 @@
 #include <set>
 #include <cstdint>
 #include "utils.h"
+#include "vulkanUtils.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -565,7 +566,7 @@ int main() {
 
     // The Format struct contains two variables that should be set:
     // 1. Format - The color channels and types used by the Vulkan.
-    // 2. Colorspace - Checks of the SRGB colo space is supported or not
+    // 2. Colorspace - Checks if the SRGB color space is supported or not
 
     for (auto& format : swapChainDetails.formats) {
         // In our case we'll be looking for the SRGB color space since it results in
@@ -1465,14 +1466,15 @@ int main() {
         // Check if a previous frame is using this image. I.e: we're waiting on 
         // it's fence to be signalled. 
         if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-            // Wait for the fence to signal that it's available for usage.
+            // Wait for the fence to signal that it's available for usage. This 
+            // will now ensure that there are no more than 2 frames in use, and 
+            // that these frames are not accidentally using the same image!
             vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         // Once we have that, we now need to submit the image to the queue:
-
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         
