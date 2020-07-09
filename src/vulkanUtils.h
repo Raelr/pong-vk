@@ -4,23 +4,28 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-// Struct for holding all swapchain relevant data.
-struct SwapchainData {
-    VkSwapchainKHR swapchain;
-    uint32_t imageCount;
-    VkImage* swapchainImages;
-    VkFormat swapchainFormat;
-    VkExtent2D swapchainExtent;
-};
+namespace VulkanUtils {
 
-struct SwapChainSupportDetails2 {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
-};
+    // Struct for holding all swapchain relevant data.
+    struct SwapchainData {
+        VkSwapchainKHR swapchain;
+        uint32_t imageCount;
+        VkImage* swapchainImages;
+        VkFormat swapchainFormat;
+        VkExtent2D swapchainExtent;
+    };
 
-SwapChainSupportDetails2 querySwapChainSupport2(VkPhysicalDevice device, VkSurfaceKHR surface);
+    struct SwapchainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
 
-SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface);
+    SwapchainSupportDetails querySwapChainSupport(VkPhysicalDevice device,
+        VkSurfaceKHR surface);
+
+    SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+}
 
 #endif
