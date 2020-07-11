@@ -21,7 +21,7 @@ namespace VulkanUtils {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
-    SwapchainSupportDetails querySwapChainSupport(VkPhysicalDevice device,
+    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
     SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface);

@@ -1,4 +1,5 @@
 #include "vulkanUtils.h"
+#include "logger.h"
 //struct SwapchainData {
 //    VkSwapchainKHR swapchain;
 //    uint32_t imageCount;
@@ -15,7 +16,7 @@
 
 namespace VulkanUtils {
 
-    SwapchainSupportDetails querySwapChainSupport(VkPhysicalDevice device, 
+    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device, 
         VkSurfaceKHR surface){
 
         // instantiate a struct to store swapchain details.
@@ -49,12 +50,89 @@ namespace VulkanUtils {
 
     }
 
-    SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface, const uint32_t windowHeight, const uint32_t windowWidth) {
         
         SwapchainData data{};
-        
-        // Do stuff with the swapchain
 
+        // Start by getting the supported formats for the swapchain
+        SwapchainSupportDetails supportDetails = querySwapchainSupport(device, surface);
+
+        // We want to find three settings for our swapchain:
+        // 1. We want to find the surface format (color depth).
+        // 2. Presentation Mode (conditions for 'swapping' images to the 
+        // screen - kinda like vSync).
+        // 3. Swap Extent (resolution of images in the swapchain)
+
+        // First lets get the format, we'll set it to the first format 
+        // in the list to start:
+        VkSurfaceFormatKHR chosenFormat = supportDetails.formats[0];
+
+        // The Format struct contains two variables that should be set:
+        // 1. Format - The color channels and types used by the Vulkan.
+        // 2. Colorspace - Checks if the SRGB color space is supported or not
+
+        for (auto& format : supportDetails.formats) {
+        
+            // We'll be looking for the SRGB color space since it results in 
+            // more accurate perceived colors.
+            // Each color channel will be stored in 8 bit integers (32 bits
+            // total)
+            if (format.format == VK_FORMAT_B8G8R8A8_SRGB && 
+            format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+
+                chosenFormat = format;
+                INFO("Found SRGB channel for rendering format");
+                break;
+                // TODO: Might be good to have a fallback for when we fail to
+                // find the desired color space. 
+            }
+        }
+        
+        // We set the mode to vsync as a start.
+        VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+
+        // Ideally, we want to use triple buffering as it results in less screen
+        // tear and less performance issues than normal vsync. The present
+        // mode we're looking for here is the VL_PRESENT_MODE_MAILBOX_KHR.
+        for (auto& presentMode : supportDetails.presentModes) {
+            // If we can get triple buffering instead of vsync then we'll take
+            // it. 
+            if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+
+                chosenPresentMode = presentMode;
+                INFO("Triple buffering enabled for present mode!");
+                break;
+            }
+        }
+
+        // Set the swap extent, or the resolution of the images being processed
+        // by the swapchain.
+        VkExtent2D chosenExtent = {windowWidth, windowHeight};
+
+        // Make sure that the width and height of the images are greater than 0
+        // and less than the maximum image dimensions.
+        chosenExtent.width = std::clamp(chosenExtent.width, 
+            supportDetails.capabilities.minImageExtent.width,
+            supportDetails.capabilities.maxImageExtent.width);
+
+        chosenExtent.height = std::clamp(chosenExtent.height,
+            supportDetails.capabilities.minImageExtent.height,
+            supportDetails.capabilities.maxImageExtent.height);
+
+        // Make sure the width is not the maximum value of a 32-bit unsigned
+        // integer. 
+        if (supportDetails.capabilities.currentExtent.width != UINT32_MAX) {
+            chosenExtent = supportDetails.capabilities.currentExtent;
+        }
+
+        INFO("Device extent has been set to: [ " + 
+            std::to_string(chosenExtent.width) + ", " + 
+            std::to_string(chosenExtent.height) + " ]");
+
+        // Now we handle the actual creation of the swapchain:
+
+        
         return data;
 
     }

@@ -421,7 +421,7 @@ int main() {
         if (extensionsSupported) {
             // Get the swapchain details
             VulkanUtils::SwapchainSupportDetails supportDetails = 
-                    VulkanUtils::querySwapChainSupport(device, surface);
+                    VulkanUtils::querySwapchainSupport(device, surface);
             // Make sure that we have at least one supported format and one supported presentation mode.
             swapChainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
         }
@@ -515,7 +515,7 @@ int main() {
     // --------------------- SWAP CHAIN CREATION ------------------------
 
     // Get the surface format for the swapchain:
-    VulkanUtils::SwapchainSupportDetails swapChainDetails = VulkanUtils::querySwapChainSupport(physicalDevice, surface);
+    VulkanUtils::SwapchainSupportDetails swapChainDetails = VulkanUtils::querySwapchainSupport(physicalDevice, surface);
 
     // We want to find three settings for our swapchain:
     // 1. We want to find the surface format (color depth).
