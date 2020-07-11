@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <optional>
 
 namespace VulkanUtils {
 
@@ -21,11 +22,18 @@ namespace VulkanUtils {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+    };
+
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
     SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface);
 
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
+        surface);
 }
 
 #endif

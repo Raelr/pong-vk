@@ -17,32 +17,37 @@
 namespace VulkanUtils {
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device, 
-        VkSurfaceKHR surface){
+            VkSurfaceKHR surface){
 
         // instantiate a struct to store swapchain details.
         SwapchainSupportDetails details;
 
-        // Now follow a familiar pattern and query all the support details from Vulkan...
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+        // Now follow a familiar pattern and query all the support details 
+        // from Vulkan...
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, 
+                &details.capabilities);
 
         uint32_t formatCount = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, 
+                details.formats.data());
 
-        // Using a vector for the utility functions - statically resize the data within it to hold·
-        // the data we need.
+        // Using a vector for the utility functions - statically resize the 
+        // data within it to hold·the data we need.
         if (formatCount != 0) {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+                    details.formats.data());
         }
        
         uint32_t presentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, 
+                &presentModeCount, nullptr);
 
         // Same as above ^
         if (presentModeCount != 0) {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount,
-                details.presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, 
+                    &presentModeCount,details.presentModes.data());
         }
        
         // Return the details we need
@@ -50,12 +55,54 @@ namespace VulkanUtils {
 
     }
 
-    SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface, const uint32_t windowHeight, const uint32_t windowWidth) {
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, 
+            VkSurfaceKHR surface) {
+
+        // A struct for storing the index of the queue family that the device        will be using
+         QueueFamilyIndices indices;
+    
+         // Again, get the queue families that the device uses.
+         uint32_t queueFamilyCount = 0;
+
+         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, 
+                nullptr);
+         
+         VkQueueFamilyProperties queueFamilies[queueFamilyCount];
+    
+         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, 
+                queueFamilies);
+    
+         // Now that we know the families, we can now assess the suitability 
+         // of this device.
+         for (size_t i = 0; i < queueFamilyCount; i++) {
+             // We search for a flag which specifies that the queue supports 
+             // graphics operations.
+             // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
+             if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                 indices.graphicsFamily = i;
+             }
+            VkBool32 presentSupport = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, 
+                    &presentSupport);
+    
+             if (presentSupport) {
+                 indices.presentFamily = i;
+            }
+        }
+   
+        return indices;
+    }
+
+    SwapchainData createSwapchain(VkPhysicalDevice device, 
+            VkSurfaceKHR surface, const uint32_t windowHeight, 
+            const uint32_t windowWidth,
+            QueueFamilyIndices indices) {
         
         SwapchainData data{};
 
         // Start by getting the supported formats for the swapchain
-        SwapchainSupportDetails supportDetails = querySwapchainSupport(device, surface);
+        SwapchainSupportDetails supportDetails = 
+                querySwapchainSupport(device, surface);
 
         // We want to find three settings for our swapchain:
         // 1. We want to find the surface format (color depth).
@@ -132,7 +179,30 @@ namespace VulkanUtils {
 
         // Now we handle the actual creation of the swapchain:
 
+        // First, we need to specify how many images the swapchain will handle:
+        uint32_t imageCount = supportDetails.capabilities.minImageCount + 1; 
+        // We add an additional image just to allow for some extra flexibility.
         
+        // Check that we're assigning the correct number of images for the 
+        // queue. A maxImageCount of 0 implies that there is no max.
+        if (supportDetails.capabilities.maxImageCount > 0
+        && imageCount > supportDetails.capabilities.maxImageCount) {
+            // Set the image count to the maximum allowed in the queue.
+            imageCount = supportDetails.capabilities.maxImageCount;
+        }
+        
+        // Now that we've set the images, we can start setting up our swapchain
+        // configuration.
+        VkSwapchainCreateInfoKHR swapchainCreateInfo {};
+        swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        swapchainCreateInfo.surface = surface;
+        swapchainCreateInfo.minImageCount = imageCount;
+        swapchainCreateInfo.imageFormat = chosenFormat.format;
+        swapchainCreateInfo.imageColorSpace = chosenFormat.colorSpace;
+        swapchainCreateInfo.imageExtent = chosenExtent;
+        swapchainCreateInfo.imageArrayLayers = 1;
+        swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
         return data;
 
     }

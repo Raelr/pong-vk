@@ -42,40 +42,6 @@ const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const bool enableValidationLayers = false;
 #endif
 
-struct QueueFamilyIndices {
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
-};
-
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    // A struct for storing the index of the queue family that the device will be using
-    QueueFamilyIndices indices;
-
-    // Again, get the queue families that the device uses.
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-    VkQueueFamilyProperties queueFamilies[queueFamilyCount];
-
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
-
-    // Now that we know the families, we can now assess the suitability of this device.
-    for (size_t i = 0; i < queueFamilyCount; i++) {
-        // We search for a flag which specifies that the queue supports graphics operations.
-        // This is specified with the VK_QUEUE_GRAPHICS_BIT flag.
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-        }
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-
-        if (presentSupport) {
-            indices.presentFamily = i;
-        }
-    }
-
-    return indices;
-}
-
 // A debug function callback - where the message data actually goes when triggered by the 
 // validation layer. 
 // This function uses three mactros to define it's signature (used to help Vulkan know that
@@ -392,7 +358,8 @@ int main() {
         // We need to find exactly which queues this device uses so we can use them
         // to execute commands. 
         
-        QueueFamilyIndices indices = findQueueFamilies(device, surface);
+        VulkanUtils::QueueFamilyIndices indices = 
+                VulkanUtils::findQueueFamilies(device, surface);
 
         // Now we need to check whether our physical device supports drawing images to the screen.
 
@@ -459,7 +426,8 @@ int main() {
     VkDevice device;
 
     // Get the queue families from the physical device that we got previously. 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
+    VulkanUtils::QueueFamilyIndices indices = 
+            VulkanUtils::findQueueFamilies(physicalDevice, surface);
 
     // TODO: There's probably a way to do this with an array rather than a vector + set.
     std::vector<VkDeviceQueueCreateInfo> createInfos;
