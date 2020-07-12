@@ -485,51 +485,12 @@ int main() {
     VulkanUtils::SwapchainData swapchain;
 
     if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
-            surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) 
-            != VK_SUCCESS){
+            surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) != VK_SUCCESS) {
 
        PONG_FATAL_ERROR("Failed to create swapchain!"); 
 
     }
-
-    // --------------------- Create Image Views -------------------------
-
-    // A VkImageView object is required to use any Images in Vulkan.
-    // A view describes how to access an image and which part of an image should be accessed.
-
-    // Store all images in an array.
-    VkImageView swapChainImageViews[swapchain.imageCount];
-
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
-        // We need to create a view for every image that we stored for the swapChain.
-        VkImageViewCreateInfo imageViewCreateInfo{};
-        imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = swapchain.pImages[i];
-        // Allows you to specify whether the image will be viewed as a 1D, 2D, or 3D texture.
-        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        imageViewCreateInfo.format = swapchain.swapchainFormat;
-        // Components field allow us to swizzle values around (force them to assume certain
-        // values).
-        // In this case we'll set the components to their default values.
-        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        // The subresourceRange field describes an image's purpose. 
-        // In our case our images will be used as color targets with no mipmapping levels
-        // or layers. 
-        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-        imageViewCreateInfo.subresourceRange.levelCount = 1;
-        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-        imageViewCreateInfo.subresourceRange.layerCount = 1;
-        // Create the image view and store it in the swapChainImageViews array.
-        if (vkCreateImageView(device, &imageViewCreateInfo, nullptr, &swapChainImageViews[i]) 
-            != VK_SUCCESS) {
-            PONG_FATAL_ERROR("Failed to create image view!");
-        }
-    }
-
+    
     // ------------------------ RENDER PASS -----------------------------
     
     // In Vulkan, a render pass represents all information that our framebuffers. 
@@ -981,7 +942,7 @@ int main() {
         
         // Get the image stored previously by our swapchain
         VkImageView attachments[] = {
-            swapChainImageViews[i]
+            swapchain.pImageViews[i]
         };
         
         // Create a new framebuffer which uses our renderpass and image.
@@ -1350,8 +1311,11 @@ int main() {
 
     // Destroy image views
     for (size_t i = 0; i < swapchain.imageCount; i++) {
-        vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+        vkDestroyImageView(device, swapchain.pImageViews[i], nullptr);
     }
+ 
+    delete [] swapchain.pImageViews;
+
     // Delete all images stored in the swapchain
     VulkanUtils::destroySwapchainImageData(swapchain);
 

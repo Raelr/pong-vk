@@ -43,6 +43,8 @@ namespace VulkanUtils {
         surface);
     
     void destroySwapchainImageData(SwapchainData);
+
+    VkResult createImageViews(VkDevice, SwapchainData*);
 }
 
 #endif
