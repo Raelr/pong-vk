@@ -219,10 +219,22 @@ namespace VulkanUtils {
             swapchainCreateInfo.queueFamilyIndexCount = 0;
             swapchainCreateInfo.pQueueFamilyIndices = nullptr;
         }
+        
+        // Can be used to specify a transform that all images in the swapchain will follow. 
+        // In this case we'll just set it to the default.
+        swapchainCreateInfo.preTransform = 
+                supportDetails.capabilities.currentTransform;
 
         swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
+        // Vulkan swapchains can become irrelevant when certain details are 
+        // met (such as if the 
+        // screen is resized). In this case we need to specify the old 
+        // swapchain.
+        swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+        
         swapchainCreateInfo.presentMode = chosenPresentMode;
+        swapchainCreateInfo.clipped = VK_TRUE;
 
         // With all the config done, we can finally make the swapchain.
         VkSwapchainKHR swapchain;
@@ -231,17 +243,10 @@ namespace VulkanUtils {
                 &swapchain) != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
-
-        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
-
-        VkImage swapchainImages[imageCount];
-
-        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, 
-                swapchainImages);
-
+        
+        // populate the swapchain data struct.
         data->swapchain = swapchain;
         data->imageCount = imageCount;
-        data->swapchainImages = swapchainImages;
         data->swapchainFormat = chosenFormat.format;
         data->swapchainExtent = chosenExtent;
 

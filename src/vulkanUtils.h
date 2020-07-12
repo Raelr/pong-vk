@@ -11,7 +11,6 @@ namespace VulkanUtils {
     struct SwapchainData {
         VkSwapchainKHR swapchain;
         uint32_t imageCount;
-        VkImage* swapchainImages;
         VkFormat swapchainFormat;
         VkExtent2D swapchainExtent;
     };

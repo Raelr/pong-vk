@@ -482,9 +482,9 @@ int main() {
 
     // --------------------- SWAP CHAIN CREATION ------------------------
 
-    VulkanUtils::SwapchainData data;
+    VulkanUtils::SwapchainData swapchain;
 
-    if (VulkanUtils::createSwapchain(&data, physicalDevice, device,
+    if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
             surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) 
             != VK_SUCCESS){
 
@@ -492,176 +492,32 @@ int main() {
 
     }
 
-    // Get the surface format for the swapchain:
-    VulkanUtils::SwapchainSupportDetails swapChainDetails = VulkanUtils::querySwapchainSupport(physicalDevice, surface);
+    // Now we need to get the current images from the swapchain and store them
+    // for later use.
+    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.imageCount, 
+            nullptr);
 
-    // We want to find three settings for our swapchain:
-    // 1. We want to find the surface format (color depth).
-    // 2. Presentation Mode (conditions for 'swapping' images to the screen - kinda like vSync).
-    // 3. Swap Extent (resolution of images in the swapchain)
+    VkImage swapchainImages[swapchain.imageCount];
 
-    // First lets get the format, we'll set it to the first format in the list to start.
-    VkSurfaceFormatKHR chosenformat = swapChainDetails.formats[0];
-
-    // The Format struct contains two variables that should be set:
-    // 1. Format - The color channels and types used by the Vulkan.
-    // 2. Colorspace - Checks if the SRGB color space is supported or not
-
-    for (auto& format : swapChainDetails.formats) {
-        // In our case we'll be looking for the SRGB color space since it results in
-        // more accurate percieved colors. 
-        // We'll also store each color channel as an 8-bit integer (resulting in 32 bits total).
-        // Format is also going to be: B G R A - in that order.
-        if (format.format == VK_FORMAT_B8G8R8A8_SRGB 
-            && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            chosenformat = format;
-            INFO("Found SRGB channel for the rendering format.");
-            break;
-        } // TODO: If this fails then might be good to rank other formats depending on their desirability. 
-    }
-
-    // The present mode details the conditions for showing images on screen, this comes with a few
-    // settings:
-
-    // 1. VK_PRESENT_MODE_IMMEDIATE_KHR - images are transferred to screen right away (might result
-    // in screen tear).
-    // 2. VK_PRESENT_MODE_FIFO_KHR - Similar to Vsync (uses a queue to process images). Essentially
-    // processes images in the queue in batches. Application is also blocked when the queue is full.
-    // 3. VK_PRESENT_MODE_FIFO_RELAXED_KHR - Sends an image to screen if the queue is empty.
-    // 4. VK_PRESENT_MODE_MAILBOX_KHR - Same as 2, except that it doesn't block when the queue
-    // is full. Older images are simply replaced with newer ones. This results in triple buffering
-    // (which avoids screen tear and latency issues caused by standard Vsync).
-
-    // Now we search for available present modes:
-    
-    // Set present mode to Vsync as default.
-    VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
-    for (auto& presentMode: swapChainDetails.presentModes) {
-        // If we can, we should try and get triple buffering as a configuration.
-        if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            chosenPresentMode = presentMode;
-            INFO("Triple buffering enabled for Present mode.");
-            break;
-        }
-    }
-    
-    // Finally, we need to set the swap extent. The Swap extent is the resolution of the images in
-    // the swapchain. Generally speaking, its recommended to set this to the window width/height.
-    VkExtent2D chosenExtent = {WINDOW_WIDTH, WINDOW_HEIGHT};
-
-    // Make sure to clamp both the x and y values between the min and max
-    chosenExtent.width = std::clamp(chosenExtent.width, 
-        swapChainDetails.capabilities.minImageExtent.width, 
-        swapChainDetails.capabilities.maxImageExtent.width);
-
-    chosenExtent.height = std::clamp(chosenExtent.height, 
-        swapChainDetails.capabilities.minImageExtent.height, 
-        swapChainDetails.capabilities.maxImageExtent.height);
-
-    // If the extent is already the maximum of t_uint32 then we simply set the extent
-    // to the default returned by our physical device. 
-    if (swapChainDetails.capabilities.currentExtent.width != UINT32_MAX) {
-        chosenExtent = swapChainDetails.capabilities.currentExtent;
-    }
-
-    INFO("Device extent has been set to: [ " 
-        + std::to_string(chosenExtent.width) + ", " + std::to_string(chosenExtent.height) + " ]");
-
-    // --------------------- CREATE SWAPCHAIN ---------------------------
-
-    // Lets get the number of image that we'd like the Swapchain to have:
-
-
-    // Start the loop and only stop when a close event happens. We'll get the minimum 
-    // images to start with and add 1 to the end (just to allow one more image in!)
-    uint32_t imageCount = swapChainDetails.capabilities.minImageCount + 1;
-
-    // Make sure that we aren't assigning more images to the queue than it can handle.
-    // NOTE: A max imagecount of 0 implies that there is no max.
-    if (swapChainDetails.capabilities.maxImageCount > 0 
-        && imageCount > swapChainDetails.capabilities.maxImageCount) {
-        
-        imageCount = swapChainDetails.capabilities.maxImageCount;
-    }
-
-    // Create the swapchain creation struct and assign all the previous values to it.
-    VkSwapchainCreateInfoKHR swapchainCreateInfo {};
-    swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchainCreateInfo.surface = surface;
-    swapchainCreateInfo.minImageCount = imageCount;
-    swapchainCreateInfo.imageFormat = chosenformat.format;
-    swapchainCreateInfo.imageColorSpace = chosenformat.colorSpace;
-    swapchainCreateInfo.imageExtent = chosenExtent;
-    // Specifies tbe number of layers the image will consist of. 
-    swapchainCreateInfo.imageArrayLayers = 1;
-    // Specifies the kind of operations the images in the swapchain will be used for.
-    swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-
-    if (indices.graphicsFamily != indices.presentFamily) {
-        // Images can be owned by multiple queue families without explicit changes in ownership.
-        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        swapchainCreateInfo.queueFamilyIndexCount = 2;
-        swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-    } else {
-        // This specifies that the image can only be owned by a single queue family at a time. 
-        swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        swapchainCreateInfo.queueFamilyIndexCount = 0;
-        swapchainCreateInfo.pQueueFamilyIndices = nullptr;
-    }
-
-    // Can be used to specify a transform that all images in the swapchain will follow. 
-    // In this case we'll just set it to the default.
-    swapchainCreateInfo.preTransform = swapChainDetails.capabilities.currentTransform;
-
-    // Specifies if the alpha channel should be used for blending with other windows.
-    // We'll be ifnoring this for now.
-    swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-
-    swapchainCreateInfo.presentMode = chosenPresentMode;
-
-    // Vulkan swapchains can become irrelevant when certain details are met (such as if the 
-    // screen is resized). In this case we need to specify the old swapchain.
-    swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    // Now we can create the swapchain:
-    VkSwapchainKHR swapchain;
-
-    // Create the swapchain and stop the program if the creation fails.
-    if (vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain) != VK_SUCCESS) {
-        PONG_FATAL_ERROR("Failed to create swapchain!");
-    }
-
-    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
-
-    VkImage swapchainImages[imageCount];
-
-    vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages);
-
-    VkFormat swapchainFormat;
-
-    swapchainFormat = chosenformat.format;
-
-    VkExtent2D swapChainExtent = chosenExtent;
+    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.imageCount,
+            swapchainImages);
 
     // --------------------- Create Image Views -------------------------
 
     // A VkImageView object is required to use any Images in Vulkan.
-    // A view describes how to access an image and which part of an image should be accessed. 
+    // A view describes how to access an image and which part of an image should be accessed.
 
     // Store all images in an array.
-    VkImageView swapChainImageViews[imageCount];
+    VkImageView swapChainImageViews[swapchain.imageCount];
 
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         // We need to create a view for every image that we stored for the swapChain.
         VkImageViewCreateInfo imageViewCreateInfo{};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         imageViewCreateInfo.image = swapchainImages[i];
         // Allows you to specify whether the image will be viewed as a 1D, 2D, or 3D texture.
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        imageViewCreateInfo.format = swapchainFormat;
+        imageViewCreateInfo.format = swapchain.swapchainFormat;
         // Components field allow us to swizzle values around (force them to assume certain
         // values).
         // In this case we'll set the components to their default values.
@@ -699,7 +555,7 @@ int main() {
 
     VkAttachmentDescription colorAttachment{};
     // Set this to the imageFormat we chose earlier for the swapchain. 
-    colorAttachment.format = swapchainFormat;
+    colorAttachment.format = swapchain.swapchainFormat;
     // If we were using multi-sampling we'd set this to more than one bit. 
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     // loadOp determines what happens to the contents of an attachment before
@@ -907,8 +763,8 @@ int main() {
     VkViewport viewPort{};
     viewPort.x = 0.0f;
     viewPort.y = 0.0f;
-    viewPort.width = (float) chosenExtent.width;
-    viewPort.height = (float) chosenExtent.height;
+    viewPort.width = (float) swapchain.swapchainExtent.width;
+    viewPort.height = (float) swapchain.swapchainExtent.height;
     viewPort.minDepth = 0.0f;
     viewPort.maxDepth = 1.0f;
 
@@ -920,7 +776,7 @@ int main() {
     // In this case, we'll just draw it over the entire screen.
     VkRect2D scissor{};
     scissor.offset = {0,0};
-    scissor.extent = chosenExtent;
+    scissor.extent = swapchain.swapchainExtent;
 
     // Now, the scissor and Viewport need to be combined into a single struct.
     // This struct is known as a ViewportState: 
@@ -1129,9 +985,9 @@ int main() {
     // namely the color attachment. 
 
     // First, we create an array to hold our framebuffers. 
-    VkFramebuffer swapChainFramebuffers[imageCount];
+    VkFramebuffer swapChainFramebuffers[swapchain.imageCount];
 
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         
         // Get the image stored previously by our swapchain
         VkImageView attachments[] = {
@@ -1148,8 +1004,8 @@ int main() {
         // Now we specify the image views associated with this framebuffer.
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = chosenExtent.width;
-        framebufferInfo.height = chosenExtent.height;
+        framebufferInfo.width = swapchain.swapchainExtent.width;
+        framebufferInfo.height = swapchain.swapchainExtent.height;
         // Refers the the number of layers in image arrays. 
         framebufferInfo.layers = 1;
         
@@ -1204,7 +1060,7 @@ int main() {
     // we'll need to record a command buffer for every image in the swap chain.
     
     // Make this the same size as our images. 
-    VkCommandBuffer commandBuffers[imageCount];
+    VkCommandBuffer commandBuffers[swapchain.imageCount];
 
     // It should be notes that command buffers are automatically cleaned up when
     // the commandpool is destroyed. As such they require no explicit cleanup. 
@@ -1222,7 +1078,7 @@ int main() {
     // VK_COMMAND_BUFFER_LEVEL_SECONDARY - cannot be submitted directly, but can 
     // be called from other command buffers. 
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = imageCount;
+    allocInfo.commandBufferCount = swapchain.imageCount;
 
     // Now we can start allocating our command buffers!
     if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers) != VK_SUCCESS) {
@@ -1233,7 +1089,7 @@ int main() {
     // entails taking the draw commands and recording the same set of commands into
     // them. 
 
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         // This parameter specifies how the command buffer will be used. This can
@@ -1268,7 +1124,7 @@ int main() {
         // the specified regions will have undefined values. For best performance, 
         // the render extent should match the size of the attachments.
         renderPassInfo.renderArea.offset = {0,0};
-        renderPassInfo.renderArea.extent = chosenExtent;
+        renderPassInfo.renderArea.extent = swapchain.swapchainExtent;
         // Now we can define a clear color. This color is used as a load operation
         // for the color attachment. In our case we're setting it to black.
         VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -1344,10 +1200,10 @@ int main() {
     VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
     // We'll have a second array of fences to track whether an image is being
     // used by a fence. 
-    VkFence imagesInFlight[imageCount];
+    VkFence imagesInFlight[swapchain.imageCount];
 
     // Initialise all these images to 0 to start with. 
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         imagesInFlight[i] = VK_NULL_HANDLE;
     }
     // As always with Vulkan, we create a create info struct to handle the 
@@ -1399,7 +1255,7 @@ int main() {
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
-        vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
+        vkAcquireNextImageKHR(device, swapchain.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
         
         // Check if a previous frame is using this image. I.e: we're waiting on 
@@ -1456,7 +1312,7 @@ int main() {
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
         // Next we need to specify which swapchains we're using:
-        VkSwapchainKHR swapchains[] = { swapchain };
+        VkSwapchainKHR swapchains[] = { swapchain.swapchain };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapchains;
         // Get the index of the image we're using:
@@ -1487,7 +1343,7 @@ int main() {
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
     }
 
@@ -1503,12 +1359,12 @@ int main() {
     }
 
     // Destroy image views
-    for (size_t i = 0; i < imageCount; i++) {
+    for (size_t i = 0; i < swapchain.imageCount; i++) {
         vkDestroyImageView(device, swapChainImageViews[i], nullptr);
     }
 
     // Destroy the Swapchain
-    vkDestroySwapchainKHR(device, swapchain, nullptr);
+    vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
 
     // Destroy window surface
     vkDestroySurfaceKHR(instance, surface, nullptr);
