@@ -246,7 +246,8 @@ namespace VulkanUtils {
         data->swapchainFormat = chosenFormat.format;
         data->swapchainExtent = chosenExtent;
         data->pImages = swapchainImages;
-
+        
+        // Now we can create image views for use later on in the program.
         if (createImageViews(device, data) != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }

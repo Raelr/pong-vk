@@ -482,8 +482,12 @@ int main() {
 
     // --------------------- SWAP CHAIN CREATION ------------------------
 
+    // Create a basic swapchain strucutre - this is a custom struct that
+    // stores all our swapchain data.
     VulkanUtils::SwapchainData swapchain;
 
+    // Create the swapchain (should initialise both the swapchain and image
+    // views). See vulkanUtils.cpp for implementation details.
     if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
             surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) != VK_SUCCESS) {
 
