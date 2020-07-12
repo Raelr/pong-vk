@@ -492,16 +492,6 @@ int main() {
 
     }
 
-    // Now we need to get the current images from the swapchain and store them
-    // for later use.
-    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.imageCount, 
-            nullptr);
-
-    VkImage swapchainImages[swapchain.imageCount];
-
-    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain.imageCount,
-            swapchainImages);
-
     // --------------------- Create Image Views -------------------------
 
     // A VkImageView object is required to use any Images in Vulkan.
@@ -514,7 +504,7 @@ int main() {
         // We need to create a view for every image that we stored for the swapChain.
         VkImageViewCreateInfo imageViewCreateInfo{};
         imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        imageViewCreateInfo.image = swapchainImages[i];
+        imageViewCreateInfo.image = swapchain.pImages[i];
         // Allows you to specify whether the image will be viewed as a 1D, 2D, or 3D texture.
         imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         imageViewCreateInfo.format = swapchain.swapchainFormat;
@@ -1362,6 +1352,8 @@ int main() {
     for (size_t i = 0; i < swapchain.imageCount; i++) {
         vkDestroyImageView(device, swapChainImageViews[i], nullptr);
     }
+    // Delete all images stored in the swapchain
+    VulkanUtils::destroySwapchainImageData(swapchain);
 
     // Destroy the Swapchain
     vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);

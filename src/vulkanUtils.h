@@ -13,14 +13,17 @@ namespace VulkanUtils {
         uint32_t imageCount;
         VkFormat swapchainFormat;
         VkExtent2D swapchainExtent;
+        VkImageView* pImageViews;
+        VkImage* pImages;
     };
-
+    // Struct storing details relating to swapchain extensions and
+    // support.
     struct SwapchainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
     };
-
+    // Struct storing all queue families
     struct QueueFamilyIndices {
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
@@ -38,6 +41,8 @@ namespace VulkanUtils {
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
         surface);
+    
+    void destroySwapchainImageData(SwapchainData);
 }
 
 #endif

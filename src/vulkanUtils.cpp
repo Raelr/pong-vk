@@ -1,18 +1,5 @@
 #include "vulkanUtils.h"
 #include "logger.h"
-//struct SwapchainData {
-//    VkSwapchainKHR swapchain;
-//    uint32_t imageCount;
-//    VkImage* swapchainImages;
-//    VkFormat swapchainFormat;
-//    VkExtent2D swapchainExtent;
-//};
-
-//struct SwapChainSupportDetails2 {
-//    VkSurfaceCapabilitiesKHR capabilities;
-//    std::vector<VkSurfaceFormatKHR> formats;
-//    std::vector<VkPresentModeKHR> presentModes;
-//};
 
 namespace VulkanUtils {
 
@@ -243,15 +230,30 @@ namespace VulkanUtils {
                 &swapchain) != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
+
+        // Get the current images in the swapchain and store them for later 
+        // use. 
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+        VkImage* swapchainImages = new VkImage[imageCount];
+
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, 
+                swapchainImages);
+
+
         
         // populate the swapchain data struct.
         data->swapchain = swapchain;
         data->imageCount = imageCount;
         data->swapchainFormat = chosenFormat.format;
         data->swapchainExtent = chosenExtent;
+        data->pImages = swapchainImages;
 
         return VK_SUCCESS;
+    }
 
+    void destroySwapchainImageData(SwapchainData data) {
+        delete [] data.pImages;
     }
 
 }
