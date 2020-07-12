@@ -93,16 +93,16 @@ namespace VulkanUtils {
         return indices;
     }
 
-    SwapchainData createSwapchain(VkPhysicalDevice device, 
+    VkResult createSwapchain(SwapchainData& data,
+            VkPhysicalDevice physicalDevice,
+            VkDevice device,
             VkSurfaceKHR surface, const uint32_t windowHeight, 
             const uint32_t windowWidth,
             QueueFamilyIndices indices) {
-        
-        SwapchainData data{};
 
         // Start by getting the supported formats for the swapchain
         SwapchainSupportDetails supportDetails = 
-                querySwapchainSupport(device, surface);
+                querySwapchainSupport(physicalDevice, surface);
 
         // We want to find three settings for our swapchain:
         // 1. We want to find the surface format (color depth).
@@ -203,7 +203,49 @@ namespace VulkanUtils {
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        return data;
+        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), 
+                indices.presentFamily.value()};
+        
+        if (indices.graphicsFamily != indices.presentFamily) {
+            // If the present and graphics families are not the same then we 
+            // specify that images can be owned by multiple queues at once.
+            swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            swapchainCreateInfo.queueFamilyIndexCount = 2;           
+            swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        } else {
+            // Specifies that an image can only be used by a single queue 
+            // family at any given moment in time.
+            swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            swapchainCreateInfo.queueFamilyIndexCount = 0;
+            swapchainCreateInfo.pQueueFamilyIndices = nullptr;
+        }
+
+        swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+        swapchainCreateInfo.presentMode = chosenPresentMode;
+
+        // With all the config done, we can finally make the swapchain.
+        VkSwapchainKHR swapchain;
+
+        if (vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, 
+                &swapchain) != VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+        VkImage swapchainImages[imageCount];
+
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, 
+                swapchainImages);
+
+        data.swapchain = swapchain;
+        data.imageCount = imageCount;
+        data.swapchainImages = swapchainImages;
+        data.swapchainFormat = chosenFormat.format;
+        data.swapchainExtent = chosenExtent;
+
+        return VK_SUCCESS;
 
     }
 
