@@ -93,7 +93,7 @@ namespace VulkanUtils {
         return indices;
     }
 
-    VkResult createSwapchain(SwapchainData& data,
+    VkResult createSwapchain(SwapchainData* data,
             VkPhysicalDevice physicalDevice,
             VkDevice device,
             VkSurfaceKHR surface, const uint32_t windowHeight, 
@@ -239,11 +239,11 @@ namespace VulkanUtils {
         vkGetSwapchainImagesKHR(device, swapchain, &imageCount, 
                 swapchainImages);
 
-        data.swapchain = swapchain;
-        data.imageCount = imageCount;
-        data.swapchainImages = swapchainImages;
-        data.swapchainFormat = chosenFormat.format;
-        data.swapchainExtent = chosenExtent;
+        data->swapchain = swapchain;
+        data->imageCount = imageCount;
+        data->swapchainImages = swapchainImages;
+        data->swapchainFormat = chosenFormat.format;
+        data->swapchainExtent = chosenExtent;
 
         return VK_SUCCESS;
 

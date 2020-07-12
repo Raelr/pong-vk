@@ -482,6 +482,16 @@ int main() {
 
     // --------------------- SWAP CHAIN CREATION ------------------------
 
+    VulkanUtils::SwapchainData data;
+
+    if (VulkanUtils::createSwapchain(&data, physicalDevice, device,
+            surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) 
+            != VK_SUCCESS){
+
+       PONG_FATAL_ERROR("Failed to create swapchain!"); 
+
+    }
+
     // Get the surface format for the swapchain:
     VulkanUtils::SwapchainSupportDetails swapChainDetails = VulkanUtils::querySwapchainSupport(physicalDevice, surface);
 

@@ -30,7 +30,12 @@ namespace VulkanUtils {
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
-    SwapchainData createSwapchain(VkPhysicalDevice device, VkSurfaceKHR surface);
+    VkResult createSwapchain(SwapchainData* data,
+            VkPhysicalDevice physicalDevice,
+            VkDevice device,
+            VkSurfaceKHR surface, const uint32_t windowHeight,
+            const uint32_t windowWidth,
+            QueueFamilyIndices indices);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
         surface);
