@@ -495,7 +495,14 @@ int main() {
     }
     
     // ------------------------ RENDER PASS -----------------------------
-    
+   
+    VulkanUtils::GraphicsPipelineData graphicsPipeline2;
+
+    if (VulkanUtils::createRenderPass(device, swapchain.swapchainFormat, 
+            &graphicsPipeline2) != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create render pass!");
+    }
+
     // In Vulkan, a render pass represents all information that our framebuffers. 
     // This is primarily done by specifying the framebuffer attachments. 
 

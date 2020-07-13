@@ -31,7 +31,7 @@ namespace VulkanUtils {
 
     struct GraphicsPipelineData {
         VkRenderPass renderPass;
-    }
+    };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
@@ -50,7 +50,7 @@ namespace VulkanUtils {
 
     VkResult createImageViews(VkDevice, SwapchainData*);
 
-    VkResult createRenderPass(VkDevice, GraphicsPipelineData*);
+    VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 }
 
 #endif
