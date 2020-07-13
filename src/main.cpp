@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
-#include <optional>
 #include "logger.h"
 #include <string>
 #include <set>

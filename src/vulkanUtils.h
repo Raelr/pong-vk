@@ -29,6 +29,10 @@ namespace VulkanUtils {
         std::optional<uint32_t> presentFamily;
     };
 
+    struct GraphicsPipelineData {
+        VkRenderPass renderPass;
+    }
+
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
@@ -45,6 +49,8 @@ namespace VulkanUtils {
     void destroySwapchainImageData(SwapchainData);
 
     VkResult createImageViews(VkDevice, SwapchainData*);
+
+    VkResult createRenderPass(VkDevice, GraphicsPipelineData*);
 }
 
 #endif
