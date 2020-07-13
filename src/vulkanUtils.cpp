@@ -307,38 +307,62 @@ namespace VulkanUtils {
     void destroySwapchainImageData(SwapchainData data) {
         delete [] data.pImages;
     }
-
+    
+    // Method to create renderpasses for our pipelines.
     VkResult createRenderPass(VkDevice device, VkFormat format, 
             GraphicsPipelineData* data) {
-        
+        // Struct or storing color and depth buffer information. 
         VkAttachmentDescription colorAttachment{};
         
         colorAttachment.format = format;
+        // Used for multisampling
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        // Determines what happens to attachment contents before rendering. 
+        // In our case we're going to clear the buffer before rendering.
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        // Determines what happens after rendering.
+        // In our case we store contents in memory.
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        // Defines how image if formatted in memory. 
+        // We leave it undefined in this case. 
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        // Defines the layout the image must be made into to be presentable for
+        // the swapchain. 
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        // define a reference to the color attachment above (for subpasses)
+        // Next we define a subpass - a series of subcommands which control
+        // how rendering occurs.
+
+        // Define a reference to the color attachment above (for subpasses)
         VkAttachmentReference colorAttachmentRef{};
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+        
+        // Now create the subpass:
         VkSubpassDescription subpass{};
-
+        
+        // Specify this subpass is used for graphics rendering
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        // Specify how many color attchments we have.
         subpass.colorAttachmentCount = 1;
+        // Pass a pointer to the attachments reference.
         subpass.pColorAttachments = &colorAttachmentRef;
 
+        // Now we define a dependency. This forces the subpass to wait until
+        // a stage of the pipeline is done before executing again. 
         VkSubpassDependency dependency{};
-
+        // Specifies the dependent subpass.
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        // The index of the subpass (we only have one)
         dependency.dstSubpass = 0;
+        // Specifies which operations to wait on. In our case it's the color
+        // attachment stage.
         dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.srcAccessMask = 0;
+        // Defines which stage to wait on. Ensures transitions only happen when 
+        // absolutely necessary.
         dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
@@ -348,18 +372,21 @@ namespace VulkanUtils {
         VkRenderPassCreateInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.attachmentCount = 1;
+        // Pass in the color attachment as an array
         renderPassInfo.pAttachments = &colorAttachment;
         renderPassInfo.subpassCount = 1;
+        // Pass in the subpass
         renderPassInfo.pSubpasses = &subpass;
         renderPassInfo.dependencyCount = 1;
+        // Pass in the dependency
         renderPassInfo.pDependencies = &dependency;
-
+        // Create the render pass
         if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) 
                 != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
-        
+        // Pass the render pass back to our storage struct.
         data->renderPass = renderPass;
         return VK_SUCCESS;
     }
