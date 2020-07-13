@@ -765,7 +765,7 @@ int main() {
     // Then we reference the layout struct. 
     pipelineInfo.layout = pipelineLayout;
     // Now we pass the renderPass into this.
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.renderPass = graphicsPipeline2.renderPass;
     // We reference the subpass by index. 
     pipelineInfo.subpass = 0;
     // This field allows us to specify a pipeline that this one can be pased off. 
@@ -834,7 +834,7 @@ int main() {
         // specify the renderpass - can only be done with a compatible render pass. 
         // This means that the number of attachments in the renderpass must be 
         // the same as the number of attachments in the framebuffer. 
-        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.renderPass = graphicsPipeline2.renderPass;
         // Now we specify the image views associated with this framebuffer.
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
@@ -951,7 +951,7 @@ int main() {
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         // Pass in our renderPass
-        renderPassInfo.renderPass = renderPass;
+        renderPassInfo.renderPass = graphicsPipeline2.renderPass;
         // Get the specific renderpass.
         renderPassInfo.framebuffer = swapChainFramebuffers[i];
         // These parameters define the size of the render area. Pixels outside 
@@ -1186,7 +1186,7 @@ int main() {
     // Clean up pipeline memory
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     // Destroy the render pass
-    vkDestroyRenderPass(device, renderPass, nullptr);
+    vkDestroyRenderPass(device, graphicsPipeline2.renderPass, nullptr);
     // Cleaning up memory
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
