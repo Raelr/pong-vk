@@ -3,8 +3,10 @@
 
 namespace VulkanUtils {
 
-    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device, 
-            VkSurfaceKHR surface){
+    SwapchainSupportDetails querySwapchainSupport(
+        VkPhysicalDevice device, 
+        VkSurfaceKHR surface
+    ) {
 
         // instantiate a struct to store swapchain details.
         SwapchainSupportDetails details;
@@ -42,10 +44,12 @@ namespace VulkanUtils {
 
     }
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, 
-            VkSurfaceKHR surface) {
-
-        // A struct for storing the index of the queue family that the device        will be using
+    QueueFamilyIndices findQueueFamilies(
+        VkPhysicalDevice device, 
+        VkSurfaceKHR surface
+    ) {
+        // A struct for storing the index of the queue family that the 
+        // device will be using
          QueueFamilyIndices indices;
     
          // Again, get the queue families that the device uses.
@@ -81,11 +85,12 @@ namespace VulkanUtils {
     }
 
     VkResult createSwapchain(SwapchainData* data,
-            VkPhysicalDevice physicalDevice,
-            VkDevice device,
-            VkSurfaceKHR surface, const uint32_t windowHeight, 
-            const uint32_t windowWidth,
-            QueueFamilyIndices indices) {
+        VkPhysicalDevice physicalDevice,
+        VkDevice device,
+        VkSurfaceKHR surface, const uint32_t windowHeight, 
+        const uint32_t windowWidth,
+        QueueFamilyIndices indices
+    ) {
 
         // Start by getting the supported formats for the swapchain
         SwapchainSupportDetails supportDetails = 
@@ -309,8 +314,11 @@ namespace VulkanUtils {
     }
     
     // Method to create renderpasses for our pipelines.
-    VkResult createRenderPass(VkDevice device, VkFormat format, 
-            GraphicsPipelineData* data) {
+    VkResult createRenderPass(
+        VkDevice device, 
+        VkFormat format, 
+        GraphicsPipelineData* data
+    ) {
         // Struct or storing color and depth buffer information. 
         VkAttachmentDescription colorAttachment{};
         
@@ -390,5 +398,82 @@ namespace VulkanUtils {
         data->renderPass = renderPass;
         return VK_SUCCESS;
     }
+
+    // Vulkan requires that you define your own graphics pipelines when you
+    // want to use different combinations of shaders. This is because the·
+    // graphics pipeline in Vulkan is almost completely immutable. This means
+    // that the pipeline can be very well optimised (but will also require
+    // a complete rewrite if you need anything different).
+    //
+    // In this case we'll set up a vertex and fragment shader so we can get
+    // a triangle showing on screen.
+
+    VkResult createGraphicsPipeline(
+        VkDevice device, 
+        GraphicsPipelineData* data
+    ) {
+        
+        // Load out vertex and fragment shaders in machine readable bytecode.
+        auto vert = readFile("src/shaders/vert.spv");
+        auto frag = readFile("src/shaders/frag.spv");
+
+        // Wrap the file contents in a shader module
+        VkShaderModule vertShaderModule = createShaderModule(vert, device);
+        VkShaderModule fragShaderModule = createShaderModule(frag, device);
+
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType 
+                = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        // This variable tells Vulkan to insert this into the vertex shader 
+        // stage
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        // Specify the shader module to be used.
+        vertShaderStageInfo.module = vertShaderModule;
+        // Specify the entrypoint to the shader (i.e: the main function)
+        vertShaderStageInfo.pName = "main";
+        // Frag shader create info:
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+        fragShaderStageInfo.sType 
+                = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        // This variable tells Vulkan to insert this into the fragment 
+        // shader stage
+        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        // Specify the shader module to be used.
+        fragShaderStageInfo.module = fragShaderModule;
+        // Specify the entrypoint to the shader (i.e: the main function)
+        fragShaderStageInfo.pName = "main";
+        // Store the stage information in an array for now - will be used 
+        // later.
+        VkPipelineShaderStageCreateInfo shaderStages[] = {
+            vertShaderStageInfo,
+            fragShaderStageInfo
+        };
+    }
+
+    // All shaders must be wrapped in a shader module. This is a helper 
+    // function for wrapping the shader.·
+    VkShaderModule createShaderModule(FileContents buffer, VkDevice &device) {
+        // As is usually the case, we pass the config information to an info 
+        // struct
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        // Add in the buffer size
+        createInfo.codeSize = buffer.fileSize;
+        // Add in the bytecode itself. The bytecode needs to be submitted in 
+        // bytes, so
+        // we need to cast this to a 32-bit unsigned integer to make this 
+        // work.
+        createInfo.pCode = 
+                reinterpret_cast<const uint32_t*>(buffer.p_byteCode);
+        // Create the shader
+        VkShaderModule shader;
+        if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) 
+                != VK_SUCCESS)        {
+            // TODO: Find a better method to propagate errors.
+            ERROR("Unsable to create shader module!\n");
+        }
+        // Return the shader
+        return shader;
+   }
 
 }

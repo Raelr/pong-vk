@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
+#include "utils.h"
 
 namespace VulkanUtils {
 
@@ -31,6 +32,7 @@ namespace VulkanUtils {
 
     struct GraphicsPipelineData {
         VkRenderPass renderPass;
+        VkPipeline graphicsPipeline;
     };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
@@ -51,6 +53,10 @@ namespace VulkanUtils {
     VkResult createImageViews(VkDevice, SwapchainData*);
 
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
+
+    VkResult createGraphicsPipeline(VkDevice, GraphicsPipelineData*);
+
+    VkShaderModule createShaderModule(FileContents buffer, VkDevice &device);
 }
 
 #endif
