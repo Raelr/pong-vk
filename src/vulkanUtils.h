@@ -54,9 +54,16 @@ namespace VulkanUtils {
 
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 
-    VkResult createGraphicsPipeline(VkDevice, GraphicsPipelineData*);
+    VkResult createGraphicsPipeline(
+        VkDevice, 
+        GraphicsPipelineData*, 
+        const SwapchainData*
+    );
 
-    VkShaderModule createShaderModule(FileContents buffer, VkDevice &device);
+    VkShaderModule createShaderModule(
+        FileContents buffer, 
+        VkDevice &device 
+    );
 }
 
 #endif

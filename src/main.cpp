@@ -115,27 +115,6 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance,
     }
 }
 
-// All shaders must be wrapped in a shader module. This is a helper function
-// for wrapping the shader. 
-VkShaderModule createShaderModule(FileContents buffer, VkDevice &device) {
-    // As is usually the case, we pass the config information to an info struct
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    // Add in the buffer size
-    createInfo.codeSize = buffer.fileSize;
-    // Add in the bytecode itself. The bytecode needs to be submitted in bytes, so
-    // we need to cast this to a 32-bit unsigned integer to make this work.
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.p_byteCode);
-    // Create the shader
-    VkShaderModule shader;
-    if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS) {
-        // TODO: Find a better method to propagate errors.
-        printf("Unsable to create shader module!\n");
-    }
-    // Return the shader
-    return shader;
-}
-
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
@@ -522,8 +501,10 @@ int main() {
     auto frag = readFile("src/shaders/frag.spv");
     
     // Wrap the file contents in a shadermodule.
-    VkShaderModule vertShaderModule = createShaderModule(vert, device);
-    VkShaderModule fragShaderModule = createShaderModule(frag, device);
+    VkShaderModule vertShaderModule = 
+            VulkanUtils::createShaderModule(vert, device);
+    VkShaderModule fragShaderModule = 
+            VulkanUtils::createShaderModule(frag, device);
     
     // Shaders need to be manually added to a stage in the rendering 
     // pipeline. This is generally achieved using a VkPipelineShaderStageCreateInfo
