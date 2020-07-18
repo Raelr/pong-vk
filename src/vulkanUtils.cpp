@@ -532,6 +532,7 @@ namespace VulkanUtils {
         // front-facing and which re back-facing. Can be clockwise or 
         // counter-clockwise.
         rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.depthBiasEnable = VK_FALSE;
 
         // We also need to specify a MultiSampling struct. Multisampling allows
         // us to create effects like anti-aliasing in our programs.
@@ -541,6 +542,91 @@ namespace VulkanUtils {
         // occurs along edges where we get the most artifacting.
         
         // Enabling multisampling requires a GPU feauture to be enabled.
+        // Multisampling will de disabled for now
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = 
+                VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+        // Next stage is to define color blending. Color beldning defines
+        // how what happens once the fragment shader returns a color. 
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        // Defines how th color will be formatted
+        colorBlendAttachment.colorWriteMask = 
+                VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT 
+                | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.blendEnable = VK_FALSE; 
+        // Now we need to actually build the createInfo struct.·
+        VkPipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.sType = 
+                VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        // Set this to VK_TRUE to enable bitwise blending.
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+
+        // With all those defined, we now need to build a pipeline layout
+        // struct. A pipeline layout struct details all the uniform values 
+        // within our shaders.
+
+        VkPipelineLayout pipelineLayout{};
+        // Then instantiate the createInfo struct for that object:
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+        pipelineLayoutCreateInfo.sType = 
+                VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutCreateInfo.setLayoutCount = 0;
+        pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+        pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+        // Now create the pipeline layout using the usual method:
+        if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, 
+                &pipelineLayout) != VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        // Now we can actually create the pipeline:
+        VkGraphicsPipelineCreateInfo pipelineInfo{};
+        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        // Now we input all the structs that we defined previously into this 
+        // one:
+        pipelineInfo.stageCount = 2;
+        pipelineInfo.pStages = shaderStages;
+        pipelineInfo.pVertexInputState = &vertexInputInfo;
+        pipelineInfo.pInputAssemblyState = &inputAssembly;
+        pipelineInfo.pViewportState = &viewportState;
+        pipelineInfo.pRasterizationState = &rasterizer;
+        pipelineInfo.pMultisampleState = &multisampling;
+        pipelineInfo.pDepthStencilState = nullptr;
+        pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.pDynamicState = nullptr;
+        // Then we reference the layout struct.·
+        pipelineInfo.layout = pipelineLayout;
+        // Now we pass the renderPass into this.
+        pipelineInfo.renderPass = data->renderPass;
+        // We reference the subpass by index.·
+        pipelineInfo.subpass = 0;
+        
+        // Finally, we can create our pipeline
+        VkPipeline graphicsPipeline;
+
+        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo,
+                nullptr, &graphicsPipeline) != VK_SUCCESS) {
+                return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        // Delete the shader modules (doesn't need to happen during device 
+        // cleanup phase)
+        vkDestroyShaderModule(device, vertShaderModule, nullptr);
+        vkDestroyShaderModule(device, fragShaderModule, nullptr);
+        
+        // Delete the pointers to the bytecode
+        delete [] vert.p_byteCode;
+        delete [] frag.p_byteCode;
+
+        data->graphicsPipeline = graphicsPipeline;
+        data->pipelineLayout = pipelineLayout;
 
         return VK_SUCCESS;
     }

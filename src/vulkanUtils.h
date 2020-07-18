@@ -33,6 +33,7 @@ namespace VulkanUtils {
     struct GraphicsPipelineData {
         VkRenderPass renderPass;
         VkPipeline graphicsPipeline;
+        VkPipelineLayout pipelineLayout;
     };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,

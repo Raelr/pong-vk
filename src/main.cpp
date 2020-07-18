@@ -475,12 +475,12 @@ int main() {
     
     // ------------------------ RENDER PASS -----------------------------
    
-    VulkanUtils::GraphicsPipelineData graphicsPipeline2;
+    VulkanUtils::GraphicsPipelineData graphicsPipeline;
     
     // In Vulkan, a render pass represents all information that our 
     // framebuffers will need to process our images.
     if (VulkanUtils::createRenderPass(device, swapchain.swapchainFormat, 
-            &graphicsPipeline2) != VK_SUCCESS) {
+            &graphicsPipeline) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create render pass!");
     }
 
@@ -491,302 +491,12 @@ int main() {
     // graphics pipeline in Vulkan is almost completely immutable. This means
     // that the pipeline can be very well optimised (but will also require
     // a complete rewrite if you need anything different).
-    //
-    // In this case we'll set up a vertex and fragment shader so we can get
-    // a triangle showing on screen.
     
-    // To begin, lets load in our vertex and fragment shaders (in 
-    // machine-readable bytecode)
-    auto vert = readFile("src/shaders/vert.spv");
-    auto frag = readFile("src/shaders/frag.spv");
-    
-    // Wrap the file contents in a shadermodule.
-    VkShaderModule vertShaderModule = 
-            VulkanUtils::createShaderModule(vert, device);
-    VkShaderModule fragShaderModule = 
-            VulkanUtils::createShaderModule(frag, device);
-    
-    // Shaders need to be manually added to a stage in the rendering 
-    // pipeline. This is generally achieved using a VkPipelineShaderStageCreateInfo
-    // struct.
-    
-
-    // TODO: Find a way to do this via a single function call?
-    // Vertex shader create info:
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    // This variable tells Vulkan to insert this into the vertex shader stage
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    // Specify the shader module to be used.
-    vertShaderStageInfo.module = vertShaderModule;
-    // Specify the entrypoint to the shader (i.e: the main function)
-    vertShaderStageInfo.pName = "main";
-    
-    // Frag shader create info:
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    // This variable tells Vulkan to insert this into the fragment shader stage
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    // Specify the shader module to be used.
-    fragShaderStageInfo.module = fragShaderModule;
-    // Specify the entrypoint to the shader (i.e: the main function)
-    fragShaderStageInfo.pName = "main";
-
-    // Store the stage information in an array for now - will be used later.
-    VkPipelineShaderStageCreateInfo shaderStages[] = {
-        vertShaderStageInfo,
-        fragShaderStageInfo
-    };
-    
-    // ------------------------ PIPELINE STRUCTS ----------------------------
-    
-    // Create a struct for detailing how vertex data will be formatted in the
-    // vertex shader.
-
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    // Describes details for loading vertex data.
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    // Describes details for loading vertex data.
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-
-    // Now define the input assembly. This defines the kind of geometry drawn
-    // from the vertices and if primitive restart is enabled. 
-    // Geometry (specified by the topology) member has the options:
-    // VK_PRIMITIVE_TOPOLOGY_POINT_LIST - builds geometry from points of vertices. 
-    // VK_PRIMITIVE_TOPOLOGY_LINE_LIST - line from every 2 vertices without reuse.
-    // VK_PRIMITIVE_TOPOLOGY_LINE_STRIP - The end of every vertex line is used as
-    //                                    the start vertex of the next line
-    // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST - Create a triangle from every 3 vertices
-    //                                      without reuse.
-    // VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP - the 2nd and 3rd vertex of every
-    //                                        triangle are used as the first two
-    //                                        vertices of the next.
-
-    // For us, we'll use the TRIANGLE_LIST option to help us draw a triangle:
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-    // Now, we need to create a viewport. A viewport defines the region of the 
-    // framebuffer that the output will be rendered to. In this case the viewport
-    // will range between (0,0) and (width, height):
-    
-    VkViewport viewPort{};
-    viewPort.x = 0.0f;
-    viewPort.y = 0.0f;
-    viewPort.width = (float) swapchain.swapchainExtent.width;
-    viewPort.height = (float) swapchain.swapchainExtent.height;
-    viewPort.minDepth = 0.0f;
-    viewPort.maxDepth = 1.0f;
-
-    // Now we need to define scissors. Scissors define which regions the pixels
-    // will actually be stored. These regions are generally specified as 
-    // rectangles where anything in the rectangle is rendered whilst anything 
-    // outside the window is discarded. 
-
-    // In this case, we'll just draw it over the entire screen.
-    VkRect2D scissor{};
-    scissor.offset = {0,0};
-    scissor.extent = swapchain.swapchainExtent;
-
-    // Now, the scissor and Viewport need to be combined into a single struct.
-    // This struct is known as a ViewportState: 
-    
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    // This takes in an array of viewports. Some GPUs allow multiple viewports
-    // to be specified, but this must be enabled as a device feature (in logical
-    // device section)
-    viewportState.pViewports = &viewPort;
-    viewportState.scissorCount = 1;
-    // Same as with viewports - this takes in an array of scissors. 
-    viewportState.pScissors = &scissor;
-
-    // Now that we have a viewport, we can start building out the rasterizer. 
-    // The rasterizer takes in the geometry shaped by the shader's vertices 
-    // and turns them into fragments. These fragments are then colored by the 
-    // fragment shader. 
-    // The rasterizer also performs face culling and depth testing. 
-    
-    VkPipelineRasterizationStateCreateInfo rasterizer{};
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    // This means that fragments below the near/far plane are clamped to the planes
-    // as opposed to discarding them. This requires a GPU feature in order for it
-    // to work. 
-    rasterizer.depthClampEnable = VK_FALSE;
-    // Checks if geometry should pass through the rasterizer stage. We only skip
-    // the stage if this is set to VK_TRUE.
-    rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    // Determines how fragments are generated for geometry. 
-    // VK_POLYGON_MODE_FILL - fill the area of the polygon with fragments.
-    // VK_POLYGON_MODE_LINE - Polygon edges are drawn as lines.
-    // VK_POLYGON_MODE_POINT - Polygon vertices are drawn as points.
-    //
-    // NOTE: The use of anything other than FILL requires a GPU feature to be
-    // enabled. 
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    // Describes the thickness of lines. Any lines thicker than 1.0f requires 
-    // a GPU feature to be enabled. 
-    rasterizer.lineWidth = 1.0f;
-    // Determines the type of face-culling to use.
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    // Determines the vertex order for faces. Determines which are front-facing 
-    // and which re back-facing. Can be clockwise or counter-clockwise. 
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    // Alters the depth values by adding a constant value or biasing depth 
-    // values. Can be useful for shadow mapping. 
-    rasterizer.depthBiasEnable = VK_FALSE;
-    rasterizer.depthBiasConstantFactor = 0.0f;  // optional
-    rasterizer.depthBiasClamp = 0.0f;           // optional
-    rasterizer.depthBiasSlopeFactor = 0.0f;     // optional
-
-    // We also need to specify a MultiSampling struct. Multisampling allows us
-    // to create effects like anti-aliasing in our programs. 
-    //
-    // Multisampling works by combining the fragment shader results into of
-    // multiple polygons and rasterize them to the same pixel. This usually 
-    // occurs along edges where we get the most artifacting.
-    
-    // Enabling multisampling requires a GPU feauture to be enabled. 
-    // For now we'll disable multi-sampling and revisit it at a later stage. 
-    VkPipelineMultisampleStateCreateInfo multisampling{};
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO; 
-    multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    multisampling.minSampleShading = 1.0f;          // optional
-    multisampling.pSampleMask = nullptr;            // optional
-    multisampling.alphaToCoverageEnable = VK_FALSE; // optional
-    multisampling.alphaToOneEnable = VK_FALSE;      // optional
-
-    // The next stage is to define how color blending works. The color blending 
-    // stage happens once a fragment shader returns a color. This color is then
-    // combined with a color that's already in the frame-buffer. 
-    
-    // Color blending can happen in one of two ways:
-    // 1) Mix the old and new values to produce a final color. 
-    // 2) Use a bitwise operation to combine the old and new colors. 
-
-    // First, we need to create a BlendAttachmentState struct. This struct 
-    // contains configuration per attached framebuffer:
-    
-    // We'll follow the first method of color blending:
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | 
-        VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;   
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;     // optional
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;    // optional
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;                // optional
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;     // optional
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;    // optional
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;                // optional
-
-    // Now we need to actually build the createInfo struct. 
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    // Set this to VK_TRUE to enable bitwise blending.
-    colorBlending.logicOpEnable = VK_FALSE;
-    // This is where the bitwise combination is set (if logicOpEnable is set to true)
-    colorBlending.logicOp = VK_LOGIC_OP_COPY;           // optional
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f;             // optional
-    colorBlending.blendConstants[1] = 0.0f;             // optional
-    colorBlending.blendConstants[2] = 0.0f;             // optional
-    colorBlending.blendConstants[3] = 0.0f;             // optional
-
-    // At this point it is possible to create a VkDynamicState struct. This will 
-    // allow certain data to be modified without requiring the pipeline to be remade. 
-    // We won't implement this now, but we might do so at a later stage. 
-    
-    // PLACEHOLDER: VkDynamicState state;
-   
-    // The next (and final) struct we need for now is to create a PipelineLayout
-    // struct. The PipelineLayout struct details all the uniform values within
-    // our shaders. This is required to be specified at the time of creation of
-    // the pipeline.
-    
-    // First create an empty pipeline layout struct. 
-    VkPipelineLayout pipelineLayout{};
-
-    // Then instantiate the createInfo struct for that object:
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-    pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutCreateInfo.setLayoutCount = 0;
-    pipelineLayoutCreateInfo.pSetLayouts = nullptr;
-    pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-    pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-
-    // Now create the pipeline layout using the usual method:
-    if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) 
-            != VK_SUCCESS) {
-    
-        PONG_FATAL_ERROR("Failed to create pipeline layout");
-    }
-
-    // Finally, we can no create out graphics pipeline:
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    // Now we input all the structs that we defined previously into this one:
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState; 
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = nullptr;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = nullptr;
-    // Then we reference the layout struct. 
-    pipelineInfo.layout = pipelineLayout;
-    // Now we pass the renderPass into this.
-    pipelineInfo.renderPass = graphicsPipeline2.renderPass;
-    // We reference the subpass by index. 
-    pipelineInfo.subpass = 0;
-    // This field allows us to specify a pipeline that this one can be pased off. 
-    // Since we need to re-create a pipeline whenever a property changes, Vulkan
-    // allows us to specify an existing pipeline to act as a base for this one. 
-    
-    // In our case we'll provide no base pipeline since we're not going to be
-    // changing the pipeline much.
-    
-    // NOTE: These fields are only used if we've specified VK_PIPELINE_CREATE_DERIVATIVE_BIT
-    // as a flag to the struct. 
-
-    // You can reference it with either a handle of an existing pipeline.
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;   // optional
-    // Or you can reference that pipeline by index. 
-    pipelineInfo.basePipelineIndex = -1;                // optional
-
-    // Now we can create a pipeline!
-    VkPipeline graphicsPipeline;
-
-    // Create the graphics pipeline.
-    // This function is designed to take in multiple pipelineCreateInfos
-    // and create multiple pipelines with them. 
-    // This function alos allows us to pass in a VkPipelineCache, which is
-    // used to store and reuse data relevant to pipeline creation. 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, 
-            nullptr, &graphicsPipeline) 
-            != VK_SUCCESS) {
+    if (VulkanUtils::createGraphicsPipeline(device, &graphicsPipeline, 
+            &swapchain) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
-    }
 
-    // Delete the shader modules (doesn't need to happen during device cleanup
-    // phase)
-    vkDestroyShaderModule(device, vertShaderModule, nullptr); 
-    vkDestroyShaderModule(device, fragShaderModule, nullptr);
-    
-    // Delete the vertex and frag shaders (at least for now)
-    // TODO: move this into it's own method
-    delete [] vert.p_byteCode;
-    delete [] frag.p_byteCode;
+    }
 
     // --------------------- FRAMEBUFFER SETUP --------------------------
     
@@ -815,7 +525,7 @@ int main() {
         // specify the renderpass - can only be done with a compatible render pass. 
         // This means that the number of attachments in the renderpass must be 
         // the same as the number of attachments in the framebuffer. 
-        framebufferInfo.renderPass = graphicsPipeline2.renderPass;
+        framebufferInfo.renderPass = graphicsPipeline.renderPass;
         // Now we specify the image views associated with this framebuffer.
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
@@ -932,7 +642,7 @@ int main() {
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         // Pass in our renderPass
-        renderPassInfo.renderPass = graphicsPipeline2.renderPass;
+        renderPassInfo.renderPass = graphicsPipeline.renderPass;
         // Get the specific renderpass.
         renderPassInfo.framebuffer = swapChainFramebuffers[i];
         // These parameters define the size of the render area. Pixels outside 
@@ -960,7 +670,7 @@ int main() {
         // Once the render pass has started, we can now attach the graphics pipeline. The second 
         // parameter of this function call specifies whether this pipeline object is a graphics 
         // or compute pipeline. 
-        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
 
         // Now we can tell Vulkan to draw our triangle. This function has the parameters:
         // 1. the command buffer.
@@ -1163,11 +873,11 @@ int main() {
     }
 
     // Destroy the graphics pipeline  
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipeline(device, graphicsPipeline.graphicsPipeline, nullptr);
     // Clean up pipeline memory
-    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    vkDestroyPipelineLayout(device, graphicsPipeline.pipelineLayout, nullptr);
     // Destroy the render pass
-    vkDestroyRenderPass(device, graphicsPipeline2.renderPass, nullptr);
+    vkDestroyRenderPass(device, graphicsPipeline.renderPass, nullptr);
     // Cleaning up memory
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
