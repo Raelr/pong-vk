@@ -72,6 +72,15 @@ namespace VulkanUtils {
         SwapchainData* swapchain, 
         GraphicsPipelineData* graphicsPipeline
     );
+
+    VkResult createCommandBuffers(
+        VkDevice device,
+        VkCommandBuffer* buffers,
+        GraphicsPipelineData* pGraphicsPipeline,
+        SwapchainData* pSwapchain,
+        VkFramebuffer* pFramebuffers,
+        VkCommandPool commandPool
+    );
 }
 
 #endif

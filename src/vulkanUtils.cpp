@@ -670,9 +670,88 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
-    VkResult createCommandbuffers(VkDevice device, VkCommandBuffer* buffers, 
+    VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
             GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
-            VkFramebuffer* pFramebuffers) {
+            VkFramebuffer* pFramebuffers, VkCommandPool commandPool) {
+        
+        // We alocate command buffers by using a CommandBufferAllocationInfo struct.
+        // // This struct specifies a command pool, as well as the number of buffers to
+        // allocate.·
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = commandPool;
+        // Specifies that these buffers can be submitted to a queue for 
+        // execution, but can't be called by other command buffers.
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = pSwapchain->imageCount;
+  
+        // Now we can start allocating our command buffers!
+        if (vkAllocateCommandBuffers(device, &allocInfo, buffers) 
+                != VK_SUCCESS) {
+           
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        // Now we need to start recording the command buffer. Recording a 
+        // command buffer entails taking the draw commands and recording the 
+        // same set of commands into them.
+
+        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO; 
+  
+           if (vkBeginCommandBuffer(buffers[i], &beginInfo) != VK_SUCCESS) {
+               return VK_ERROR_INITIALIZATION_FAILED;
+           }
+   
+           // Now we can start setting up our render pass. Render passes are 
+           // configured using a RenderPassBeginInfo struct:
+  
+           VkRenderPassBeginInfo renderPassInfo{};
+           renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+           // Pass in our renderPass
+           renderPassInfo.renderPass = pGraphicsPipeline->renderPass;
+           // Get the specific renderpass.
+           renderPassInfo.framebuffer = pFramebuffers[i];
+           // These parameters define the size of the render area. Pixels 
+           // outside the specified regions will have undefined values. For 
+           // best performance, the render extent should match the size of the 
+           // attachments.
+           renderPassInfo.renderArea.offset = {0,0};
+           renderPassInfo.renderArea.extent = pSwapchain->swapchainExtent;
+           // Now we can define a clear color. This color is used as a load 
+           // operation for the color attachment. In our case we're setting it 
+           // to black.
+           VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+           renderPassInfo.clearValueCount = 1;
+           renderPassInfo.pClearValues = &clearColor;
+ 
+           // Specify that render pass commands will be embedded in the primary 
+           // command buffer. No secondary command buffers wll be executed.
+           vkCmdBeginRenderPass(buffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+  
+           // Once the render pass has started, we can now attach the graphics pipeline. The second·
+           // parameter of this function call specifies whether this pipeline object is a graphics·
+           // or compute pipeline.
+           vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
+  
+           // Now we can tell Vulkan to draw our triangle. This function has the parameters:
+           // 1. the command buffer.
+           // 2. The number of vertices - We can do this even without a vertex buffer.
+           // 3. instanceCount - used for instanced rendering, can use 1 if you aren't using that.
+           // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value·
+           // of gl_vertexIndex.
+           // 5. firstInstance - Used as an offset for instanced rendering.
+           vkCmdDraw(buffers[i], 3, 1, 0, 0);
+  
+           // Now we can end the render pass:
+           vkCmdEndRenderPass(buffers[i]);
+  
+           //  Now we can end the command buffer recording
+           if (vkEndCommandBuffer(buffers[i]) != VK_SUCCESS) {
+               return VK_ERROR_INITIALIZATION_FAILED;
+           }
+        }
 
         return VK_SUCCESS;
     }

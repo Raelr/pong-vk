@@ -563,106 +563,11 @@ int main() {
     // It should be noted that command buffers are automatically cleaned up when
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
-    // We alocate command buffers by using a CommandBufferAllocationInfo struct.
-    // This struct specifies a command pool, as well as the number of buffers to
-    // allocate. 
-    
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    // Specifies if the command buffers are primary or secondary:
-    // VK_COMMAND_BUFFER_LEVEL_PRIMARY - Can be submitted to a queue for execution,
-    // but can't be called from other command buffers.
-    // VK_COMMAND_BUFFER_LEVEL_SECONDARY - cannot be submitted directly, but can 
-    // be called from other command buffers. 
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = swapchain.imageCount;
+    if (VulkanUtils::createCommandBuffers(device, commandBuffers.data(), 
+            &graphicsPipeline, &swapchain, swapchainFramebuffers.data(), 
+            commandPool) != VK_SUCCESS) {
 
-    // Now we can start allocating our command buffers!
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-        PONG_FATAL_ERROR("Failed to allocate command buffers!");
     }
-
-    // Now we need to start recording the command buffer. Recording a framebuffer
-    // entails taking the draw commands and recording the same set of commands into
-    // them. 
-
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        // This parameter specifies how the command buffer will be used. This can
-        // be:
-        // 1. VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT - The buffer will be
-        // re-recorded after executing it once.
-        // 2. VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT - This is a secondary 
-        // command buffer that will be entirely within a single render pass. 
-        // 3. VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT - the buffer can be 
-        // re-submitted while its pending execution. 
-
-        // None of these flags are applicable to us so we'll set this to 0. 
-        beginInfo.flags = 0; // optional
-        // This is only applicable to secondary command buffers. It specifies 
-        // which state to inherit from the primary command buffers.
-        beginInfo.pInheritanceInfo = nullptr; // optional
-
-        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-            PONG_FATAL_ERROR("Failed to begin recording command buffer!");
-        }
-        
-        // Now we can start setting up our render pass. Render passes are configured
-        // using a RenderPassBeginInfo struct:
-
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        // Pass in our renderPass
-        renderPassInfo.renderPass = graphicsPipeline.renderPass;
-        // Get the specific renderpass.
-        renderPassInfo.framebuffer = swapchainFramebuffers[i];
-        // These parameters define the size of the render area. Pixels outside 
-        // the specified regions will have undefined values. For best performance, 
-        // the render extent should match the size of the attachments.
-        renderPassInfo.renderArea.offset = {0,0};
-        renderPassInfo.renderArea.extent = swapchain.swapchainExtent;
-        // Now we can define a clear color. This color is used as a load operation
-        // for the color attachment. In our case we're setting it to black.
-        VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
-        
-        // Now we can finally start the render pass! We pass in the specified command buffer,
-        // the render pass info, and an enum which controls how the drawing commands will
-        // be provided. It can be one of the following:
-        // 1. VK_SUBPASS_CONTENTS_INLINE - Render pass commands will be embedded in the primary
-        // command buffer. No secondary command buffers will be executed. 
-        // 2. VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS - the render pass will be exectuted
-        // from the secondary command buffers. 
-
-        // Since we're not using secondary buffers we'll just stick to the first option.
-        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        // Once the render pass has started, we can now attach the graphics pipeline. The second 
-        // parameter of this function call specifies whether this pipeline object is a graphics 
-        // or compute pipeline. 
-        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline.graphicsPipeline);
-
-        // Now we can tell Vulkan to draw our triangle. This function has the parameters:
-        // 1. the command buffer.
-        // 2. The number of vertices - We can do this even without a vertex buffer.
-        // 3. instanceCount - used for instanced rendering, can use 1 if you aren't using that.
-        // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value 
-        // of gl_vertexIndex.
-        // 5. firstInstance - Used as an offset for instanced rendering.
-        vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-
-        // Now we can end the render pass:
-        vkCmdEndRenderPass(commandBuffers[i]);
-
-        //  Now we can end the command buffer recording
-        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-            PONG_FATAL_ERROR("Failed to record command buffer!");
-        }
-    }
-
     // --------------------- SYNC OBJECT CREATION -------------------------
     
     // In Vulkan, drawing every frame can be done in a few simple function 
