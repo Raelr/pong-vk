@@ -143,19 +143,19 @@ int main() {
     // Get the number of layers available for vulkan.
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-    VkLayerProperties layerProps[layerCount];
+    std::vector<VkLayerProperties> layerProperties(layerCount);
 
     if (enableValidationLayers) {
         
         // Get the layer names themselves USING the count variable.
-        vkEnumerateInstanceLayerProperties(&layerCount, layerProps);
+        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
 
         uint8_t foundCount = 0;
 
         // Search to see whether the validation layers requested are supported by Vulkan.
         for (size_t i = 0; i < validationLayersCount; i++) {
-            for (size_t j = 0; j < layerCount; j++) {
-                if (strcmp(validationLayers[i], layerProps[j].layerName) == 0) {
+            for (auto& layer : layerProperties) {
+                if (strcmp(validationLayers[i], layer.layerName) == 0) {
                     foundCount++;
                 }
             }
@@ -196,19 +196,20 @@ int main() {
     // This instance of the method will return the number of supported extensions. 
     vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, nullptr);
 
-    VkExtensionProperties vkExtensions[vulkanExtensionCount];
+    std::vector<VkExtensionProperties> vkExtensions(vulkanExtensionCount);
 
     // This instance of the method will return the exact extensions supported
-    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions);
+    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions.data());
 
     // Print out and display all extensions.
     INFO("Checking Extensions: ");
 
     std::string extensionStr = "\n";
-    for (size_t i = 0; i < vulkanExtensionCount; i++) {
-        std::string str = vkExtensions[i].extensionName;
+    for (auto& extension : vkExtensions) {
+        std::string str = extension.extensionName;
         extensionStr += '\t' + str + '\n';
     }
+
     INFO(extensionStr);
 
     // Now we need to get the extensions required by GLFW in order for it to work with Vulkan.
@@ -236,7 +237,6 @@ int main() {
     }
 
     // A combined vector for all extensions.
-    // TODO: Maybe find an alternative to the vector class? Not a priority at the moment.
     std::vector<const char*> extensions(glfwExtensions + 0, glfwExtensions + glfwExtensionCount);
 
     if (enableValidationLayers) {
@@ -322,14 +322,13 @@ int main() {
     }
 
     // Get the actual device details.
-    VkPhysicalDevice devices[deviceCount];
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     // Now we need to actually find a device to use. This can be done using a number of
     // methods. One such method is to assign a rating to each GPU and pick the best rated one. 
     // In this case, since this is a tutorial, we'll just take the first GPU we find. 
-    for (size_t i = 0; i < deviceCount; i++) {
-        VkPhysicalDevice device = devices[i];
+    for (auto& device: devices) {
 
         // Now we need to actually find the exact queue families that this device uses. 
         // In Vulkan, all commands are executed in a queue of similar types. 
@@ -345,16 +344,16 @@ int main() {
         uint32_t extensionCount = 0;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
-        VkExtensionProperties availableExtensions[extensionCount];
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions);
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
         // Store the unique extensions in a set so we can quickly remove duplicates.
         std::set<std::string> requiredExtensions(deviceExtensions+0, deviceExtensions+deviceExtensionsCount);
 
-        for (size_t i = 0; i < extensionCount; i++) {
+        for (auto& extension : availableExtensions) {
             // If all required extensions are available from our GPU then we know we have full 
             // Vulkan support!
-            requiredExtensions.erase(availableExtensions[i].extensionName);
+            requiredExtensions.erase(extension.extensionName);
         }
 
         bool extensionsSupported = requiredExtensions.empty();
@@ -407,7 +406,6 @@ int main() {
     VulkanUtils::QueueFamilyIndices indices = 
             VulkanUtils::findQueueFamilies(physicalDevice, surface);
 
-    // TODO: There's probably a way to do this with an array rather than a vector + set.
     std::vector<VkDeviceQueueCreateInfo> createInfos;
     // Create a set so we can store queue families by their unique index (stops us from 
     // using the same index twice.)
@@ -469,8 +467,7 @@ int main() {
     if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
             surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) != VK_SUCCESS) {
 
-       PONG_FATAL_ERROR("Failed to create swapchain!"); 
-
+       PONG_FATAL_ERROR("Failed to create swapchain!");
     }
     
     // ------------------------ RENDER PASS -----------------------------
@@ -507,41 +504,16 @@ int main() {
     // We use a VkFramebuffer object to store the attachments which were specified
     // during the render pass. A framebuffer references all the image views that
     // represent these attachments. In our case, we only have one to reference, 
-    // namely the color attachment. 
-
+    // namely the color attachment.
+    
     // First, we create an array to hold our framebuffers. 
-    VkFramebuffer swapChainFramebuffers[swapchain.imageCount];
+    std::vector<VkFramebuffer> swapchainFramebuffers(swapchain.imageCount);
 
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
-        
-        // Get the image stored previously by our swapchain
-        VkImageView attachments[] = {
-            swapchain.pImageViews[i]
-        };
-        
-        // Create a new framebuffer which uses our renderpass and image.
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        // specify the renderpass - can only be done with a compatible render pass. 
-        // This means that the number of attachments in the renderpass must be 
-        // the same as the number of attachments in the framebuffer. 
-        framebufferInfo.renderPass = graphicsPipeline.renderPass;
-        // Now we specify the image views associated with this framebuffer.
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = swapchain.swapchainExtent.width;
-        framebufferInfo.height = swapchain.swapchainExtent.height;
-        // Refers the the number of layers in image arrays. 
-        framebufferInfo.layers = 1;
-        
-        // Create the framebuffer itself
-        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) 
-                != VK_SUCCESS) {
-
-            PONG_FATAL_ERROR("Failed to create framebuffer!");
-        }
+    if (VulkanUtils::createFramebuffer(device, swapchainFramebuffers.data(),
+            &swapchain, &graphicsPipeline) != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create framebuffers!");
     }
- 
+
     // ------------------- COMMAND POOL CREATION ------------------------
 
     // In vulkan, all steps and operations that happen are not handled via
@@ -644,7 +616,7 @@ int main() {
         // Pass in our renderPass
         renderPassInfo.renderPass = graphicsPipeline.renderPass;
         // Get the specific renderpass.
-        renderPassInfo.framebuffer = swapChainFramebuffers[i];
+        renderPassInfo.framebuffer = swapchainFramebuffers[i];
         // These parameters define the size of the render area. Pixels outside 
         // the specified regions will have undefined values. For best performance, 
         // the render extent should match the size of the attachments.
@@ -869,7 +841,7 @@ int main() {
     vkDestroyCommandPool(device, commandPool, nullptr);
 
     for (size_t i = 0; i < swapchain.imageCount; i++) {
-        vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+        vkDestroyFramebuffer(device, swapchainFramebuffers[i], nullptr);
     }
 
     // Destroy the graphics pipeline  

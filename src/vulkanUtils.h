@@ -65,6 +65,13 @@ namespace VulkanUtils {
         FileContents buffer, 
         VkDevice &device 
     );
+
+    VkResult createFramebuffer(
+        VkDevice device, 
+        VkFramebuffer* pFramebuffers,
+        SwapchainData* swapchain, 
+        GraphicsPipelineData* graphicsPipeline
+    );
 }
 
 #endif

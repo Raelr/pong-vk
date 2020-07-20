@@ -21,7 +21,7 @@ project "Pong"
      }
 
      includedirs { 
-          "$(VULKAN_SDK)/include",
+          os.getenv("VULKAN_SDK") .. "/include",
           "vendor/glm",
           "vendor/GLFW/glfw/include",
           "vendor/spdlog/include"

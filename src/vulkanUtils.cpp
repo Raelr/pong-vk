@@ -58,7 +58,7 @@ namespace VulkanUtils {
          vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, 
                 nullptr);
          
-         VkQueueFamilyProperties queueFamilies[queueFamilyCount];
+         VkQueueFamilyProperties* queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
     
          vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, 
                 queueFamilies);
@@ -80,6 +80,8 @@ namespace VulkanUtils {
                  indices.presentFamily = i;
             }
         }
+
+        delete [] queueFamilies;
    
         return indices;
     }
@@ -631,6 +633,43 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
+    VkResult createFramebuffer(VkDevice device, VkFramebuffer* pFramebuffers,
+            SwapchainData* swapchain, GraphicsPipelineData* graphicsPipeline) {
+    
+        for (size_t i = 0; i < swapchain->imageCount; i++) {
+
+            // Get the image stored previously by our swapchain
+            VkImageView attachments[] = {
+                swapchain->pImageViews[i]
+            };
+
+            // Create a new framebuffer which uses our renderpass and image.
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            // specify the renderpass - can only be done with a compatible 
+            // render pass. This means that the number of attachments in the 
+            // renderpass must be the same as the number of attachments in the 
+            // framebuffer.
+            framebufferInfo.renderPass = graphicsPipeline->renderPass;
+            // Now we specify the image views associated with this framebuffer.
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.width = swapchain->swapchainExtent.width;
+            framebufferInfo.height = swapchain->swapchainExtent.height;
+            // Refers the the number of layers in image arrays.·
+            framebufferInfo.layers = 1;
+
+            // Create the framebuffer itself
+            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, 
+                    &pFramebuffers[i]) != VK_SUCCESS) {
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+
+        }
+
+        return VK_SUCCESS;
+    }
+
     // All shaders must be wrapped in a shader module. This is a helper 
     // function for wrapping the shader.·
     VkShaderModule createShaderModule(FileContents buffer, VkDevice &device) {
@@ -656,5 +695,4 @@ namespace VulkanUtils {
         // Return the shader
         return shader;
    }
-
 }
