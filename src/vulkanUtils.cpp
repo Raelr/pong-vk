@@ -670,6 +670,13 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
+    VkResult createCommandbuffers(VkDevice device, VkCommandBuffer* buffers, 
+            GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
+            VkFramebuffer* pFramebuffers) {
+
+        return VK_SUCCESS;
+    }
+
     // All shaders must be wrapped in a shader module. This is a helper 
     // function for wrapping the shader.·
     VkShaderModule createShaderModule(FileContents buffer, VkDevice &device) {

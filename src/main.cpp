@@ -546,23 +546,24 @@ int main() {
     poolInfo.flags = 0; // optional
     
     // Create the command pool
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) 
+            != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create command pool!");
     }
 
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
     // With the command pool created, we can now start creating and allocating
-    // command buffers. Because these commands involve allocating a frambuffer,
+    // command buffers. Because these commands involve allocating a framebuffer,
     // we'll need to record a command buffer for every image in the swap chain.
     
     // Make this the same size as our images. 
-    VkCommandBuffer commandBuffers[swapchain.imageCount];
+    std::vector<VkCommandBuffer> commandBuffers(swapchain.imageCount);
 
-    // It should be notes that command buffers are automatically cleaned up when
-    // the commandpool is destroyed. As such they require no explicit cleanup. 
+    // It should be noted that command buffers are automatically cleaned up when
+    // the commandpool is destroyed. As such they require no explicit cleanup.
 
-    // We alocate command buffers by using a CommandBufferAllocationInfo struct. 
+    // We alocate command buffers by using a CommandBufferAllocationInfo struct.
     // This struct specifies a command pool, as well as the number of buffers to
     // allocate. 
     
@@ -578,7 +579,7 @@ int main() {
     allocInfo.commandBufferCount = swapchain.imageCount;
 
     // Now we can start allocating our command buffers!
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to allocate command buffers!");
     }
 
