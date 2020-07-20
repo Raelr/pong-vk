@@ -3,6 +3,7 @@
 
 namespace VulkanUtils {
 
+    // Returns swapchain information supported by Vulkan.
     SwapchainSupportDetails querySwapchainSupport(
         VkPhysicalDevice device, 
         VkSurfaceKHR surface
@@ -43,7 +44,9 @@ namespace VulkanUtils {
         return details;
 
     }
-
+    
+    // Returns information about the queue families available by our physical
+    // device
     QueueFamilyIndices findQueueFamilies(
         VkPhysicalDevice device, 
         VkSurfaceKHR surface
@@ -85,7 +88,8 @@ namespace VulkanUtils {
    
         return indices;
     }
-
+    
+    // Handles the creation and storage of swapchain data. 
     VkResult createSwapchain(SwapchainData* data,
         VkPhysicalDevice physicalDevice,
         VkDevice device,
@@ -310,7 +314,8 @@ namespace VulkanUtils {
         data->pImageViews = imageViews;
         return VK_SUCCESS;
     }
-
+    
+    // TODO: create unified destoryer method for struct data
     void destroySwapchainImageData(SwapchainData data) {
         delete [] data.pImages;
     }
@@ -406,9 +411,6 @@ namespace VulkanUtils {
     // graphics pipeline in Vulkan is almost completely immutable. This means
     // that the pipeline can be very well optimised (but will also require
     // a complete rewrite if you need anything different).
-    //
-    // In this case we'll set up a vertex and fragment shader so we can get
-    // a triangle showing on screen.
 
     VkResult createGraphicsPipeline(
         VkDevice device, 
@@ -633,6 +635,7 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
+    // Frame buffer creation method
     VkResult createFramebuffer(VkDevice device, VkFramebuffer* pFramebuffers,
             SwapchainData* swapchain, GraphicsPipelineData* graphicsPipeline) {
     
@@ -670,6 +673,7 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
+    // Command buffer creation method
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
             GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
             VkFramebuffer* pFramebuffers, VkCommandPool commandPool) {

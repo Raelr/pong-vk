@@ -536,13 +536,6 @@ int main() {
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    // Flags is set to nothing for now. Usually there are two options:
-    // 1. VK_COMMAND_POOL_CREATE_TRANSIENT_BIT - Command buffers are re-recorded
-    // with new commands often. 
-    // 2. VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT - allow command buffers
-    // to be re-recorded individually. 
-    // Since we only recored these buffers in the beginning and executing them
-    // many times in the same loop, we won't need either of these flags. 
     poolInfo.flags = 0; // optional
     
     // Create the command pool
