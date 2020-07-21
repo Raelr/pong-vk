@@ -81,6 +81,25 @@ namespace VulkanUtils {
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool
     );
+
+    VkResult recreateSwapchain(
+        VkDevice device,
+        VkPhysicalDevice physicalDevice,
+        SwapchainData* pSwapchain,
+        GraphicsPipelineData* pGraphicsPipeline,
+        VkCommandPool commandPool,
+        VkFramebuffer* pframeBuffers,
+        VkCommandBuffer* pCommandbuffers
+    );
+
+    void cleanupSwapchain(
+        VkDevice device,
+        SwapchainData* pSwapchain,
+        GraphicsPipelineData* pGraphicsPipeline,
+        VkCommandPool commandPool,
+        VkFramebuffer* pFramebuffers,
+        VkCommandBuffer* pCommandbuffers
+    );
 }
 
 #endif

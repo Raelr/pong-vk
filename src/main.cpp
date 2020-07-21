@@ -730,6 +730,9 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
     
+    VulkanUtils::cleanupSwapchain(device, &swapchain, &graphicsPipeline, 
+        commandPool, swapchainFramebuffers.data(), commandBuffers.data());
+
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
@@ -739,33 +742,10 @@ int main() {
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
-        vkDestroyFramebuffer(device, swapchainFramebuffers[i], nullptr);
-    }
-
-    // Destroy the graphics pipeline  
-    vkDestroyPipeline(device, graphicsPipeline.graphicsPipeline, nullptr);
-    // Clean up pipeline memory
-    vkDestroyPipelineLayout(device, graphicsPipeline.pipelineLayout, nullptr);
-    // Destroy the render pass
-    vkDestroyRenderPass(device, graphicsPipeline.renderPass, nullptr);
     // Cleaning up memory
     if(enableValidationLayers) {
         destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
-
-    // Destroy image views
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
-        vkDestroyImageView(device, swapchain.pImageViews[i], nullptr);
-    }
- 
-    delete [] swapchain.pImageViews;
-
-    // Delete all images stored in the swapchain
-    VulkanUtils::destroySwapchainImageData(swapchain);
-
-    // Destroy the Swapchain
-    vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
 
     // Destroy window surface
     vkDestroySurfaceKHR(instance, surface, nullptr);

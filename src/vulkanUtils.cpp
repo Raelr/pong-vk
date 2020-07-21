@@ -314,12 +314,6 @@ namespace VulkanUtils {
         data->pImageViews = imageViews;
         return VK_SUCCESS;
     }
-    
-    // TODO: create unified destoryer method for struct data
-    void destroySwapchainImageData(SwapchainData data) {
-        delete [] data.pImages;
-    }
-    
     // Method to create renderpasses for our pipelines.
     VkResult createRenderPass(
         VkDevice device, 
@@ -758,6 +752,57 @@ namespace VulkanUtils {
         }
 
         return VK_SUCCESS;
+    }
+
+    VkResult recreateSwapchain(
+        VkDevice device,
+        VkPhysicalDevice physicalDevice,
+        SwapchainData* pSwapchain,
+        GraphicsPipelineData* pGraphicsPipeline,
+        VkCommandPool commandPool,
+        VkFramebuffer* pframeBuffers,
+        VkCommandBuffer* pCommandbuffers) {
+
+        vkDeviceWaitIdle(device);
+
+
+        return VK_SUCCESS;
+
+    }
+
+    void cleanupSwapchain(
+        VkDevice device,
+        SwapchainData* pSwapchain,
+        GraphicsPipelineData* pGraphicsPipeline,
+        VkCommandPool commandPool,
+        VkFramebuffer* pFramebuffers,
+        VkCommandBuffer* pCommandbuffers) {
+
+        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
+            vkDestroyFramebuffer(device, pFramebuffers[i], nullptr);
+        }
+
+        vkFreeCommandBuffers(device, commandPool, pSwapchain->imageCount, 
+                pCommandbuffers);
+
+        // Destroy the graphics pipeline··
+        vkDestroyPipeline(device, pGraphicsPipeline->graphicsPipeline, nullptr);
+        // Clean up pipeline memory
+        vkDestroyPipelineLayout(device, pGraphicsPipeline->pipelineLayout, nullptr);
+        // Destroy the render pass
+        vkDestroyRenderPass(device, pGraphicsPipeline->renderPass, nullptr);
+
+        // Destroy image views
+        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
+            vkDestroyImageView(device, pSwapchain->pImageViews[i], nullptr);
+        }
+
+        delete [] pSwapchain->pImageViews;
+
+        delete [] pSwapchain->pImages;
+
+        // Destroy the Swapchain
+        vkDestroySwapchainKHR(device, pSwapchain->swapchain, nullptr);
     }
 
     // All shaders must be wrapped in a shader module. This is a helper 
