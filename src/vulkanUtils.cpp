@@ -758,18 +758,55 @@ namespace VulkanUtils {
         VkDevice device,
         VkPhysicalDevice physicalDevice,
         SwapchainData* pSwapchain,
+        VkSurfaceKHR surface,
+        uint32_t window_width,
+        uint32_t window_height,
+        QueueFamilyIndices indices,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
-        VkFramebuffer* pframeBuffers,
+        VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers) {
 
         vkDeviceWaitIdle(device);
+        
+        // Re-populate the swapchain
+        if (createSwapchain(pSwapchain, physicalDevice, device,
+            surface, window_height, window_width, indices) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+        // Re-create our render pass
+        if (createRenderPass(device, pSwapchain->swapchainFormat,
+            pGraphicsPipeline) != VK_SUCCESS) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+        // Re-create our graphics pipeline
+        if (createGraphicsPipeline(device, pGraphicsPipeline,
+            pSwapchain) != VK_SUCCESS) {
+         
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+        // Re-create our framebuffers
+        if (createFramebuffer(device, pFramebuffers,
+            pSwapchain, pGraphicsPipeline) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+        // Re-create command buffers
+        if (createCommandBuffers(device, pCommandbuffers,
+            pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool) 
+            != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
 
 
         return VK_SUCCESS;
 
     }
-
+    
+    // Simple method for cleaning up all items relating to our swapchain
     void cleanupSwapchain(
         VkDevice device,
         SwapchainData* pSwapchain,

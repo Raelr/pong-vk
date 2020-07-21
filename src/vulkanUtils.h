@@ -86,9 +86,13 @@ namespace VulkanUtils {
         VkDevice device,
         VkPhysicalDevice physicalDevice,
         SwapchainData* pSwapchain,
+        VkSurfaceKHR surface,
+        uint32_t window_width,
+        uint32_t window_height,
+        QueueFamilyIndices indices,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
-        VkFramebuffer* pframeBuffers,
+        VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers
     );
 
