@@ -120,17 +120,34 @@ int main() {
     // -------------------- INITIALISE WINDOW --------------------------
     initLogger();
 
+
+    // Need to keep track of whether the screen was resized
+    bool framebufferResized = false;
+
     // Initialise GLFW
     glfwInit();
 
     // Set flags for the window (set it to not use GLFW API and 
     // set it to not resize)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     // Actually make the window
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", 
         nullptr, nullptr);
+
+    glfwSetWindowUserPointer(window, &framebufferResized);
+
+    // NOTE: THIS IS JUST A TEST, WILL NEED TO SET A BETTER POINTER THAN A 
+    // SINGLE INT IN FUTURE
+    // TODO: Replace this resize boolean with a struct containing our app data.
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
+        int height) {
+
+        bool resized = reinterpret_cast<bool*>(glfwGetWindowUserPointer(window));
+
+        resized = true;
+
+    });
 
     INFO("Created GLFW window");
 
@@ -635,9 +652,6 @@ int main() {
 
     size_t currentFrame = 0;
 
-    // Need to keep track of whether the screen was resized
-    bool framebufferResized = false;
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -752,7 +766,8 @@ int main() {
         // Now we submit a request to present an image to the swapchain. 
         result = vkQueuePresentKHR(presentQueue, &presentInfo);
         // Again, we make sure that we're using the best possible swapchain.
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
+            || framebufferResized) {
             glfwGetFramebufferSize(window, &width, &height);
             // Re-create the swap chain in its entirety if the pipeline is no·
             // longer valid or is out of date.·
@@ -768,6 +783,8 @@ int main() {
                 commandPool,
                 swapchainFramebuffers.data(),
                 commandBuffers.data());
+
+                framebufferResized = false;
         } else if (result != VK_SUCCESS) {
 
             PONG_FATAL_ERROR("Failed to present swapchain image!");
