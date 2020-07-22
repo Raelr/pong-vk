@@ -635,6 +635,9 @@ int main() {
 
     size_t currentFrame = 0;
 
+    // Need to keep track of whether the screen was resized
+    bool framebufferResized = false;
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -656,8 +659,32 @@ int main() {
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
-        vkAcquireNextImageKHR(device, swapchain.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
-            VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(device, swapchain.swapchain, 
+            UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, 
+            &imageIndex);
+        // If our swapchain is out of date (no longer valid, then we re-create
+        // it)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            glfwGetFramebufferSize(window, &width, &height);
+            // Re-create the swap chain in its entirety if the pipeline is no 
+            // longer valid or is out of date. 
+            VulkanUtils::recreateSwapchain(
+                device, 
+                physicalDevice, 
+                &swapchain,
+                surface, 
+                static_cast<uint32_t>(width), 
+                static_cast<uint32_t>(height), 
+                indices, 
+                &graphicsPipeline, 
+                commandPool, 
+                swapchainFramebuffers.data(), 
+                commandBuffers.data());
+            // Go to the next iteration of the loop
+            continue;
+        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            PONG_FATAL_ERROR("Failed to acquire swapchain image!");
+        }
         
         // Check if a previous frame is using this image. I.e: we're waiting on 
         // it's fence to be signalled. 
@@ -723,7 +750,29 @@ int main() {
         presentInfo.pResults = nullptr; // optional
         
         // Now we submit a request to present an image to the swapchain. 
-        vkQueuePresentKHR(presentQueue, &presentInfo);
+        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        // Again, we make sure that we're using the best possible swapchain.
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+            glfwGetFramebufferSize(window, &width, &height);
+            // Re-create the swap chain in its entirety if the pipeline is no·
+            // longer valid or is out of date.·
+            VulkanUtils::recreateSwapchain(
+                device,
+                physicalDevice,
+                &swapchain,
+                surface,
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height),
+                indices,
+                &graphicsPipeline,
+                commandPool,
+                swapchainFramebuffers.data(),
+                commandBuffers.data());
+        } else if (result != VK_SUCCESS) {
+
+            PONG_FATAL_ERROR("Failed to present swapchain image!");
+
+        }
         
         // This should clamp the value of currentFrame between 0 and 1.
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
