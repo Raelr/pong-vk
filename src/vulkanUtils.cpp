@@ -93,8 +93,8 @@ namespace VulkanUtils {
     VkResult createSwapchain(SwapchainData* data,
         VkPhysicalDevice physicalDevice,
         VkDevice device,
-        VkSurfaceKHR surface, const uint32_t windowHeight, 
-        const uint32_t windowWidth,
+        VkSurfaceKHR surface, const uint32_t windowWidth, 
+        const uint32_t windowHeight,
         QueueFamilyIndices indices
     ) {
 
@@ -155,20 +155,21 @@ namespace VulkanUtils {
         // by the swapchain.
         VkExtent2D chosenExtent = {windowWidth, windowHeight};
 
-        // Make sure that the width and height of the images are greater than 0
-        // and less than the maximum image dimensions.
-        chosenExtent.width = std::clamp(chosenExtent.width, 
-            supportDetails.capabilities.minImageExtent.width,
-            supportDetails.capabilities.maxImageExtent.width);
-
-        chosenExtent.height = std::clamp(chosenExtent.height,
-            supportDetails.capabilities.minImageExtent.height,
-            supportDetails.capabilities.maxImageExtent.height);
-
         // Make sure the width is not the maximum value of a 32-bit unsigned
         // integer. 
         if (supportDetails.capabilities.currentExtent.width != UINT32_MAX) {
             chosenExtent = supportDetails.capabilities.currentExtent;
+        } else {
+
+            // Make sure that the width and height of the images are greater than 0
+            // and less than the maximum image dimensions.
+            chosenExtent.width = std::clamp(chosenExtent.width,
+                 supportDetails.capabilities.minImageExtent.width,
+                 supportDetails.capabilities.maxImageExtent.width);
+
+            chosenExtent.height = std::clamp(chosenExtent.height,
+                 supportDetails.capabilities.minImageExtent.height,
+                 supportDetails.capabilities.maxImageExtent.height);
         }
 
         INFO("Device extent has been set to: [ " + 
@@ -218,8 +219,8 @@ namespace VulkanUtils {
             swapchainCreateInfo.pQueueFamilyIndices = nullptr;
         }
         
-        // Can be used to specify a transform that all images in the swapchain will follow. 
-        // In this case we'll just set it to the default.
+        // Can be used to specify a transform that all images in the swapchain 
+        // will follow. In this case we'll just set it to the default.
         swapchainCreateInfo.preTransform = 
                 supportDetails.capabilities.currentTransform;
 
@@ -768,6 +769,9 @@ namespace VulkanUtils {
         VkCommandBuffer* pCommandbuffers) {
 
         vkDeviceWaitIdle(device);
+
+        cleanupSwapchain(device, pSwapchain, pGraphicsPipeline, commandPool, 
+            pFramebuffers, pCommandbuffers);
         
         // Re-populate the swapchain
         if (createSwapchain(pSwapchain, physicalDevice, device,

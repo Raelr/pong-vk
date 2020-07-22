@@ -462,10 +462,15 @@ int main() {
     // stores all our swapchain data.
     VulkanUtils::SwapchainData swapchain;
 
+    int width, height;
+
+    glfwGetFramebufferSize(window, &width, &height);
+
     // Create the swapchain (should initialise both the swapchain and image
     // views). See vulkanUtils.cpp for implementation details.
     if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
-            surface, WINDOW_HEIGHT, WINDOW_WIDTH, indices) != VK_SUCCESS) {
+            surface, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 
+            indices) != VK_SUCCESS) {
 
        PONG_FATAL_ERROR("Failed to create swapchain!");
     }
