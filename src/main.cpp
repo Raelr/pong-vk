@@ -679,7 +679,18 @@ int main() {
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+           
+            // TODO: craete a standalone function for handling re-creation of 
+            // swapchains for re-usability.
+            // TODO: Move all swapchain items into a standalone struct for 
+            // storage
             glfwGetFramebufferSize(window, &width, &height);
+            
+            // if the window is minimised, pause rendering until it comes back
+            while (width == 0 && height == 0) {
+                glfwGetFramebufferSize(window, &width, &height);
+                glfwWaitEvents();
+            }
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
@@ -768,7 +779,15 @@ int main() {
         // Again, we make sure that we're using the best possible swapchain.
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
             || framebufferResized) {
+            
             glfwGetFramebufferSize(window, &width, &height);
+            
+            // If the window is minimized we simply pause rendering until it
+            // comes back!
+            while (width == 0 && height == 0) {
+                glfwGetFramebufferSize(window, &width, &height);
+                glfwWaitEvents();
+            }
             // Re-create the swap chain in its entirety if the pipeline is no·
             // longer valid or is out of date.·
             VulkanUtils::recreateSwapchain(
