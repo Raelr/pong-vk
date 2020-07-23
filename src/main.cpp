@@ -115,14 +115,35 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance,
     }
 }
 
+// Handles a case where the window is minimised
+void handleMinimisation(GLFWwindow* window, int* width, int* height) {
+    
+    glfwGetFramebufferSize(window, width, height);
+    
+    // If the window is minimized we simply pause rendering until it
+    // comes back!
+    
+    while (width == 0 && height == 0) {
+        glfwGetFramebufferSize(window, width, height);
+        glfwWaitEvents();
+    }
+}
+
+// Struct for storing application-specific data. Will be used by glfw for data
+// storage in the user pointer.
+struct AppData {
+    // Boolean for checking if the window has been resized
+    bool framebufferResized;
+};
+
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
     initLogger();
-
-
-    // Need to keep track of whether the screen was resized
-    bool framebufferResized = false;
+    
+    // Initialise app data struct
+    AppData pongData{};
+    pongData.framebufferResized = false;
 
     // Initialise GLFW
     glfwInit();
@@ -135,7 +156,7 @@ int main() {
     GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", 
         nullptr, nullptr);
 
-    glfwSetWindowUserPointer(window, &framebufferResized);
+    glfwSetWindowUserPointer(window, &pongData);
 
     // NOTE: THIS IS JUST A TEST, WILL NEED TO SET A BETTER POINTER THAN A 
     // SINGLE INT IN FUTURE
@@ -143,9 +164,10 @@ int main() {
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
         int height) {
 
-        bool resized = reinterpret_cast<bool*>(glfwGetWindowUserPointer(window));
+        AppData* data = 
+            reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
 
-        resized = true;
+        data->framebufferResized = true;
 
     });
 
@@ -684,13 +706,7 @@ int main() {
             // swapchains for re-usability.
             // TODO: Move all swapchain items into a standalone struct for 
             // storage
-            glfwGetFramebufferSize(window, &width, &height);
-            
-            // if the window is minimised, pause rendering until it comes back
-            while (width == 0 && height == 0) {
-                glfwGetFramebufferSize(window, &width, &height);
-                glfwWaitEvents();
-            }
+            handleMinimisation(window, &width, &height);
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
@@ -705,6 +721,8 @@ int main() {
                 commandPool, 
                 swapchainFramebuffers.data(), 
                 commandBuffers.data());
+                
+                pongData.framebufferResized = false;
             // Go to the next iteration of the loop
             continue;
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -778,18 +796,12 @@ int main() {
         result = vkQueuePresentKHR(presentQueue, &presentInfo);
         // Again, we make sure that we're using the best possible swapchain.
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
-            || framebufferResized) {
+            || pongData.framebufferResized) {
             
-            glfwGetFramebufferSize(window, &width, &height);
+            handleMinimisation(window,& width, &height);
             
-            // If the window is minimized we simply pause rendering until it
-            // comes back!
-            while (width == 0 && height == 0) {
-                glfwGetFramebufferSize(window, &width, &height);
-                glfwWaitEvents();
-            }
-            // Re-create the swap chain in its entirety if the pipeline is no·
-            // longer valid or is out of date.·
+            // Re-create the swap chain in its entirety if the pipeline is no
+            // longer valid or is out of date.
             VulkanUtils::recreateSwapchain(
                 device,
                 physicalDevice,
@@ -802,8 +814,7 @@ int main() {
                 commandPool,
                 swapchainFramebuffers.data(),
                 commandBuffers.data());
-
-                framebufferResized = false;
+                pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
 
             PONG_FATAL_ERROR("Failed to present swapchain image!");
