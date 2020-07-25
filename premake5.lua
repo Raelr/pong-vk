@@ -1,5 +1,7 @@
 
 workspace "Pong"
+     architecture "x86"
+     startproject "Pong"
      configurations { 
           "DEBUG", 
           "RELEASE" 
@@ -39,6 +41,13 @@ project "Pong"
                "Cocoa.framework",
                "IOKit.framework",
                "CoreFoundation.framework",
+          }
+
+     filter "system:windows"
+          systemversion "latest"
+          staticruntime "on"
+          links {
+               os.getenv("VULKAN_SDK") .. "/lib32/vulkan-1.lib",
           }
 
      filter "configurations:Debug"

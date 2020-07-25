@@ -640,7 +640,7 @@ int main() {
     VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
     // We'll have a second array of fences to track whether an image is being
     // used by a fence. 
-    VkFence imagesInFlight[swapchain.imageCount];
+    std::vector<VkFence> imagesInFlight(swapchain.imageCount);
 
     // Initialise all these images to 0 to start with. 
     for (size_t i = 0; i < swapchain.imageCount; i++) {
