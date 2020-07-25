@@ -588,6 +588,10 @@ int main() {
         PONG_FATAL_ERROR("Failed to create command pool!");
     }
 
+    // --------------------- VERTEX DEFINITION --------------------------
+
+    const int vertices = 3;
+
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
     // With the command pool created, we can now start creating and allocating

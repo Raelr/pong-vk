@@ -1,5 +1,6 @@
 #include "vulkanUtils.h"
 #include "logger.h"
+#include "vertexBuffer.h"
 
 namespace VulkanUtils {
 
@@ -452,16 +453,18 @@ namespace VulkanUtils {
         // Now that we've loaded in the shaders we can start creating defining
         // how the pipeline will operate. 
 
+        auto bindingDescription = VertexBuffer::getBindingDescription();
+        auto attributeDescriptions = VertexBuffer::getAttributeDescriptions();
+
         // Defines how vertex data will be formatted in the shader.
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = 
                 VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
         // Describes details for loading vertex data.
-        vertexInputInfo.pVertexBindingDescriptions = nullptr;
-        vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        // Describes details for loading vertex data.
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         // Next, define the input assembly, or the kind of geometry drawn.
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
