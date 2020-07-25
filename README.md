@@ -12,6 +12,29 @@ The project is still very much in its infant stages. Right now the focus is on s
 
 Once this is done we'll be going over the Vulkan API to try and set up the basics of the project. 
 
+## Setup Notes
+
+NOTE: This prject contains submodules. Please remember to clone the project with --recursive-submodules prepended. I.e:
+
+```
+$ git clone --recurse-submodules https://github.com/Raelr/pong-vk.git
+```
+
+Alternatively, you can also clone the repo and run the commands:
+
+```
+$ git submodules init
+$ git submodules update
+```
+
+You find that the submodules fail to install, you should try and delete the following directories:
+
+* vendor/glm
+* vendor/spdlog
+* vendor/GLFW/glfw
+
+Then try and re-run the submodules command and see if it works.
+
 ## MacOS Setup
 
 To successfully run the project in MacOS, a few conditions must be met: 
@@ -69,6 +92,15 @@ You should then see the window show up!
 
 You can also simply navigate to the `bin/Debug` folder and run the `Pong` file manually from there. 
 
-## Windows Setup (not supported yet)
+## Windows Setup
 
-Windows support will be coming as the project moves from its infant stages.
+Windows is now supported. Like the MacOS installation, it requires that you have the Vulkan installation directory set in your environment variables.
+
+You should be able to generate your Visual Studio project code by opening the windows CLI and navigating to the project directory. When in the project directory, run the following command: 
+
+```
+[From project directory]
+premake\premake5.exe vs2019
+```
+
+This should generate the appropriate visual studio files. After that, open the generated .sln file and you should be able to run the project from there!
