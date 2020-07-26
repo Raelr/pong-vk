@@ -10,6 +10,7 @@
 #include <cstdint>
 #include "utils.h"
 #include "vulkanUtils.h"
+#include "vertexBuffer.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -117,13 +118,13 @@ static void destroyDebugUtilsMessengerEXT(VkInstance instance,
 
 // Handles a case where the window is minimised
 void handleMinimisation(GLFWwindow* window, int* width, int* height) {
-    
+
     glfwGetFramebufferSize(window, width, height);
     
     // If the window is minimized we simply pause rendering until it
     // comes back!
     
-    while (width == 0 && height == 0) {
+    while (*width == 0 && *height == 0) {
         glfwGetFramebufferSize(window, width, height);
         glfwWaitEvents();
     }
@@ -590,7 +591,23 @@ int main() {
 
     // --------------------- VERTEX DEFINITION --------------------------
 
-    const int vertices = 3;
+    const uint32_t vertexCount = 3;
+
+    // Define all the vertices of our triangle.
+    const VertexBuffer::Vertex vertices[] = {
+        { {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
+        { {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} },
+        { {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
+    };
+
+    VkBuffer vertexBuffer{};
+    VkDeviceMemory vertexBufferMemory{};
+
+    if (VulkanUtils::createVertexBuffer(device, physicalDevice, &vertexBufferMemory,
+        vertices, vertexCount, &vertexBuffer) != VK_SUCCESS) {
+    
+        PONG_FATAL_ERROR("Failed to create vertex buffer.");
+    }
 
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
@@ -606,7 +623,7 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(device, commandBuffers.data(), 
             &graphicsPipeline, &swapchain, swapchainFramebuffers.data(), 
-            commandPool) != VK_SUCCESS) {
+            commandPool, vertexBuffer, vertexCount) != VK_SUCCESS) {
 
     }
     // --------------------- SYNC OBJECT CREATION -------------------------
@@ -706,7 +723,7 @@ int main() {
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
            
-            // TODO: craete a standalone function for handling re-creation of 
+            // TODO: create a standalone function for handling re-creation of 
             // swapchains for re-usability.
             // TODO: Move all swapchain items into a standalone struct for 
             // storage
@@ -724,6 +741,8 @@ int main() {
                 &graphicsPipeline, 
                 commandPool, 
                 swapchainFramebuffers.data(), 
+                vertexBuffer,
+                vertexCount,
                 commandBuffers.data());
                 
                 pongData.framebufferResized = false;
@@ -802,7 +821,7 @@ int main() {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
             || pongData.framebufferResized) {
             
-            handleMinimisation(window,& width, &height);
+            handleMinimisation(window,&width, &height);
             
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
@@ -817,7 +836,10 @@ int main() {
                 &graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),
+                vertexBuffer,
+                vertexCount,
                 commandBuffers.data());
+
                 pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
 
@@ -837,6 +859,10 @@ int main() {
     
     VulkanUtils::cleanupSwapchain(device, &swapchain, &graphicsPipeline, 
         commandPool, swapchainFramebuffers.data(), commandBuffers.data());
+
+    vkDestroyBuffer(device, vertexBuffer, nullptr);
+
+    vkFreeMemory(device, vertexBufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

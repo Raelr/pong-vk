@@ -1,6 +1,5 @@
 #include "vulkanUtils.h"
 #include "logger.h"
-#include "vertexBuffer.h"
 
 namespace VulkanUtils {
 
@@ -463,7 +462,8 @@ namespace VulkanUtils {
         vertexInputInfo.vertexBindingDescriptionCount = 1;
         // Describes details for loading vertex data.
         vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-        vertexInputInfo.vertexAttributeDescriptionCount = attributeDescriptions.size();
+        vertexInputInfo.vertexAttributeDescriptionCount = 
+            static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         // Next, define the input assembly, or the kind of geometry drawn.
@@ -673,8 +673,9 @@ namespace VulkanUtils {
 
     // Command buffer creation method
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
-            GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
-            VkFramebuffer* pFramebuffers, VkCommandPool commandPool) {
+        GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
+        VkFramebuffer* pFramebuffers, VkCommandPool commandPool, VkBuffer vertexBuffer,
+        uint32_t vertexCount) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -737,6 +738,10 @@ namespace VulkanUtils {
            // or compute pipeline.
            vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
   
+           VkBuffer vertexBuffers[] = { vertexBuffer };
+           VkDeviceSize offsets[] = {0};
+
+           vkCmdBindVertexBuffers(buffers[i], 0, 1, vertexBuffers, offsets);
            // Now we can tell Vulkan to draw our triangle. This function has the parameters:
            // 1. the command buffer.
            // 2. The number of vertices - We can do this even without a vertex buffer.
@@ -744,7 +749,7 @@ namespace VulkanUtils {
            // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value·
            // of gl_vertexIndex.
            // 5. firstInstance - Used as an offset for instanced rendering.
-           vkCmdDraw(buffers[i], 3, 1, 0, 0);
+           vkCmdDraw(buffers[i], vertexCount, 1, 0, 0);
   
            // Now we can end the render pass:
            vkCmdEndRenderPass(buffers[i]);
@@ -769,6 +774,8 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
+        VkBuffer vertexBuffer,
+        uint32_t vertexCount,
         VkCommandBuffer* pCommandbuffers) {
 
         vkDeviceWaitIdle(device);
@@ -802,7 +809,8 @@ namespace VulkanUtils {
         }
         // Re-create command buffers
         if (createCommandBuffers(device, pCommandbuffers,
-            pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool) 
+            pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
+            vertexBuffer, vertexCount) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -873,5 +881,72 @@ namespace VulkanUtils {
         }
         // Return the shader
         return shader;
-   }
+    }
+
+    VkResult createVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, 
+        VkDeviceMemory* vertexMemory, const VertexBuffer::Vertex* vertices, 
+        const uint32_t vertexCount, VkBuffer* vertexBuffer) {
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = sizeof(vertices[0]) * vertexCount;
+        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if ((vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer))!= VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(device, *vertexBuffer, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+
+        uint32_t memoryType; 
+        
+        if (!findMemoryType(physicalDevice, &memoryType, memRequirements.memoryTypeBits, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = memoryType;
+
+        if (vkAllocateMemory(device, &allocInfo, nullptr, vertexMemory) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        vkBindBufferMemory(device, *vertexBuffer, *vertexMemory, 0);
+
+        void* data;
+        vkMapMemory(device, *vertexMemory, 0, bufferInfo.size, 0, &data);
+        
+        memcpy(data, vertices, (size_t)bufferInfo.size);
+        
+        vkUnmapMemory(device, *vertexMemory);
+
+        return VK_SUCCESS;
+    }
+
+    bool findMemoryType(VkPhysicalDevice physicalDevice, uint32_t* memoryType, 
+        uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+
+        bool isMemoryTypeFound = false;
+
+        VkPhysicalDeviceMemoryProperties memProperties;
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags 
+                & properties) == properties) {
+                *memoryType = i;
+                isMemoryTypeFound = true;
+                break;
+            }
+        }
+
+        return isMemoryTypeFound;
+    }
 }

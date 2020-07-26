@@ -5,6 +5,7 @@
 #include <vector>
 #include <optional>
 #include "utils.h"
+#include "vertexBuffer.h"
 
 namespace VulkanUtils {
 
@@ -79,7 +80,9 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers,
-        VkCommandPool commandPool
+        VkCommandPool commandPool,
+        VkBuffer vertexBuffer,
+        uint32_t vertexCount
     );
 
     VkResult recreateSwapchain(
@@ -93,6 +96,8 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
+        VkBuffer vertexBuffer,
+        uint32_t vertexCount,
         VkCommandBuffer* pCommandbuffers
     );
 
@@ -103,6 +108,22 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers
+    );
+
+    VkResult createVertexBuffer(
+        VkDevice device, 
+        VkPhysicalDevice physicalDevice,
+        VkDeviceMemory* vertexMemory, 
+        const VertexBuffer::Vertex* vertices,
+        const uint32_t vertexCount, 
+        VkBuffer* vertexBuffer
+    );
+
+    bool findMemoryType(
+        VkPhysicalDevice physicalDevice, 
+        uint32_t* memoryType,
+        uint32_t typeFilter, 
+        VkMemoryPropertyFlags properties
     );
 }
 
