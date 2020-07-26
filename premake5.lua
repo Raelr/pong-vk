@@ -1,6 +1,5 @@
 
 workspace "Pong"
-     architecture "x86"
      startproject "Pong"
      configurations { 
           "DEBUG", 
@@ -30,6 +29,7 @@ project "Pong"
      }
 
      filter "system:macosx"
+          architecture "x64"
           systemversion "latest"
           staticruntime "on"
           linkoptions { os.getenv("VULKAN_SDK") .. "lib/libvulkan.1.2.135.dylib" }
@@ -44,6 +44,7 @@ project "Pong"
           }
 
      filter "system:windows"
+          architecture "x86"
           systemversion "latest"
           staticruntime "on"
           links {
