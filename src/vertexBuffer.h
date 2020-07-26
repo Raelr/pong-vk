@@ -7,13 +7,21 @@
 
 namespace VertexBuffer {
 
+	// A simple struct for storing vertex data. May need to split between a 
+	// 3D and 2D vertex at some point.
 	struct Vertex {
+		// position vector
 		glm::vec2 pos;
+		// Color vector
 		glm::vec3 color;
 	};
 
+	// Returns vertex binding information. This information specifies the rate
+	// with which data is loaded from memory throughout the vertices. 
 	VkVertexInputBindingDescription getBindingDescription();
 
+	// Return vertex input attributes. This describes how a vertex attribute
+	// can be extracted from a chunk of vertex data. 
 	std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
 }
 
