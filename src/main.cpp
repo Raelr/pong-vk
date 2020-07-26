@@ -591,9 +591,11 @@ int main() {
 
     // --------------------- VERTEX DEFINITION --------------------------
 
+    // Define a vertex buffer for configuring vertex data.
+
     const uint32_t vertexCount = 3;
 
-    // Define all the vertices of our triangle.
+    // Define all the vertices of our triangle and the colors for every vertex
     const VertexBuffer::Vertex vertices[] = {
         { {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
         { {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} },
@@ -603,6 +605,7 @@ int main() {
     VkBuffer vertexBuffer{};
     VkDeviceMemory vertexBufferMemory{};
 
+    // Create the vertex buffer and allocate the memory for it
     if (VulkanUtils::createVertexBuffer(device, physicalDevice, &vertexBufferMemory,
         vertices, vertexCount, &vertexBuffer) != VK_SUCCESS) {
     
@@ -860,8 +863,10 @@ int main() {
     VulkanUtils::cleanupSwapchain(device, &swapchain, &graphicsPipeline, 
         commandPool, swapchainFramebuffers.data(), commandBuffers.data());
 
+    // Cleans up the memory buffer 
     vkDestroyBuffer(device, vertexBuffer, nullptr);
 
+    // Frees the allocated vertex buffer memory 
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.

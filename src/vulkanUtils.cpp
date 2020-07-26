@@ -452,6 +452,7 @@ namespace VulkanUtils {
         // Now that we've loaded in the shaders we can start creating defining
         // how the pipeline will operate. 
 
+        // Get the vertex buffer data for our triangle
         auto bindingDescription = VertexBuffer::getBindingDescription();
         auto attributeDescriptions = VertexBuffer::getAttributeDescriptions();
 
@@ -737,10 +738,12 @@ namespace VulkanUtils {
            // parameter of this function call specifies whether this pipeline object is a graphics·
            // or compute pipeline.
            vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
-  
+            
+           // Specify a list of vertex buffers that need to be recorded by the command buffer
            VkBuffer vertexBuffers[] = { vertexBuffer };
            VkDeviceSize offsets[] = {0};
 
+           // Bind the vertex buffers to the command buffer being recorded.
            vkCmdBindVertexBuffers(buffers[i], 0, 1, vertexBuffers, offsets);
            // Now we can tell Vulkan to draw our triangle. This function has the parameters:
            // 1. the command buffer.
@@ -883,27 +886,40 @@ namespace VulkanUtils {
         return shader;
     }
 
+    // Handles the creation of the triangle vertex buffer 
     VkResult createVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, 
         VkDeviceMemory* vertexMemory, const VertexBuffer::Vertex* vertices, 
         const uint32_t vertexCount, VkBuffer* vertexBuffer) {
 
+        // We need to start by creating a configuration for our vertex buffer.
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        // We need to specify the size of the buffer in bytes. 
         bufferInfo.size = sizeof(vertices[0]) * vertexCount;
+        // Specify that this is a vertex buffer
         bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        // Specifies that this will only be used by a single queue - the
+        // graphics queue.
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+        // Create the buffer using the create object we specified before
         if ((vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer))!= VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
+        // Once the buffer has been created, we need to actually allocate memory to it.
+
+        // First we need to get the memory requirements for the buffer
         VkMemoryRequirements memRequirements;
         vkGetBufferMemoryRequirements(device, *vertexBuffer, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
 
+        // Store the memory type in a variable
         uint32_t memoryType; 
         
+        // Search for our memory requirements and check if we can map this memory from
+        // our CPU to the GPU.
         if (!findMemoryType(physicalDevice, &memoryType, memRequirements.memoryTypeBits, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
             
@@ -911,34 +927,50 @@ namespace VulkanUtils {
         }
 
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        // Specify the size of our allocation using our memory requirements
         allocInfo.allocationSize = memRequirements.size;
         allocInfo.memoryTypeIndex = memoryType;
 
+        // Now allocate the memory
         if (vkAllocateMemory(device, &allocInfo, nullptr, vertexMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
+        // Now we associate the buffer with our memory
         vkBindBufferMemory(device, *vertexBuffer, *vertexMemory, 0);
 
+        // Now we need to fill the vertex buffer:
+
         void* data;
+        // Lets us access a region in memory by specifying an offset and size. 
         vkMapMemory(device, *vertexMemory, 0, bufferInfo.size, 0, &data);
-        
+        // Copy the memory from our vertex array into our mapped memory. 
         memcpy(data, vertices, (size_t)bufferInfo.size);
-        
+        // Now unmap the memory
         vkUnmapMemory(device, *vertexMemory);
 
         return VK_SUCCESS;
     }
 
+    // A method to help us get synchronise the memory requirements of the CPU
+    // and GPU
     bool findMemoryType(VkPhysicalDevice physicalDevice, uint32_t* memoryType, 
         uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 
         bool isMemoryTypeFound = false;
 
+        // First, we query the types of memory available to us
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+        // Now lets look through the memory types and find one that suits us
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            // The type filter will be used to specify the memory types that are 
+            // suitable. In our case we're looking for cases where the corresponding
+            // bit is set to 1. 
+            // We also need to check if the memory type supports the properties that we
+            // need
             if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags 
                 & properties) == properties) {
                 *memoryType = i;
