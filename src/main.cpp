@@ -541,10 +541,10 @@ int main() {
     // that the pipeline can be very well optimised (but will also require
     // a complete rewrite if you need anything different).
     
-    if (VulkanUtils::createGraphicsPipeline(device.logicalDevice, &graphicsPipeline, 
-            &swapchain) != VK_SUCCESS) {
+    if (VulkanUtils::createGraphicsPipeline(deviceData.logicalDevice, 
+        &graphicsPipeline, &swapchain) != VK_SUCCESS) {
+        
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
-
     }
 
     // --------------------- FRAMEBUFFER SETUP --------------------------
@@ -561,8 +561,10 @@ int main() {
     // First, we create an array to hold our framebuffers. 
     std::vector<VkFramebuffer> swapchainFramebuffers(swapchain.imageCount);
 
-    if (VulkanUtils::createFramebuffer(device, swapchainFramebuffers.data(),
-            &swapchain, &graphicsPipeline) != VK_SUCCESS) {
+    if (VulkanUtils::createFramebuffer(deviceData.logicalDevice, 
+        swapchainFramebuffers.data(), &swapchain, &graphicsPipeline) 
+        != VK_SUCCESS) {
+        
         PONG_FATAL_ERROR("Failed to create framebuffers!");
     }
 
@@ -587,12 +589,13 @@ int main() {
 
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    poolInfo.queueFamilyIndex = deviceData.indices.graphicsFamily.value();
     poolInfo.flags = 0; // optional
     
     // Create the command pool
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) 
-            != VK_SUCCESS) {
+    if (vkCreateCommandPool(deviceData.logicalDevice, &poolInfo, nullptr, 
+        &commandPool) != VK_SUCCESS) {
+        
         PONG_FATAL_ERROR("Failed to create command pool!");
     }
 
@@ -613,7 +616,7 @@ int main() {
     VkDeviceMemory vertexBufferMemory{};
 
     // Create the vertex buffer and allocate the memory for it
-    if (VulkanUtils::createVertexBuffer(device, physicalDevice, &vertexBufferMemory,
+    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBufferMemory,
         vertices, vertexCount, &vertexBuffer) != VK_SUCCESS) {
     
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
@@ -631,10 +634,11 @@ int main() {
     // It should be noted that command buffers are automatically cleaned up when
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
-    if (VulkanUtils::createCommandBuffers(device, commandBuffers.data(), 
-            &graphicsPipeline, &swapchain, swapchainFramebuffers.data(), 
-            commandPool, vertexBuffer, vertexCount) != VK_SUCCESS) {
-
+    if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
+        commandBuffers.data(), &graphicsPipeline, &swapchain, 
+        swapchainFramebuffers.data(), commandPool, vertexBuffer, vertexCount) 
+        != VK_SUCCESS) {
+        PONG_FATAL_ERROR("Failed to create command buffers!");
     }
     // --------------------- SYNC OBJECT CREATION -------------------------
     
@@ -687,13 +691,14 @@ int main() {
     // Now we simply create both semaphores, making sure that both succeed before we 
     // move on.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) 
-            != VK_SUCCESS 
+        if (vkCreateSemaphore(deviceData.logicalDevice, &semaphoreInfo, nullptr, 
+            &imageAvailableSemaphores[i]) != VK_SUCCESS 
             || 
-            vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i])
-            != VK_SUCCESS 
+            vkCreateSemaphore(deviceData.logicalDevice, &semaphoreInfo, nullptr, 
+            &renderFinishedSemaphores[i]) != VK_SUCCESS 
             ||
-            vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+            vkCreateFence(deviceData.logicalDevice, &fenceInfo, nullptr, 
+            &inFlightFences[i]) != VK_SUCCESS) {
 
             PONG_FATAL_ERROR("Failed to create synchronisation objects for frame!");
         }
@@ -713,7 +718,8 @@ int main() {
         // waiting for all fences to be signalled before moving on. The last 
         // parameter takes a timeout period which we set really high (effectively
         // making it null)
-        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(deviceData.logicalDevice, 1, 
+            &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         // In each frame of the main loop, we'll need to perform the following
         // operations:
@@ -726,9 +732,9 @@ int main() {
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
-        VkResult result = vkAcquireNextImageKHR(device, swapchain.swapchain, 
-            UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, 
-            &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(deviceData.logicalDevice, 
+            swapchain.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], 
+            VK_NULL_HANDLE, &imageIndex);
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -768,7 +774,8 @@ int main() {
             // Wait for the fence to signal that it's available for usage. This 
             // will now ensure that there are no more than 2 frames in use, and 
             // that these frames are not accidentally using the same image!
-            vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+            vkWaitForFences(deviceData.logicalDevice, 1, &imagesInFlight[imageIndex], 
+                VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
@@ -798,7 +805,7 @@ int main() {
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // We need to reset the fence to an unsignalled state before moving on.
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
+        vkResetFences(deviceData.logicalDevice, 1, &inFlightFences[currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
         if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) 
@@ -863,27 +870,27 @@ int main() {
 
     // Since our image drawing is asynchronous, we need to make sure that
     // our resources aren't in use when trying to clean them up:
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(deviceData.logicalDevice);
     
     // --------------------------- CLEANUP ------------------------------
     
-    VulkanUtils::cleanupSwapchain(device, &swapchain, &graphicsPipeline, 
+    VulkanUtils::cleanupSwapchain(deviceData.logicalDevice, &swapchain, &graphicsPipeline, 
         commandPool, swapchainFramebuffers.data(), commandBuffers.data());
 
     // Cleans up the memory buffer 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
+    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer, nullptr);
 
     // Frees the allocated vertex buffer memory 
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    vkFreeMemory(deviceData.logicalDevice, vertexBufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(device, inFlightFences[i], nullptr);
+        vkDestroySemaphore(deviceData.logicalDevice, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(deviceData.logicalDevice, imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(deviceData.logicalDevice, inFlightFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyCommandPool(deviceData.logicalDevice, commandPool, nullptr);
 
     // Cleaning up memory
     if(enableValidationLayers) {
@@ -891,10 +898,10 @@ int main() {
     }
 
     // Destroy window surface
-    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroySurfaceKHR(instance, deviceData.surface, nullptr);
 
     // Destroy logical device
-    vkDestroyDevice(device, nullptr);
+    vkDestroyDevice(deviceData.logicalDevice, nullptr);
 
     // Vulkan cleanup
     vkDestroyInstance(instance, nullptr);

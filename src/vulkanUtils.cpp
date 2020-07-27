@@ -891,7 +891,7 @@ namespace VulkanUtils {
     }
 
     // Handles the creation of the triangle vertex buffer 
-    VkResult createVertexBuffer(VkDevice device, VkPhysicalDevice physicalDevice, 
+    VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
         VkDeviceMemory* vertexMemory, const VertexBuffer::Vertex* vertices, 
         const uint32_t vertexCount, VkBuffer* vertexBuffer) {
 
@@ -907,7 +907,8 @@ namespace VulkanUtils {
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         // Create the buffer using the create object we specified before
-        if ((vkCreateBuffer(device, &bufferInfo, nullptr, vertexBuffer))!= VK_SUCCESS) {
+        if ((vkCreateBuffer(deviceData->logicalDevice, &bufferInfo, nullptr, 
+            vertexBuffer))!= VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
@@ -915,7 +916,8 @@ namespace VulkanUtils {
 
         // First we need to get the memory requirements for the buffer
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(device, *vertexBuffer, &memRequirements);
+        vkGetBufferMemoryRequirements(deviceData->logicalDevice, *vertexBuffer, 
+            &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
 
@@ -924,8 +926,9 @@ namespace VulkanUtils {
         
         // Search for our memory requirements and check if we can map this memory from
         // our CPU to the GPU.
-        if (!findMemoryType(physicalDevice, &memoryType, memRequirements.memoryTypeBits, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+        if (!findMemoryType(deviceData->physicalDevice, &memoryType, 
+            memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
             
             return VK_ERROR_INITIALIZATION_FAILED;
         }
@@ -936,23 +939,26 @@ namespace VulkanUtils {
         allocInfo.memoryTypeIndex = memoryType;
 
         // Now allocate the memory
-        if (vkAllocateMemory(device, &allocInfo, nullptr, vertexMemory) != VK_SUCCESS) {
+        if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, 
+            vertexMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         // Now we associate the buffer with our memory
-        vkBindBufferMemory(device, *vertexBuffer, *vertexMemory, 0);
+        vkBindBufferMemory(deviceData->logicalDevice, *vertexBuffer, 
+            *vertexMemory, 0);
 
         // Now we need to fill the vertex buffer:
 
         void* data;
         // Lets us access a region in memory by specifying an offset and size. 
-        vkMapMemory(device, *vertexMemory, 0, bufferInfo.size, 0, &data);
+        vkMapMemory(deviceData->logicalDevice, *vertexMemory, 0, 
+            bufferInfo.size, 0, &data);
         // Copy the memory from our vertex array into our mapped memory. 
         memcpy(data, vertices, (size_t)bufferInfo.size);
         // Now unmap the memory
-        vkUnmapMemory(device, *vertexMemory);
+        vkUnmapMemory(deviceData->logicalDevice, *vertexMemory);
 
         return VK_SUCCESS;
     }

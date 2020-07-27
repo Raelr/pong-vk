@@ -118,8 +118,7 @@ namespace VulkanUtils {
     );
 
     VkResult createVertexBuffer(
-        VkDevice device, 
-        VkPhysicalDevice physicalDevice,
+        VulkanDeviceData* deviceData,
         VkDeviceMemory* vertexMemory, 
         const VertexBuffer::Vertex* vertices,
         const uint32_t vertexCount, 
