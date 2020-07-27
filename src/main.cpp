@@ -331,25 +331,28 @@ int main() {
         }
     }
 
+    // ----------------- VULKAN DEVICE INSTANTIATION --------------------
+    
+    // Create a struct to store Vulkan device information     
+    VulkanUtils::VulkanDeviceData deviceData;
+
     // --------------- WINDOW SYSTEM INTEGRATION SETUP ------------------
 
     // Vulkan doesn't handle integrating with window systems automatically. We need
     // to manually set this up wth our windowing system (which is GLFW).
 
-    // Create a surface extension object.
-    VkSurfaceKHR surface;
-
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+    if (glfwCreateWindowSurface(instance, window, nullptr, 
+        &deviceData.surface) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create window surface!");
     }
 
     // ------------------- PHYSICAL DEVICE SETUP ------------------------
+    
+    // Set the phsyical device to null to start.
+    deviceData.physicalDevice = VK_NULL_HANDLE;
 
     // Vulkan requires us to specify the device that we'll be using for our rendering. 
     // Generally this means the GPUs that are available to us. 
-
-    // The device struct - used to hold the physical device data.
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     // Following a similar pattern as before - we need to query for the number of supported 
     // devices and get the actual counts.
@@ -376,7 +379,7 @@ int main() {
         // to execute commands. 
         
         VulkanUtils::QueueFamilyIndices indices = 
-                VulkanUtils::findQueueFamilies(device, surface);
+                VulkanUtils::findQueueFamilies(device, deviceData.surface);
 
         // Now we need to check whether our physical device supports drawing images to the screen.
 
@@ -405,7 +408,7 @@ int main() {
         if (extensionsSupported) {
             // Get the swapchain details
             VulkanUtils::SwapchainSupportDetails supportDetails = 
-                    VulkanUtils::querySwapchainSupport(device, surface);
+                    VulkanUtils::querySwapchainSupport(device, deviceData.surface);
             // Make sure that we have at least one supported format and one supported presentation mode.
             swapChainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
         }
@@ -422,14 +425,14 @@ int main() {
         // use it (at least for now).
         // TODO: Add some sort of function to get a graphics card that's most suitable for us.
         if (is_supported) {
-            physicalDevice = device;
+            deviceData.physicalDevice = device;
             break;
         }
     }
 
     // Finally, we just need to make sure that an actual valid device was returned to us from 
     // our search.
-    if (physicalDevice == VK_NULL_HANDLE) {
+    if (deviceData.physicalDevice == VK_NULL_HANDLE) {
         PONG_FATAL_ERROR("Failed to find a suitable GPU for Vulkan!");
     }
 
@@ -439,18 +442,18 @@ int main() {
     // A logical device interfaces with the physical device and is used to actually execute
     // commands to the hardware. 
 
-    // We start by creating a device.
-    VkDevice device;
-
     // Get the queue families from the physical device that we got previously. 
-    VulkanUtils::QueueFamilyIndices indices = 
-            VulkanUtils::findQueueFamilies(physicalDevice, surface);
+    deviceData.indices = 
+            VulkanUtils::findQueueFamilies(deviceData.physicalDevice, 
+            deviceData.surface);
 
     std::vector<VkDeviceQueueCreateInfo> createInfos;
     // Create a set so we can store queue families by their unique index (stops us from 
     // using the same index twice.)
     std::set<uint32_t> uniqueFamilies = {
-        indices.graphicsFamily.value(), indices.presentFamily.value()};
+        deviceData.indices.graphicsFamily.value(), 
+        deviceData.indices.presentFamily.value()
+    };
 
     // Set a priority for these queues - for now we'll set to maximum.
     float priority = 1.0f;
@@ -479,7 +482,8 @@ int main() {
     logicalDeviceInfo.ppEnabledExtensionNames = deviceExtensions;
 
     // Now we create the logical device using the data we've accumulated thus far. 
-    if (vkCreateDevice(physicalDevice, &logicalDeviceInfo, nullptr, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(deviceData.physicalDevice, &logicalDeviceInfo, 
+        nullptr, &deviceData.logicalDevice) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create logical device!");
     }
 
@@ -492,9 +496,11 @@ int main() {
     VkQueue presentQueue;
 
     // Create the queue using the struct and logical device we created eariler.
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(deviceData.logicalDevice, 
+        deviceData.indices.graphicsFamily.value(), 0, &graphicsQueue);
     // Create the presentation queue using the struct.
-    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+    vkGetDeviceQueue(deviceData.logicalDevice, 
+        deviceData.indices.presentFamily.value(), 0, &presentQueue);
 
     // --------------------- SWAP CHAIN CREATION ------------------------
 
@@ -508,9 +514,9 @@ int main() {
 
     // Create the swapchain (should initialise both the swapchain and image
     // views). See vulkanUtils.cpp for implementation details.
-    if (VulkanUtils::createSwapchain(&swapchain, physicalDevice, device,
-            surface, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 
-            indices) != VK_SUCCESS) {
+    if (VulkanUtils::createSwapchain(&swapchain, &deviceData, 
+        static_cast<uint32_t>(width), static_cast<uint32_t>(height)) 
+        != VK_SUCCESS) {
 
        PONG_FATAL_ERROR("Failed to create swapchain!");
     }
@@ -521,8 +527,9 @@ int main() {
     
     // In Vulkan, a render pass represents all information that our 
     // framebuffers will need to process our images.
-    if (VulkanUtils::createRenderPass(device, swapchain.swapchainFormat, 
-            &graphicsPipeline) != VK_SUCCESS) {
+    if (VulkanUtils::createRenderPass(deviceData.logicalDevice, 
+        swapchain.swapchainFormat, &graphicsPipeline) != VK_SUCCESS) {
+
         PONG_FATAL_ERROR("Failed to create render pass!");
     }
 
@@ -534,7 +541,7 @@ int main() {
     // that the pipeline can be very well optimised (but will also require
     // a complete rewrite if you need anything different).
     
-    if (VulkanUtils::createGraphicsPipeline(device, &graphicsPipeline, 
+    if (VulkanUtils::createGraphicsPipeline(device.logicalDevice, &graphicsPipeline, 
             &swapchain) != VK_SUCCESS) {
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
 

@@ -90,17 +90,17 @@ namespace VulkanUtils {
     }
     
     // Handles the creation and storage of swapchain data. 
-    VkResult createSwapchain(SwapchainData* data,
-        VkPhysicalDevice physicalDevice,
-        VkDevice device,
-        VkSurfaceKHR surface, const uint32_t windowWidth, 
-        const uint32_t windowHeight,
-        QueueFamilyIndices indices
+    VkResult createSwapchain(
+        SwapchainData* data,
+        VulkanDeviceData* deviceData, 
+        const uint32_t windowWidth, 
+        const uint32_t windowHeight
     ) {
 
         // Start by getting the supported formats for the swapchain
         SwapchainSupportDetails supportDetails = 
-                querySwapchainSupport(physicalDevice, surface);
+            querySwapchainSupport(deviceData->physicalDevice, 
+            deviceData->surface);
 
         // We want to find three settings for our swapchain:
         // 1. We want to find the surface format (color depth).
@@ -194,7 +194,7 @@ namespace VulkanUtils {
         // configuration.
         VkSwapchainCreateInfoKHR swapchainCreateInfo {};
         swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        swapchainCreateInfo.surface = surface;
+        swapchainCreateInfo.surface = deviceData->surface;
         swapchainCreateInfo.minImageCount = imageCount;
         swapchainCreateInfo.imageFormat = chosenFormat.format;
         swapchainCreateInfo.imageColorSpace = chosenFormat.colorSpace;
@@ -202,10 +202,12 @@ namespace VulkanUtils {
         swapchainCreateInfo.imageArrayLayers = 1;
         swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), 
-                indices.presentFamily.value()};
+        uint32_t queueFamilyIndices[] = {
+            deviceData->indices.graphicsFamily.value(), 
+            deviceData->indices.presentFamily.value()
+        };
         
-        if (indices.graphicsFamily != indices.presentFamily) {
+        if (deviceData->indices.graphicsFamily != deviceData->indices.presentFamily) {
             // If the present and graphics families are not the same then we 
             // specify that images can be owned by multiple queues at once.
             swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -238,19 +240,21 @@ namespace VulkanUtils {
         // With all the config done, we can finally make the swapchain.
         VkSwapchainKHR swapchain;
 
-        if (vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, 
-                &swapchain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(deviceData->logicalDevice, &swapchainCreateInfo, 
+            nullptr, &swapchain) != VK_SUCCESS) {
+
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         // Get the current images in the swapchain and store them for later 
         // use. 
-        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(deviceData->logicalDevice, swapchain, 
+            &imageCount, nullptr);
 
         VkImage* swapchainImages = new VkImage[imageCount];
 
-        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, 
-                swapchainImages);
+        vkGetSwapchainImagesKHR(deviceData->logicalDevice, swapchain, &imageCount, 
+            swapchainImages);
 
         // populate the swapchain data struct.
         data->swapchain = swapchain;
@@ -260,7 +264,7 @@ namespace VulkanUtils {
         data->pImages = swapchainImages;
         
         // Now we can create image views for use later on in the program.
-        if (createImageViews(device, data) != VK_SUCCESS) {
+        if (createImageViews(deviceData->logicalDevice, data) != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 

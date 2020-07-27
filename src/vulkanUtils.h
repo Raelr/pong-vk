@@ -37,15 +37,22 @@ namespace VulkanUtils {
         VkPipelineLayout pipelineLayout;
     };
 
+    struct VulkanDeviceData {
+        VkPhysicalDevice physicalDevice;
+        VkDevice logicalDevice;
+        VkSurfaceKHR surface;
+        QueueFamilyIndices indices;
+    };
+
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
-    VkResult createSwapchain(SwapchainData* data,
-            VkPhysicalDevice physicalDevice,
-            VkDevice device,
-            VkSurfaceKHR surface, const uint32_t windowHeight,
-            const uint32_t windowWidth,
-            QueueFamilyIndices indices);
+    VkResult createSwapchain (
+        SwapchainData* data,
+        VulkanDeviceData* deviceData, 
+        const uint32_t windowHeight,
+        const uint32_t windowWidth
+    );
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
         surface);
