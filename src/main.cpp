@@ -747,21 +747,19 @@ int main() {
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
-                device, 
-                physicalDevice, 
+                &deviceData,
                 &swapchain,
-                surface, 
                 static_cast<uint32_t>(width), 
                 static_cast<uint32_t>(height), 
-                indices, 
                 &graphicsPipeline, 
                 commandPool, 
                 swapchainFramebuffers.data(), 
                 vertexBuffer,
                 vertexCount,
-                commandBuffers.data());
-                
-                pongData.framebufferResized = false;
+                commandBuffers.data()
+            );
+            
+            pongData.framebufferResized = false;
             // Go to the next iteration of the loop
             continue;
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -843,13 +841,10 @@ int main() {
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
             VulkanUtils::recreateSwapchain(
-                device,
-                physicalDevice,
+                &deviceData,
                 &swapchain,
-                surface,
                 static_cast<uint32_t>(width),
                 static_cast<uint32_t>(height),
-                indices,
                 &graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),
@@ -857,7 +852,7 @@ int main() {
                 vertexCount,
                 commandBuffers.data());
 
-                pongData.framebufferResized = false;
+            pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
 
             PONG_FATAL_ERROR("Failed to present swapchain image!");

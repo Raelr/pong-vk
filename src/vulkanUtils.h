@@ -93,13 +93,10 @@ namespace VulkanUtils {
     );
 
     VkResult recreateSwapchain(
-        VkDevice device,
-        VkPhysicalDevice physicalDevice,
+        VulkanDeviceData* deviceData,
         SwapchainData* pSwapchain,
-        VkSurfaceKHR surface,
         uint32_t window_width,
         uint32_t window_height,
-        QueueFamilyIndices indices,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,

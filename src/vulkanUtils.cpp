@@ -771,13 +771,10 @@ namespace VulkanUtils {
     }
 
     VkResult recreateSwapchain(
-        VkDevice device,
-        VkPhysicalDevice physicalDevice,
+        VulkanDeviceData* deviceData,
         SwapchainData* pSwapchain,
-        VkSurfaceKHR surface,
         uint32_t window_width,
         uint32_t window_height,
-        QueueFamilyIndices indices,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -785,37 +782,37 @@ namespace VulkanUtils {
         uint32_t vertexCount,
         VkCommandBuffer* pCommandbuffers) {
 
-        vkDeviceWaitIdle(device);
+        vkDeviceWaitIdle(deviceData->logicalDevice);
 
-        cleanupSwapchain(device, pSwapchain, pGraphicsPipeline, commandPool, 
-            pFramebuffers, pCommandbuffers);
+        cleanupSwapchain(deviceData->logicalDevice, pSwapchain, pGraphicsPipeline, 
+            commandPool, pFramebuffers, pCommandbuffers);
         
         // Re-populate the swapchain
-        if (createSwapchain(pSwapchain, physicalDevice, device,
-            surface, window_height, window_width, indices) != VK_SUCCESS) {
+        if (createSwapchain(pSwapchain, deviceData, window_height, window_width) 
+            != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
         // Re-create our render pass
-        if (createRenderPass(device, pSwapchain->swapchainFormat,
+        if (createRenderPass(deviceData->logicalDevice, pSwapchain->swapchainFormat,
             pGraphicsPipeline) != VK_SUCCESS) {
             
             return VK_ERROR_INITIALIZATION_FAILED;
         }
         // Re-create our graphics pipeline
-        if (createGraphicsPipeline(device, pGraphicsPipeline,
+        if (createGraphicsPipeline(deviceData->logicalDevice, pGraphicsPipeline,
             pSwapchain) != VK_SUCCESS) {
          
             return VK_ERROR_INITIALIZATION_FAILED;
         }
         // Re-create our framebuffers
-        if (createFramebuffer(device, pFramebuffers,
+        if (createFramebuffer(deviceData->logicalDevice, pFramebuffers,
             pSwapchain, pGraphicsPipeline) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
         // Re-create command buffers
-        if (createCommandBuffers(device, pCommandbuffers,
+        if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
             vertexBuffer, vertexCount) 
             != VK_SUCCESS) {
@@ -823,9 +820,7 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-
         return VK_SUCCESS;
-
     }
     
     // Simple method for cleaning up all items relating to our swapchain
