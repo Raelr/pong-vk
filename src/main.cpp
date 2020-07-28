@@ -508,15 +508,12 @@ int main() {
     // stores all our swapchain data.
     VulkanUtils::SwapchainData swapchain;
 
-    int width, height;
-
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window, &deviceData.framebufferWidth, 
+        &deviceData.framebufferHeight);
 
     // Create the swapchain (should initialise both the swapchain and image
     // views). See vulkanUtils.cpp for implementation details.
-    if (VulkanUtils::createSwapchain(&swapchain, &deviceData, 
-        static_cast<uint32_t>(width), static_cast<uint32_t>(height)) 
-        != VK_SUCCESS) {
+    if (VulkanUtils::createSwapchain(&swapchain, &deviceData) != VK_SUCCESS) {
 
        PONG_FATAL_ERROR("Failed to create swapchain!");
     }
@@ -638,6 +635,7 @@ int main() {
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
         swapchainFramebuffers.data(), commandPool, vertexBuffer, vertexCount) 
         != VK_SUCCESS) {
+
         PONG_FATAL_ERROR("Failed to create command buffers!");
     }
     // --------------------- SYNC OBJECT CREATION -------------------------
@@ -743,14 +741,13 @@ int main() {
             // swapchains for re-usability.
             // TODO: Move all swapchain items into a standalone struct for 
             // storage
-            handleMinimisation(window, &width, &height);
+            handleMinimisation(window, &deviceData.framebufferWidth, 
+                &deviceData.framebufferHeight);
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
                 &deviceData,
                 &swapchain,
-                static_cast<uint32_t>(width), 
-                static_cast<uint32_t>(height), 
                 &graphicsPipeline, 
                 commandPool, 
                 swapchainFramebuffers.data(), 
@@ -836,15 +833,14 @@ int main() {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
             || pongData.framebufferResized) {
             
-            handleMinimisation(window,&width, &height);
+            handleMinimisation(window,&deviceData.framebufferWidth, 
+                &deviceData.framebufferHeight);
             
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
             VulkanUtils::recreateSwapchain(
                 &deviceData,
                 &swapchain,
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height),
                 &graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),

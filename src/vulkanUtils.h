@@ -42,6 +42,8 @@ namespace VulkanUtils {
         VkDevice logicalDevice;
         VkSurfaceKHR surface;
         QueueFamilyIndices indices;
+        int framebufferWidth;
+        int framebufferHeight;
     };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
@@ -49,9 +51,7 @@ namespace VulkanUtils {
 
     VkResult createSwapchain (
         SwapchainData* data,
-        VulkanDeviceData* deviceData, 
-        const uint32_t windowHeight,
-        const uint32_t windowWidth
+        VulkanDeviceData* deviceData 
     );
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
@@ -95,8 +95,6 @@ namespace VulkanUtils {
     VkResult recreateSwapchain(
         VulkanDeviceData* deviceData,
         SwapchainData* pSwapchain,
-        uint32_t window_width,
-        uint32_t window_height,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,

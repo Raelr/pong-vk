@@ -92,9 +92,7 @@ namespace VulkanUtils {
     // Handles the creation and storage of swapchain data. 
     VkResult createSwapchain(
         SwapchainData* data,
-        VulkanDeviceData* deviceData, 
-        const uint32_t windowWidth, 
-        const uint32_t windowHeight
+        VulkanDeviceData* deviceData 
     ) {
 
         // Start by getting the supported formats for the swapchain
@@ -153,7 +151,10 @@ namespace VulkanUtils {
 
         // Set the swap extent, or the resolution of the images being processed
         // by the swapchain.
-        VkExtent2D chosenExtent = {windowWidth, windowHeight};
+        VkExtent2D chosenExtent = {
+            static_cast<uint32_t>(deviceData->framebufferWidth), 
+            static_cast<uint32_t>(deviceData->framebufferHeight)
+        };
 
         // Make sure the width is not the maximum value of a 32-bit unsigned
         // integer. 
@@ -773,8 +774,6 @@ namespace VulkanUtils {
     VkResult recreateSwapchain(
         VulkanDeviceData* deviceData,
         SwapchainData* pSwapchain,
-        uint32_t window_width,
-        uint32_t window_height,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -788,8 +787,7 @@ namespace VulkanUtils {
             commandPool, pFramebuffers, pCommandbuffers);
         
         // Re-populate the swapchain
-        if (createSwapchain(pSwapchain, deviceData, window_height, window_width) 
-            != VK_SUCCESS) {
+        if (createSwapchain(pSwapchain, deviceData) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
