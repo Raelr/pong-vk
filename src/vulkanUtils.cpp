@@ -680,8 +680,8 @@ namespace VulkanUtils {
     // Command buffer creation method
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
-        VkFramebuffer* pFramebuffers, VkCommandPool commandPool, VkBuffer vertexBuffer,
-        uint32_t vertexCount) {
+        VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
+        VertexBuffer::VertexBuffer* vertexBuffer) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -745,7 +745,7 @@ namespace VulkanUtils {
            vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
             
            // Specify a list of vertex buffers that need to be recorded by the command buffer
-           VkBuffer vertexBuffers[] = { vertexBuffer };
+           VkBuffer vertexBuffers[] = { vertexBuffer->vertexBuffer };
            VkDeviceSize offsets[] = {0};
 
            // Bind the vertex buffers to the command buffer being recorded.
@@ -757,7 +757,7 @@ namespace VulkanUtils {
            // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value·
            // of gl_vertexIndex.
            // 5. firstInstance - Used as an offset for instanced rendering.
-           vkCmdDraw(buffers[i], vertexCount, 1, 0, 0);
+           vkCmdDraw(buffers[i], vertexBuffer->vertexCount, 1, 0, 0);
   
            // Now we can end the render pass:
            vkCmdEndRenderPass(buffers[i]);
@@ -777,9 +777,9 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VkBuffer vertexBuffer,
-        uint32_t vertexCount,
-        VkCommandBuffer* pCommandbuffers) {
+        VertexBuffer::VertexBuffer* vertexBuffer,
+        VkCommandBuffer* pCommandbuffers
+    ) {
 
         vkDeviceWaitIdle(deviceData->logicalDevice);
 
@@ -812,7 +812,7 @@ namespace VulkanUtils {
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer, vertexCount) 
+            vertexBuffer) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -885,14 +885,14 @@ namespace VulkanUtils {
 
     // Handles the creation of the triangle vertex buffer 
     VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
-        VkDeviceMemory* vertexMemory, const VertexBuffer::Vertex* vertices, 
-        const uint32_t vertexCount, VkBuffer* vertexBuffer) {
+        VertexBuffer::VertexBuffer* vertexBuffer) {
 
         // We need to start by creating a configuration for our vertex buffer.
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         // We need to specify the size of the buffer in bytes. 
-        bufferInfo.size = sizeof(vertices[0]) * vertexCount;
+        bufferInfo.size = sizeof(vertexBuffer->vertices[0]) 
+            * vertexBuffer->vertexCount;
         // Specify that this is a vertex buffer
         bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         // Specifies that this will only be used by a single queue - the
@@ -901,7 +901,7 @@ namespace VulkanUtils {
 
         // Create the buffer using the create object we specified before
         if ((vkCreateBuffer(deviceData->logicalDevice, &bufferInfo, nullptr, 
-            vertexBuffer))!= VK_SUCCESS) {
+            &vertexBuffer->vertexBuffer))!= VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
@@ -909,7 +909,7 @@ namespace VulkanUtils {
 
         // First we need to get the memory requirements for the buffer
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(deviceData->logicalDevice, *vertexBuffer, 
+        vkGetBufferMemoryRequirements(deviceData->logicalDevice, vertexBuffer->vertexBuffer, 
             &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
@@ -933,25 +933,25 @@ namespace VulkanUtils {
 
         // Now allocate the memory
         if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, 
-            vertexMemory) != VK_SUCCESS) {
+            &vertexBuffer->vertexBufferMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         // Now we associate the buffer with our memory
-        vkBindBufferMemory(deviceData->logicalDevice, *vertexBuffer, 
-            *vertexMemory, 0);
+        vkBindBufferMemory(deviceData->logicalDevice, vertexBuffer->vertexBuffer, 
+            vertexBuffer->vertexBufferMemory, 0);
 
         // Now we need to fill the vertex buffer:
 
         void* data;
         // Lets us access a region in memory by specifying an offset and size. 
-        vkMapMemory(deviceData->logicalDevice, *vertexMemory, 0, 
+        vkMapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory, 0, 
             bufferInfo.size, 0, &data);
         // Copy the memory from our vertex array into our mapped memory. 
-        memcpy(data, vertices, (size_t)bufferInfo.size);
+        memcpy(data, vertexBuffer->vertices, (size_t)bufferInfo.size);
         // Now unmap the memory
-        vkUnmapMemory(deviceData->logicalDevice, *vertexMemory);
+        vkUnmapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory);
 
         return VK_SUCCESS;
     }

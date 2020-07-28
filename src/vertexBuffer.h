@@ -16,6 +16,13 @@ namespace VertexBuffer {
 		glm::vec3 color;
 	};
 
+    struct VertexBuffer {
+        uint32_t vertexCount;
+        VkBuffer vertexBuffer;
+        VkDeviceMemory vertexBufferMemory;
+        Vertex* vertices;
+    };
+
 	// Returns vertex binding information. This information specifies the rate
 	// with which data is loaded from memory throughout the vertices. 
 	VkVertexInputBindingDescription getBindingDescription();

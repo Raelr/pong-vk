@@ -598,23 +598,25 @@ int main() {
 
     // --------------------- VERTEX DEFINITION --------------------------
 
+    VertexBuffer::VertexBuffer vertexBuffer;
     // Define a vertex buffer for configuring vertex data.
+    vertexBuffer.vertexCount = 3;
 
-    const uint32_t vertexCount = 3;
+    {
+        // Define all the vertices of our triangle and the colors for every vertex
+        VertexBuffer::Vertex vertices[] = {
+            // Positions     // Colors
+            { {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
+            { {0.5f, 0.5f},  {0.0f, 1.0f, 0.0f} },
+            { {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
+        };
 
-    // Define all the vertices of our triangle and the colors for every vertex
-    const VertexBuffer::Vertex vertices[] = {
-        { {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
-        { {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} },
-        { {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
-    };
-
-    VkBuffer vertexBuffer{};
-    VkDeviceMemory vertexBufferMemory{};
+        vertexBuffer.vertices = vertices;
+    }
 
     // Create the vertex buffer and allocate the memory for it
-    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBufferMemory,
-        vertices, vertexCount, &vertexBuffer) != VK_SUCCESS) {
+    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBuffer) 
+        != VK_SUCCESS) {
     
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
     }
@@ -633,7 +635,7 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
-        swapchainFramebuffers.data(), commandPool, vertexBuffer, vertexCount) 
+        swapchainFramebuffers.data(), commandPool, &vertexBuffer) 
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -751,8 +753,7 @@ int main() {
                 &graphicsPipeline, 
                 commandPool, 
                 swapchainFramebuffers.data(), 
-                vertexBuffer,
-                vertexCount,
+                &vertexBuffer,
                 commandBuffers.data()
             );
             
@@ -844,8 +845,7 @@ int main() {
                 &graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),
-                vertexBuffer,
-                vertexCount,
+                &vertexBuffer,
                 commandBuffers.data());
 
             pongData.framebufferResized = false;
@@ -869,10 +869,10 @@ int main() {
         commandPool, swapchainFramebuffers.data(), commandBuffers.data());
 
     // Cleans up the memory buffer 
-    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer, nullptr);
+    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer.vertexBuffer, nullptr);
 
     // Frees the allocated vertex buffer memory 
-    vkFreeMemory(deviceData.logicalDevice, vertexBufferMemory, nullptr);
+    vkFreeMemory(deviceData.logicalDevice, vertexBuffer.vertexBufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

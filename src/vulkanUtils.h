@@ -88,8 +88,7 @@ namespace VulkanUtils {
         SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool,
-        VkBuffer vertexBuffer,
-        uint32_t vertexCount
+        VertexBuffer::VertexBuffer*
     );
 
     VkResult recreateSwapchain(
@@ -98,8 +97,7 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VkBuffer vertexBuffer,
-        uint32_t vertexCount,
+        VertexBuffer::VertexBuffer* vertexBuffer,
         VkCommandBuffer* pCommandbuffers
     );
 
@@ -114,10 +112,7 @@ namespace VulkanUtils {
 
     VkResult createVertexBuffer(
         VulkanDeviceData* deviceData,
-        VkDeviceMemory* vertexMemory, 
-        const VertexBuffer::Vertex* vertices,
-        const uint32_t vertexCount, 
-        VkBuffer* vertexBuffer
+        VertexBuffer::VertexBuffer*
     );
 
     bool findMemoryType(
