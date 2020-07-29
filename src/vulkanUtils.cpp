@@ -885,14 +885,18 @@ namespace VulkanUtils {
 
     // Handles the creation of the triangle vertex buffer 
     VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
-        VertexBuffer::VertexBuffer* vertexBuffer) {
+        VertexBuffer::VertexBuffer* vertexBuffer, VkCommandPool commandPool) {
 
         VkDeviceSize bufferSize = sizeof(vertexBuffer->vertices[0]) 
             * vertexBuffer->vertexCount;
+        
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingMemory;
 
-        if (createBuffer(deviceData, vertexBuffer, bufferSize, 
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
-            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != VK_SUCCESS) {
+        if (createBuffer(deviceData, bufferSize, 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
+            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, 
+            stagingMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
@@ -900,19 +904,33 @@ namespace VulkanUtils {
         // Now we need to fill the vertex buffer:
         void* data;
         // Lets us access a region in memory by specifying an offset and size. 
-        vkMapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory, 0, 
-            bufferSize, 0, &data);
+        vkMapMemory(deviceData->logicalDevice, stagingMemory, 0, bufferSize, 
+            0, &data);
         // Copy the memory from our vertex array into our mapped memory. 
         memcpy(data, vertexBuffer->vertices, (size_t)bufferSize);
         // Now unmap the memory
-        vkUnmapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory);
+        vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
+
+        if (createBuffer(deviceData, bufferSize,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer->vertexBuffer, 
+            vertexBuffer->vertexBufferMemory) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice, 
+            stagingBuffer, vertexBuffer->vertexBuffer, bufferSize, commandPool);
+
+        vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
+        vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
 
         return VK_SUCCESS;
     }
 
-    VkResult createBuffer(VulkanDeviceData* deviceData, 
-        VertexBuffer::VertexBuffer* vertexBuffer, VkDeviceSize size, 
-        VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+    VkResult createBuffer(VulkanDeviceData* deviceData,  VkDeviceSize size, 
+        VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, 
+        VkDeviceMemory& bufferMemory) {
 
         // We need to start by creating a configuration for our vertex buffer.
         VkBufferCreateInfo bufferInfo{};
@@ -927,7 +945,7 @@ namespace VulkanUtils {
 
         // Create the buffer using the create object we specified before
         if ((vkCreateBuffer(deviceData->logicalDevice, &bufferInfo, nullptr, 
-            &vertexBuffer->vertexBuffer))!= VK_SUCCESS) {
+            &buffer))!= VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
@@ -935,7 +953,7 @@ namespace VulkanUtils {
 
         // First we need to get the memory requirements for the buffer
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(deviceData->logicalDevice, vertexBuffer->vertexBuffer, 
+        vkGetBufferMemoryRequirements(deviceData->logicalDevice, buffer, 
             &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
@@ -958,16 +976,52 @@ namespace VulkanUtils {
 
         // Now allocate the memory
         if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, 
-            &vertexBuffer->vertexBufferMemory) != VK_SUCCESS) {
+            &bufferMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         // Now we associate the buffer with our memory
-        vkBindBufferMemory(deviceData->logicalDevice, vertexBuffer->vertexBuffer, 
-            vertexBuffer->vertexBufferMemory, 0);
+        vkBindBufferMemory(deviceData->logicalDevice, buffer, bufferMemory, 0);
 
         return VK_SUCCESS;
+    }
+
+    void copyBuffer(VkQueue submitQueue, VkDevice device,  VkBuffer srcBuffer, 
+        VkBuffer dstBuffer, VkDeviceSize size, VkCommandPool commandPool) {
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = commandPool;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0;
+        copyRegion.dstOffset = 0;
+        copyRegion.size = size;
+        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+        vkEndCommandBuffer(commandBuffer);
+        
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(submitQueue);
+
+        vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
     }
 
     // A method to help us get synchronise the memory requirements of the CPU

@@ -44,6 +44,8 @@ namespace VulkanUtils {
         QueueFamilyIndices indices;
         int framebufferWidth;
         int framebufferHeight;
+        VkQueue graphicsQueue;
+        VkQueue presentQueue;
     };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
@@ -112,15 +114,26 @@ namespace VulkanUtils {
 
     VkResult createVertexBuffer(
         VulkanDeviceData* deviceData,
-        VertexBuffer::VertexBuffer*
+        VertexBuffer::VertexBuffer*,
+        VkCommandPool commandPool
     );
 
     VkResult createBuffer(
         VulkanDeviceData* deviceData,
-        VertexBuffer::VertexBuffer* vertexBuffer, 
         VkDeviceSize size,
         VkBufferUsageFlags usage, 
-        VkMemoryPropertyFlags properties
+        VkMemoryPropertyFlags properties, 
+        VkBuffer& buffer,
+        VkDeviceMemory& bufferMemory
+    );
+
+    void copyBuffer(
+        VkQueue, 
+        VkDevice,
+        VkBuffer, 
+        VkBuffer, 
+        VkDeviceSize, 
+        VkCommandPool
     );
 
     bool findMemoryType(

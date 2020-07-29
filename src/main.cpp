@@ -489,18 +489,12 @@ int main() {
 
     // Now we just need to create the queue which will be used for our commands.
 
-    // Create the queue struct.
-    VkQueue graphicsQueue;
-
-    // Instantiate the presentation queue.
-    VkQueue presentQueue;
-
     // Create the queue using the struct and logical device we created eariler.
     vkGetDeviceQueue(deviceData.logicalDevice, 
-        deviceData.indices.graphicsFamily.value(), 0, &graphicsQueue);
+        deviceData.indices.graphicsFamily.value(), 0, &deviceData.graphicsQueue);
     // Create the presentation queue using the struct.
     vkGetDeviceQueue(deviceData.logicalDevice, 
-        deviceData.indices.presentFamily.value(), 0, &presentQueue);
+        deviceData.indices.presentFamily.value(), 0, &deviceData.presentQueue);
 
     // --------------------- SWAP CHAIN CREATION ------------------------
 
@@ -615,7 +609,7 @@ int main() {
     }
 
     // Create the vertex buffer and allocate the memory for it
-    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBuffer) 
+    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBuffer, commandPool) 
         != VK_SUCCESS) {
     
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
@@ -804,7 +798,7 @@ int main() {
         vkResetFences(deviceData.logicalDevice, 1, &inFlightFences[currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
-        if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) 
+        if (vkQueueSubmit(deviceData.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) 
             != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
@@ -829,7 +823,7 @@ int main() {
         presentInfo.pResults = nullptr; // optional
         
         // Now we submit a request to present an image to the swapchain. 
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        result = vkQueuePresentKHR(deviceData.presentQueue, &presentInfo);
         // Again, we make sure that we're using the best possible swapchain.
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
             || pongData.framebufferResized) {
