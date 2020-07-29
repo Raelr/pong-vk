@@ -887,14 +887,40 @@ namespace VulkanUtils {
     VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
         VertexBuffer::VertexBuffer* vertexBuffer) {
 
+        VkDeviceSize bufferSize = sizeof(vertexBuffer->vertices[0]) 
+            * vertexBuffer->vertexCount;
+
+        if (createBuffer(deviceData, vertexBuffer, bufferSize, 
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
+            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+        
+        // Now we need to fill the vertex buffer:
+        void* data;
+        // Lets us access a region in memory by specifying an offset and size. 
+        vkMapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory, 0, 
+            bufferSize, 0, &data);
+        // Copy the memory from our vertex array into our mapped memory. 
+        memcpy(data, vertexBuffer->vertices, (size_t)bufferSize);
+        // Now unmap the memory
+        vkUnmapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory);
+
+        return VK_SUCCESS;
+    }
+
+    VkResult createBuffer(VulkanDeviceData* deviceData, 
+        VertexBuffer::VertexBuffer* vertexBuffer, VkDeviceSize size, 
+        VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+
         // We need to start by creating a configuration for our vertex buffer.
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         // We need to specify the size of the buffer in bytes. 
-        bufferInfo.size = sizeof(vertexBuffer->vertices[0]) 
-            * vertexBuffer->vertexCount;
+        bufferInfo.size = size;
         // Specify that this is a vertex buffer
-        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        bufferInfo.usage = usage;
         // Specifies that this will only be used by a single queue - the
         // graphics queue.
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -920,8 +946,7 @@ namespace VulkanUtils {
         // Search for our memory requirements and check if we can map this memory from
         // our CPU to the GPU.
         if (!findMemoryType(deviceData->physicalDevice, &memoryType, 
-            memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
+            memRequirements.memoryTypeBits, properties)) {
             
             return VK_ERROR_INITIALIZATION_FAILED;
         }
@@ -941,17 +966,6 @@ namespace VulkanUtils {
         // Now we associate the buffer with our memory
         vkBindBufferMemory(deviceData->logicalDevice, vertexBuffer->vertexBuffer, 
             vertexBuffer->vertexBufferMemory, 0);
-
-        // Now we need to fill the vertex buffer:
-
-        void* data;
-        // Lets us access a region in memory by specifying an offset and size. 
-        vkMapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory, 0, 
-            bufferInfo.size, 0, &data);
-        // Copy the memory from our vertex array into our mapped memory. 
-        memcpy(data, vertexBuffer->vertices, (size_t)bufferInfo.size);
-        // Now unmap the memory
-        vkUnmapMemory(deviceData->logicalDevice, vertexBuffer->vertexBufferMemory);
 
         return VK_SUCCESS;
     }

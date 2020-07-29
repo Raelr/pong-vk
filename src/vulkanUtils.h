@@ -115,6 +115,14 @@ namespace VulkanUtils {
         VertexBuffer::VertexBuffer*
     );
 
+    VkResult createBuffer(
+        VulkanDeviceData* deviceData,
+        VertexBuffer::VertexBuffer* vertexBuffer, 
+        VkDeviceSize size,
+        VkBufferUsageFlags usage, 
+        VkMemoryPropertyFlags properties
+    );
+
     bool findMemoryType(
         VkPhysicalDevice physicalDevice, 
         uint32_t* memoryType,
