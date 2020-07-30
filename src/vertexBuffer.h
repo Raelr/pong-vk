@@ -23,6 +23,14 @@ namespace VertexBuffer {
         Vertex* vertices;
     };
 
+    struct IndexBuffer {
+        
+        uint16_t* indices;
+        uint32_t indexCount;
+        VkBuffer indexBuffer;
+        VkDeviceMemory indexBufferMemory;
+    };
+
 	// Returns vertex binding information. This information specifies the rate
 	// with which data is loaded from memory throughout the vertices. 
 	VkVertexInputBindingDescription getBindingDescription();

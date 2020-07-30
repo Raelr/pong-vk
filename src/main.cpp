@@ -593,26 +593,43 @@ int main() {
     // --------------------- VERTEX DEFINITION --------------------------
 
     VertexBuffer::VertexBuffer vertexBuffer;
+    VertexBuffer::IndexBuffer indexBuffer;
     // Define a vertex buffer for configuring vertex data.
-    vertexBuffer.vertexCount = 3;
+    vertexBuffer.vertexCount = 4;
 
     {
         // Define all the vertices of our triangle and the colors for every vertex
         VertexBuffer::Vertex vertices[] = {
-            // Positions     // Colors
-            { {0.0f, -0.5f}, {1.0f, 1.0f, 1.0f} },
-            { {0.5f, 0.5f},  {0.0f, 1.0f, 0.0f} },
-            { {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
+            // Positions        // Colors
+            { {-0.5f, -0.5f},   {1.0f, 0.0f, 0.0f} },
+            { {0.5f, -0.5f},    {0.0f, 1.0f, 0.0f} },
+            { {0.5f, 0.5f},     {0.0f, 0.0f, 1.0f} },
+            { {-0.5f, 0.5f},    {1.0f, 1.0f, 1.0f} }
         };
 
         vertexBuffer.vertices = vertices;
     }
+
+
+    uint16_t indices[] = {
+        0, 1, 2, 2, 3, 0
+    };
+
+
+    indexBuffer.indexCount = 6;
+    indexBuffer.indices = indices;
 
     // Create the vertex buffer and allocate the memory for it
     if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBuffer, commandPool) 
         != VK_SUCCESS) {
     
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
+    }
+
+    if (VulkanUtils::createIndexBuffer(&deviceData, &indexBuffer, commandPool)
+        != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create index buffer.");
     }
 
     // ------------------ COMMAND BUFFER CREATION -----------------------
@@ -629,7 +646,7 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
-        swapchainFramebuffers.data(), commandPool, &vertexBuffer) 
+        swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer) 
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -748,6 +765,7 @@ int main() {
                 commandPool, 
                 swapchainFramebuffers.data(), 
                 &vertexBuffer,
+                &indexBuffer,
                 commandBuffers.data()
             );
             
@@ -840,6 +858,7 @@ int main() {
                 commandPool,
                 swapchainFramebuffers.data(),
                 &vertexBuffer,
+                &indexBuffer,
                 commandBuffers.data());
 
             pongData.framebufferResized = false;
@@ -867,6 +886,10 @@ int main() {
 
     // Frees the allocated vertex buffer memory 
     vkFreeMemory(deviceData.logicalDevice, vertexBuffer.vertexBufferMemory, nullptr);
+
+    vkDestroyBuffer(deviceData.logicalDevice, indexBuffer.indexBuffer, nullptr);
+
+    vkFreeMemory(deviceData.logicalDevice, indexBuffer.indexBufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

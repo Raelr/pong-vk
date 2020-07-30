@@ -681,7 +681,8 @@ namespace VulkanUtils {
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
         VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
-        VertexBuffer::VertexBuffer* vertexBuffer) {
+        VertexBuffer::VertexBuffer* vertexBuffer, 
+        VertexBuffer::IndexBuffer* indexBuffer) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -750,6 +751,9 @@ namespace VulkanUtils {
 
            // Bind the vertex buffers to the command buffer being recorded.
            vkCmdBindVertexBuffers(buffers[i], 0, 1, vertexBuffers, offsets);
+           
+           vkCmdBindIndexBuffer(buffers[i], indexBuffer->indexBuffer, 0, 
+                VK_INDEX_TYPE_UINT16);
            // Now we can tell Vulkan to draw our triangle. This function has the parameters:
            // 1. the command buffer.
            // 2. The number of vertices - We can do this even without a vertex buffer.
@@ -757,7 +761,8 @@ namespace VulkanUtils {
            // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value·
            // of gl_vertexIndex.
            // 5. firstInstance - Used as an offset for instanced rendering.
-           vkCmdDraw(buffers[i], vertexBuffer->vertexCount, 1, 0, 0);
+
+           vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
   
            // Now we can end the render pass:
            vkCmdEndRenderPass(buffers[i]);
@@ -778,6 +783,7 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VertexBuffer::VertexBuffer* vertexBuffer,
+        VertexBuffer::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers
     ) {
 
@@ -812,7 +818,7 @@ namespace VulkanUtils {
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer) 
+            vertexBuffer, indexBuffer) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -926,6 +932,51 @@ namespace VulkanUtils {
         vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
 
         return VK_SUCCESS;
+    }
+
+    VkResult createIndexBuffer(VulkanDeviceData* deviceData, 
+        VertexBuffer::IndexBuffer* indexBuffer, VkCommandPool commandPool) {
+
+        VkDeviceSize bufferSize = sizeof(indexBuffer->indices[0])
+                * indexBuffer->indexCount;
+  
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingMemory;
+   
+            if (createBuffer(deviceData, bufferSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+                stagingMemory) != VK_SUCCESS) {
+   
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+  
+            // Now we need to fill the vertex buffer:
+            void* data;
+            // Lets us access a region in memory by specifying an offset and size.
+            vkMapMemory(deviceData->logicalDevice, stagingMemory, 0, bufferSize,
+                0, &data);
+            // Copy the memory from our vertex array into our mapped memory.
+            memcpy(data, indexBuffer->indices, (size_t)bufferSize);
+            // Now unmap the memory
+            vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
+   
+            if (createBuffer(deviceData, bufferSize,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer->indexBuffer,
+                indexBuffer->indexBufferMemory) != VK_SUCCESS) {
+   
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+   
+            copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice,
+                stagingBuffer, indexBuffer->indexBuffer, bufferSize, commandPool);
+   
+            vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
+            vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
+   
+            return VK_SUCCESS;
+
     }
 
     VkResult createBuffer(VulkanDeviceData* deviceData,  VkDeviceSize size, 

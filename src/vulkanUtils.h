@@ -90,7 +90,8 @@ namespace VulkanUtils {
         SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool,
-        VertexBuffer::VertexBuffer*
+        VertexBuffer::VertexBuffer*,
+        VertexBuffer::IndexBuffer*
     );
 
     VkResult recreateSwapchain(
@@ -100,6 +101,7 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VertexBuffer::VertexBuffer* vertexBuffer,
+        VertexBuffer::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers
     );
 
@@ -115,6 +117,12 @@ namespace VulkanUtils {
     VkResult createVertexBuffer(
         VulkanDeviceData* deviceData,
         VertexBuffer::VertexBuffer*,
+        VkCommandPool commandPool
+    );
+
+    VkResult createIndexBuffer(
+        VulkanDeviceData* deviceData,
+        VertexBuffer::IndexBuffer* indexBuffer, 
         VkCommandPool commandPool
     );
 
