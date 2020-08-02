@@ -640,6 +640,8 @@ int main() {
         PONG_FATAL_ERROR("Failed to create index buffer.");
     }
 
+    std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
+
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
     // With the command pool created, we can now start creating and allocating
@@ -774,7 +776,8 @@ int main() {
                 swapchainFramebuffers.data(), 
                 &vertexBuffer,
                 &indexBuffer,
-                commandBuffers.data()
+                commandBuffers.data(),
+                &descriptorSetLayout
             );
             
             pongData.framebufferResized = false;
@@ -867,7 +870,8 @@ int main() {
                 swapchainFramebuffers.data(),
                 &vertexBuffer,
                 &indexBuffer,
-                commandBuffers.data());
+                commandBuffers.data(),
+                &descriptorSetLayout);
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
@@ -886,8 +890,22 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
     
-    VulkanUtils::cleanupSwapchain(deviceData.logicalDevice, &swapchain, &graphicsPipeline, 
-        commandPool, swapchainFramebuffers.data(), commandBuffers.data());
+    VulkanUtils::cleanupSwapchain(
+        deviceData.logicalDevice, 
+        &swapchain, 
+        &graphicsPipeline, 
+        commandPool, 
+        swapchainFramebuffers.data(), 
+        commandBuffers.data()
+    );
+
+    for (size_t i = 0; i < uniformBuffers.size(); i++) {
+        vkDestroyBuffer(deviceData.logicalDevice, uniformBuffers[i].buffer, nullptr);
+        vkFreeMemory(deviceData.logicalDevice, uniformBuffers[i].bufferMemory, nullptr);
+    }
+    
+    vkDestroyDescriptorSetLayout(deviceData.logicalDevice, descriptorSetLayout, 
+        nullptr);
 
     // Cleans up the memory buffer 
     vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);

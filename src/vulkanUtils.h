@@ -108,7 +108,8 @@ namespace VulkanUtils {
         VkFramebuffer* pFramebuffers,
         Buffers::VertexBuffer* vertexBuffer,
         Buffers::IndexBuffer* indexBuffer,
-        VkCommandBuffer* pCommandbuffers
+        VkCommandBuffer* pCommandbuffers,
+        VkDescriptorSetLayout* descriptorSetLayout
     );
 
     void cleanupSwapchain(

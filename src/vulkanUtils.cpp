@@ -810,7 +810,8 @@ namespace VulkanUtils {
         VkFramebuffer* pFramebuffers,
         Buffers::VertexBuffer* vertexBuffer,
         Buffers::IndexBuffer* indexBuffer,
-        VkCommandBuffer* pCommandbuffers
+        VkCommandBuffer* pCommandbuffers,
+        VkDescriptorSetLayout* descriptorSetLayout
     ) {
 
         vkDeviceWaitIdle(deviceData->logicalDevice);
@@ -831,7 +832,7 @@ namespace VulkanUtils {
         }
         // Re-create our graphics pipeline
         if (createGraphicsPipeline(deviceData->logicalDevice, pGraphicsPipeline,
-            pSwapchain) != VK_SUCCESS) {
+            pSwapchain, descriptorSetLayout) != VK_SUCCESS) {
          
             return VK_ERROR_INITIALIZATION_FAILED;
         }
@@ -1040,5 +1041,27 @@ namespace VulkanUtils {
    
         return VK_SUCCESS;
 
+    }
+
+    VkResult createUniformBuffers(VulkanDeviceData* deviceData, 
+        std::vector<Buffers::BufferData>& uBuffers) {
+
+        VkDeviceSize bufferSize = sizeof(Buffers::UniformBufferObject);
+
+        for (size_t i = 0; i < uBuffers.size(); i++) {
+            if (Buffers::createBuffer(
+                deviceData->physicalDevice,
+                deviceData->logicalDevice,
+                bufferSize,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
+                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                uBuffers[i]) != VK_SUCCESS) {
+                
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+        }
+        
+        return VK_SUCCESS;
     }
 }
