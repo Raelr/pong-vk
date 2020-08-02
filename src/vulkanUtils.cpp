@@ -888,45 +888,64 @@ namespace VulkanUtils {
     VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
         Buffers::VertexBuffer* vertexBuffer, VkCommandPool commandPool) {
 
+        // Specify the required memory to store this buffer
         VkDeviceSize bufferSize = sizeof(vertexBuffer->vertices[0]) 
             * vertexBuffer->vertexCount;
         
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingMemory;
+        // Define a staging buffer. Since the most optimal memory for 
+        // the GPU is not the same as that of the CPU, we define a buffer
+        // that's most optimal for the GPU and then copy the data to the 
+        // CPU's version. Thereby keeping them both on their most optimal
+        // format.
 
-        if (Buffers::createBuffer(deviceData->physicalDevice, 
-            deviceData->logicalDevice, bufferSize, 
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
-            | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, 
-            stagingMemory) != VK_SUCCESS) {
+        Buffers::BufferData stagingBuffer{};
+
+        // Create a buffer for the staging buffer.
+        if (Buffers::createBuffer(
+            deviceData->physicalDevice, 
+            deviceData->logicalDevice, 
+            bufferSize, 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            stagingBuffer) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
         
-        // Now we need to fill the vertex buffer:
+        // Now we need to fill the staging buffer:
         void* data;
         // Lets us access a region in memory by specifying an offset and size. 
-        vkMapMemory(deviceData->logicalDevice, stagingMemory, 0, bufferSize, 
+        vkMapMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory, 0, bufferSize, 
             0, &data);
         // Copy the memory from our vertex array into our mapped memory. 
         memcpy(data, vertexBuffer->vertices, (size_t)bufferSize);
         // Now unmap the memory
-        vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
+        vkUnmapMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory);
 
-        if (Buffers::createBuffer(deviceData->physicalDevice, 
-            deviceData->logicalDevice, bufferSize,
+        // Now create the actual buffer that we'll end up using:
+        if (Buffers::createBuffer(
+            deviceData->physicalDevice, 
+            deviceData->logicalDevice, 
+            bufferSize,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer->bufferData.buffer, 
-            vertexBuffer->bufferData.bufferMemory) != VK_SUCCESS) {
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+            vertexBuffer->bufferData) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        Buffers::copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice, 
-            stagingBuffer, vertexBuffer->bufferData.buffer, bufferSize, commandPool);
+        // Copy the contents of the staging buffer into the vertex buffer.
+        Buffers::copyBuffer(
+            deviceData->graphicsQueue, 
+            deviceData->logicalDevice, 
+            stagingBuffer.buffer, 
+            vertexBuffer->bufferData.buffer, 
+            bufferSize, commandPool
+        );
 
-        vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
-        vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
+        // Destroy the staging buffer and free memory
+        vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer.buffer, nullptr);
+        vkFreeMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory, nullptr);
 
         return VK_SUCCESS;
     }
@@ -934,47 +953,61 @@ namespace VulkanUtils {
     VkResult createIndexBuffer(VulkanDeviceData* deviceData, 
         Buffers::IndexBuffer* indexBuffer, VkCommandPool commandPool) {
 
+        // We need to now get our memory for each index that our
+        // index buffer will be drawing to
         VkDeviceSize bufferSize = sizeof(indexBuffer->indices[0])
                 * indexBuffer->indexCount;
   
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingMemory;
+        // Initialise our staging buffer
+        Buffers::BufferData stagingBuffer{};
+        
+        // Create the staging buffer
+        if (Buffers::createBuffer(
+            deviceData->physicalDevice, 
+            deviceData->logicalDevice, 
+            bufferSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+            stagingBuffer) != VK_SUCCESS) {
    
-            if (Buffers::createBuffer(deviceData->physicalDevice, 
-                deviceData->logicalDevice, bufferSize,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                stagingMemory) != VK_SUCCESS) {
-   
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
   
-            // Now we need to fill the vertex buffer:
-            void* data;
-            // Lets us access a region in memory by specifying an offset and size.
-            vkMapMemory(deviceData->logicalDevice, stagingMemory, 0, bufferSize,
-                0, &data);
-            // Copy the memory from our vertex array into our mapped memory.
-            memcpy(data, indexBuffer->indices, (size_t)bufferSize);
-            // Now unmap the memory
-            vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
+        // Now we need to fill the staging buffer:
+        void* data;
+        // Lets us access a region in memory by specifying an offset and size.
+        vkMapMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory, 0, bufferSize,
+            0, &data);
+        // Copy the memory from our vertex array into our mapped memory.
+        memcpy(data, indexBuffer->indices, (size_t)bufferSize);
+        // Now unmap the memory
+        vkUnmapMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory);
+        
+        // Create the actual buffer that we'll end up using
+        if (Buffers::createBuffer(
+            deviceData->physicalDevice, 
+            deviceData->logicalDevice, 
+            bufferSize,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+            indexBuffer->bufferData) != VK_SUCCESS) {
    
-            if (Buffers::createBuffer(deviceData->physicalDevice, 
-                deviceData->logicalDevice, bufferSize,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer->bufferData.buffer,
-                indexBuffer->bufferData.bufferMemory) != VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
    
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
+        // Copy the contents of the staging buffer into the index buffer
+        Buffers::copyBuffer(
+            deviceData->graphicsQueue, 
+            deviceData->logicalDevice,
+            stagingBuffer.buffer, 
+            indexBuffer->bufferData.buffer, 
+            bufferSize, commandPool);
+
+        // Destroy the staging buffer and de-allocate its memory
+        vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer.buffer, nullptr);
+        vkFreeMemory(deviceData->logicalDevice, stagingBuffer.bufferMemory, nullptr);
    
-            Buffers::copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice,
-                stagingBuffer, indexBuffer->bufferData.buffer, bufferSize, commandPool);
-   
-            vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
-            vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
-   
-            return VK_SUCCESS;
+        return VK_SUCCESS;
 
     }
 }

@@ -10,15 +10,14 @@ namespace Buffers {
 		VkDeviceSize size,
 		VkBufferUsageFlags usage,
 		VkMemoryPropertyFlags properties,
-		VkBuffer& buffer,
-		VkDeviceMemory& bufferMemory
+		BufferData& bufferData
 	) {
 		// We need to start by creating a configuration for our vertex buffer.
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		// We need to specify the size of the buffer in bytes. 
 		bufferInfo.size = size;
-		// Specify that this is a vertex buffer
+		// Specify what type of buffer this is
 		bufferInfo.usage = usage;
 		// Specifies that this will only be used by a single queue - the
 		// graphics queue.
@@ -26,7 +25,7 @@ namespace Buffers {
 
 		// Create the buffer using the create object we specified before
 		if ((vkCreateBuffer(logicalDevice, &bufferInfo, nullptr,
-			&buffer)) != VK_SUCCESS) {
+			&bufferData.buffer)) != VK_SUCCESS) {
 			return VkResult::VK_ERROR_INITIALIZATION_FAILED;
 		}
 
@@ -34,7 +33,7 @@ namespace Buffers {
 
 		// First we need to get the memory requirements for the buffer
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(logicalDevice, buffer,
+		vkGetBufferMemoryRequirements(logicalDevice, bufferData.buffer,
 			&memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
@@ -57,13 +56,13 @@ namespace Buffers {
 
 		// Now allocate the memory
 		if (vkAllocateMemory(logicalDevice, &allocInfo, nullptr,
-			&bufferMemory) != VK_SUCCESS) {
+			&bufferData.bufferMemory) != VK_SUCCESS) {
 
 			return VK_ERROR_INITIALIZATION_FAILED;
 		}
 
 		// Now we associate the buffer with our memory
-		vkBindBufferMemory(logicalDevice, buffer, bufferMemory, 0);
+		vkBindBufferMemory(logicalDevice, bufferData.buffer, bufferData.bufferMemory, 0);
 
 		return VK_SUCCESS;
 	}
@@ -76,6 +75,8 @@ namespace Buffers {
 		VkDeviceSize size,
 		VkCommandPool commandPool
 	) {
+		// Transferring memory between buffers always occurs in our command buffers.
+		// Start by creating a command buffer and specify its usage.
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -84,32 +85,42 @@ namespace Buffers {
 
 		VkCommandBuffer commandBuffer;
 		vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
+		
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+		// Immediately start recording the command buffer
 		vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
+		// Define how data will be transferred between buffers in a
+		// CopyRegion struct. 
 		VkBufferCopy copyRegion{};
-		copyRegion.srcOffset = 0;
-		copyRegion.dstOffset = 0;
+		copyRegion.srcOffset = 0; // optional
+		copyRegion.dstOffset = 0; // optional
+		// Specify the size of the buffer to be transferred
 		copyRegion.size = size;
+		// Copy the buffer data between the staging and destination buffer
 		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
+		// End recording
 		vkEndCommandBuffer(commandBuffer);
 
+		// Now define how the data will be submitted to the queue
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 
+		// Submit the data to our queue (usually the graphics queue)
 		vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		// Wait for the queue to become idle
 		vkQueueWaitIdle(submitQueue);
-
+		// Clean up the command buffer after usage
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
+	// Used to allocate memory from the GPU for a buffer.
 	bool findMemoryType(
 		VkPhysicalDevice physicalDevice,
 		uint32_t* memoryType,

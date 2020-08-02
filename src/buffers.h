@@ -9,17 +9,16 @@ namespace Buffers {
 
     // --------------------------- BUFFER STRUCT --------------------------------
 
+    // Simple struct for storing buffer data.
     struct BufferData {
-
         VkBuffer buffer;
         VkDeviceMemory bufferMemory;
-
     };
 
     // -------------------------- INDEX BUFFER STRUCT ---------------------------
 
+    // Data necessary for using an index buffer
     struct IndexBuffer {
-
         uint16_t* indices;
         uint32_t indexCount;
         BufferData bufferData;
@@ -27,7 +26,7 @@ namespace Buffers {
 
     // -------------------------- VERTEX BUFFER STRUCT---------------------------
 
-        // A simple struct for storing vertex data. May need to split between a 
+    // A simple struct for storing vertex data. May need to split between a 
     // 3D and 2D vertex at some point.
     struct Vertex {
         // position vector
@@ -36,6 +35,7 @@ namespace Buffers {
         glm::vec3 color;
     };
 
+    // Data necessary to store a vertex buffer
     struct VertexBuffer {
         uint32_t vertexCount;
         Vertex* vertices;
@@ -44,16 +44,17 @@ namespace Buffers {
 
     // ---------------------------- BUFFER METHODS ------------------------------
 
+    // A method for creating a generic buffer - to be used for buffer creation
     VkResult createBuffer(
         VkPhysicalDevice,
         VkDevice,
         VkDeviceSize,
         VkBufferUsageFlags,
         VkMemoryPropertyFlags,
-        VkBuffer&,
-        VkDeviceMemory&
+        BufferData&
     );
 
+    // Used to copy data between a staging buffer and a standard buffer (index or vertex)
     void copyBuffer(
         VkQueue,
         VkDevice,
@@ -63,6 +64,7 @@ namespace Buffers {
         VkCommandPool
     );
 
+    // Used to actually allocate memory from the GPU for a buffer.
     bool findMemoryType(
         VkPhysicalDevice,
         uint32_t*,
