@@ -523,7 +523,18 @@ int main() {
         PONG_FATAL_ERROR("Failed to create render pass!");
     }
 
-    // --------------------- GRAPHICS PIPELINE --------------------------
+    // ------------------- DESCRIPTOR SET LAYOUT -----------------------------
+
+    VkDescriptorSetLayout descriptorSetLayout{};
+
+    if (VulkanUtils::createDescriptorSetLayout(deviceData.logicalDevice, 
+        &descriptorSetLayout) != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create descriptor set!");
+
+    }
+
+    // --------------------- GRAPHICS PIPELINE -------------------------------
     
     // Vulkan requires that you define your own graphics pipelines when you
     // want to use different combinations of shaders. This is because the 
@@ -532,7 +543,7 @@ int main() {
     // a complete rewrite if you need anything different).
     
     if (VulkanUtils::createGraphicsPipeline(deviceData.logicalDevice, 
-        &graphicsPipeline, &swapchain) != VK_SUCCESS) {
+        &graphicsPipeline, &swapchain, &descriptorSetLayout) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
     }

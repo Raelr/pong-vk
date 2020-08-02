@@ -42,7 +42,15 @@ namespace Buffers {
         BufferData bufferData;
     };
 
-    // ---------------------------- BUFFER METHODS ------------------------------
+    // ------------------------- UNIFORM BUFFER STRUCT -----------------------
+    
+    struct UniformBufferObject {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
+
+    // ---------------------------- BUFFER METHODS ---------------------------
 
     // A method for creating a generic buffer - to be used for buffer creation
     VkResult createBuffer(

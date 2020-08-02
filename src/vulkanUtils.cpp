@@ -407,6 +407,36 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
+    VkResult createDescriptorSetLayout( VkDevice device,
+        VkDescriptorSetLayout* descriptorSetLayout) {
+        
+        VkDescriptorSetLayoutBinding uboLayoutBinding{};
+        // Aligns to the binding specified in our shader.
+        uboLayoutBinding.binding = 0;
+        // Specifies the type of descriptor
+        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        // How many descriptors there are (if appplicable)
+        uboLayoutBinding.descriptorCount = 1;
+        // Which stage this will be used in (the vertex stage)
+        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        uboLayoutBinding.pImmutableSamplers = nullptr;
+
+        // Now specify the struct for configuring the descriptor set.
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = 1;
+        layoutInfo.pBindings = &uboLayoutBinding;
+
+        // Create the descriptor set
+        if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, 
+            descriptorSetLayout) != VK_SUCCESS) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return VK_SUCCESS;
+    }
+
     // Vulkan requires that you define your own graphics pipelines when you
     // want to use different combinations of shaders. This is because the·
     // graphics pipeline in Vulkan is almost completely immutable. This means
@@ -416,7 +446,8 @@ namespace VulkanUtils {
     VkResult createGraphicsPipeline(
         VkDevice device, 
         GraphicsPipelineData* data,
-        const SwapchainData* swapchain
+        const SwapchainData* swapchain,
+        VkDescriptorSetLayout* descriptorSetLayout
     ) {
         
         // Load out vertex and fragment shaders in machine readable bytecode.
@@ -584,8 +615,8 @@ namespace VulkanUtils {
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
         pipelineLayoutCreateInfo.sType = 
                 VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutCreateInfo.setLayoutCount = 0;
-        pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        pipelineLayoutCreateInfo.setLayoutCount = 1;
+        pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayout;
         pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
         pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 
