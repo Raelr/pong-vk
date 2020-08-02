@@ -10,7 +10,6 @@
 #include <cstdint>
 #include "utils.h"
 #include "vulkanUtils.h"
-#include "vertexBuffer.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -79,7 +78,7 @@ static VkResult createDebugUtilsMessengerEXT(VkInstance instance,
         return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
     } else {
         // Return an error
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
+        return VkResult::VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 }
 
@@ -592,14 +591,14 @@ int main() {
 
     // --------------------- VERTEX DEFINITION --------------------------
 
-    VertexBuffer::VertexBuffer vertexBuffer;
-    VertexBuffer::IndexBuffer indexBuffer;
+    Buffers::VertexBuffer vertexBuffer;
+    Buffers::IndexBuffer indexBuffer;
     // Define a vertex buffer for configuring vertex data.
     vertexBuffer.vertexCount = 4;
 
     {
         // Define all the vertices of our triangle and the colors for every vertex
-        VertexBuffer::Vertex vertices[] = {
+        Buffers::Vertex vertices[] = {
             // Positions        // Colors
             { {-0.5f, -0.5f},   {1.0f, 0.0f, 0.0f} },
             { {0.5f, -0.5f},    {0.0f, 1.0f, 0.0f} },
@@ -610,11 +609,9 @@ int main() {
         vertexBuffer.vertices = vertices;
     }
 
-
     uint16_t indices[] = {
         0, 1, 2, 2, 3, 0
     };
-
 
     indexBuffer.indexCount = 6;
     indexBuffer.indices = indices;
@@ -882,14 +879,14 @@ int main() {
         commandPool, swapchainFramebuffers.data(), commandBuffers.data());
 
     // Cleans up the memory buffer 
-    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer.vertexBuffer, nullptr);
+    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);
 
     // Frees the allocated vertex buffer memory 
-    vkFreeMemory(deviceData.logicalDevice, vertexBuffer.vertexBufferMemory, nullptr);
+    vkFreeMemory(deviceData.logicalDevice, vertexBuffer.bufferData.bufferMemory, nullptr);
 
-    vkDestroyBuffer(deviceData.logicalDevice, indexBuffer.indexBuffer, nullptr);
+    vkDestroyBuffer(deviceData.logicalDevice, indexBuffer.bufferData.buffer, nullptr);
 
-    vkFreeMemory(deviceData.logicalDevice, indexBuffer.indexBufferMemory, nullptr);
+    vkFreeMemory(deviceData.logicalDevice, indexBuffer.bufferData.bufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

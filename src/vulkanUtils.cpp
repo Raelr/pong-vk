@@ -1,5 +1,6 @@
 #include "vulkanUtils.h"
 #include "logger.h"
+#include "buffers.h"
 
 namespace VulkanUtils {
 
@@ -458,8 +459,8 @@ namespace VulkanUtils {
         // how the pipeline will operate. 
 
         // Get the vertex buffer data for our triangle
-        auto bindingDescription = VertexBuffer::getBindingDescription();
-        auto attributeDescriptions = VertexBuffer::getAttributeDescriptions();
+        auto bindingDescription = Buffers::getBindingDescription();
+        auto attributeDescriptions = Buffers::getAttributeDescriptions();
 
         // Defines how vertex data will be formatted in the shader.
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -681,8 +682,8 @@ namespace VulkanUtils {
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
         VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
-        VertexBuffer::VertexBuffer* vertexBuffer, 
-        VertexBuffer::IndexBuffer* indexBuffer) {
+        Buffers::VertexBuffer* vertexBuffer, 
+        Buffers::IndexBuffer* indexBuffer) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -746,22 +747,16 @@ namespace VulkanUtils {
            vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
             
            // Specify a list of vertex buffers that need to be recorded by the command buffer
-           VkBuffer vertexBuffers[] = { vertexBuffer->vertexBuffer };
+           VkBuffer vertexBuffers[] = { vertexBuffer->bufferData.buffer };
            VkDeviceSize offsets[] = {0};
 
            // Bind the vertex buffers to the command buffer being recorded.
            vkCmdBindVertexBuffers(buffers[i], 0, 1, vertexBuffers, offsets);
            
-           vkCmdBindIndexBuffer(buffers[i], indexBuffer->indexBuffer, 0, 
+           vkCmdBindIndexBuffer(buffers[i], indexBuffer->bufferData.buffer, 0, 
                 VK_INDEX_TYPE_UINT16);
+           
            // Now we can tell Vulkan to draw our triangle. This function has the parameters:
-           // 1. the command buffer.
-           // 2. The number of vertices - We can do this even without a vertex buffer.
-           // 3. instanceCount - used for instanced rendering, can use 1 if you aren't using that.
-           // 4. firstVertex - Used to offset the vertex buffer. Defines the lowest value·
-           // of gl_vertexIndex.
-           // 5. firstInstance - Used as an offset for instanced rendering.
-
            vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
   
            // Now we can end the render pass:
@@ -782,8 +777,8 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VertexBuffer::VertexBuffer* vertexBuffer,
-        VertexBuffer::IndexBuffer* indexBuffer,
+        Buffers::VertexBuffer* vertexBuffer,
+        Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers
     ) {
 
@@ -891,7 +886,7 @@ namespace VulkanUtils {
 
     // Handles the creation of the triangle vertex buffer 
     VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
-        VertexBuffer::VertexBuffer* vertexBuffer, VkCommandPool commandPool) {
+        Buffers::VertexBuffer* vertexBuffer, VkCommandPool commandPool) {
 
         VkDeviceSize bufferSize = sizeof(vertexBuffer->vertices[0]) 
             * vertexBuffer->vertexCount;
@@ -899,7 +894,8 @@ namespace VulkanUtils {
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingMemory;
 
-        if (createBuffer(deviceData, bufferSize, 
+        if (Buffers::createBuffer(deviceData->physicalDevice, 
+            deviceData->logicalDevice, bufferSize, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT 
             | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, 
             stagingMemory) != VK_SUCCESS) {
@@ -917,16 +913,17 @@ namespace VulkanUtils {
         // Now unmap the memory
         vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
 
-        if (createBuffer(deviceData, bufferSize,
+        if (Buffers::createBuffer(deviceData->physicalDevice, 
+            deviceData->logicalDevice, bufferSize,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer->vertexBuffer, 
-            vertexBuffer->vertexBufferMemory) != VK_SUCCESS) {
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer->bufferData.buffer, 
+            vertexBuffer->bufferData.bufferMemory) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice, 
-            stagingBuffer, vertexBuffer->vertexBuffer, bufferSize, commandPool);
+        Buffers::copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice, 
+            stagingBuffer, vertexBuffer->bufferData.buffer, bufferSize, commandPool);
 
         vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
         vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
@@ -935,7 +932,7 @@ namespace VulkanUtils {
     }
 
     VkResult createIndexBuffer(VulkanDeviceData* deviceData, 
-        VertexBuffer::IndexBuffer* indexBuffer, VkCommandPool commandPool) {
+        Buffers::IndexBuffer* indexBuffer, VkCommandPool commandPool) {
 
         VkDeviceSize bufferSize = sizeof(indexBuffer->indices[0])
                 * indexBuffer->indexCount;
@@ -943,7 +940,8 @@ namespace VulkanUtils {
             VkBuffer stagingBuffer;
             VkDeviceMemory stagingMemory;
    
-            if (createBuffer(deviceData, bufferSize,
+            if (Buffers::createBuffer(deviceData->physicalDevice, 
+                deviceData->logicalDevice, bufferSize,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                 | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
                 stagingMemory) != VK_SUCCESS) {
@@ -961,146 +959,22 @@ namespace VulkanUtils {
             // Now unmap the memory
             vkUnmapMemory(deviceData->logicalDevice, stagingMemory);
    
-            if (createBuffer(deviceData, bufferSize,
+            if (Buffers::createBuffer(deviceData->physicalDevice, 
+                deviceData->logicalDevice, bufferSize,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer->indexBuffer,
-                indexBuffer->indexBufferMemory) != VK_SUCCESS) {
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer->bufferData.buffer,
+                indexBuffer->bufferData.bufferMemory) != VK_SUCCESS) {
    
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
    
-            copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice,
-                stagingBuffer, indexBuffer->indexBuffer, bufferSize, commandPool);
+            Buffers::copyBuffer(deviceData->graphicsQueue, deviceData->logicalDevice,
+                stagingBuffer, indexBuffer->bufferData.buffer, bufferSize, commandPool);
    
             vkDestroyBuffer(deviceData->logicalDevice, stagingBuffer, nullptr);
             vkFreeMemory(deviceData->logicalDevice, stagingMemory, nullptr);
    
             return VK_SUCCESS;
 
-    }
-
-    VkResult createBuffer(VulkanDeviceData* deviceData,  VkDeviceSize size, 
-        VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, 
-        VkDeviceMemory& bufferMemory) {
-
-        // We need to start by creating a configuration for our vertex buffer.
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        // We need to specify the size of the buffer in bytes. 
-        bufferInfo.size = size;
-        // Specify that this is a vertex buffer
-        bufferInfo.usage = usage;
-        // Specifies that this will only be used by a single queue - the
-        // graphics queue.
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        // Create the buffer using the create object we specified before
-        if ((vkCreateBuffer(deviceData->logicalDevice, &bufferInfo, nullptr, 
-            &buffer))!= VK_SUCCESS) {
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        // Once the buffer has been created, we need to actually allocate memory to it.
-
-        // First we need to get the memory requirements for the buffer
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(deviceData->logicalDevice, buffer, 
-            &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{};
-
-        // Store the memory type in a variable
-        uint32_t memoryType; 
-        
-        // Search for our memory requirements and check if we can map this memory from
-        // our CPU to the GPU.
-        if (!findMemoryType(deviceData->physicalDevice, &memoryType, 
-            memRequirements.memoryTypeBits, properties)) {
-            
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        // Specify the size of our allocation using our memory requirements
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = memoryType;
-
-        // Now allocate the memory
-        if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, 
-            &bufferMemory) != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        // Now we associate the buffer with our memory
-        vkBindBufferMemory(deviceData->logicalDevice, buffer, bufferMemory, 0);
-
-        return VK_SUCCESS;
-    }
-
-    void copyBuffer(VkQueue submitQueue, VkDevice device,  VkBuffer srcBuffer, 
-        VkBuffer dstBuffer, VkDeviceSize size, VkCommandPool commandPool) {
-
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = commandPool;
-        allocInfo.commandBufferCount = 1;
-
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-        VkBufferCopy copyRegion{};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = size;
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-        vkEndCommandBuffer(commandBuffer);
-        
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
-
-        vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(submitQueue);
-
-        vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-    }
-
-    // A method to help us get synchronise the memory requirements of the CPU
-    // and GPU
-    bool findMemoryType(VkPhysicalDevice physicalDevice, uint32_t* memoryType, 
-        uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-
-        bool isMemoryTypeFound = false;
-
-        // First, we query the types of memory available to us
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-        // Now lets look through the memory types and find one that suits us
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            // The type filter will be used to specify the memory types that are 
-            // suitable. In our case we're looking for cases where the corresponding
-            // bit is set to 1. 
-            // We also need to check if the memory type supports the properties that we
-            // need
-            if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags 
-                & properties) == properties) {
-                *memoryType = i;
-                isMemoryTypeFound = true;
-                break;
-            }
-        }
-
-        return isMemoryTypeFound;
     }
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include <optional>
 #include "utils.h"
-#include "vertexBuffer.h"
+#include "buffers.h"
 
 namespace VulkanUtils {
 
@@ -90,8 +90,8 @@ namespace VulkanUtils {
         SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool,
-        VertexBuffer::VertexBuffer*,
-        VertexBuffer::IndexBuffer*
+        Buffers::VertexBuffer*,
+        Buffers::IndexBuffer*
     );
 
     VkResult recreateSwapchain(
@@ -100,8 +100,8 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VertexBuffer::VertexBuffer* vertexBuffer,
-        VertexBuffer::IndexBuffer* indexBuffer,
+        Buffers::VertexBuffer* vertexBuffer,
+        Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers
     );
 
@@ -116,39 +116,14 @@ namespace VulkanUtils {
 
     VkResult createVertexBuffer(
         VulkanDeviceData* deviceData,
-        VertexBuffer::VertexBuffer*,
+        Buffers::VertexBuffer*,
         VkCommandPool commandPool
     );
 
     VkResult createIndexBuffer(
         VulkanDeviceData* deviceData,
-        VertexBuffer::IndexBuffer* indexBuffer, 
+        Buffers::IndexBuffer* indexBuffer, 
         VkCommandPool commandPool
-    );
-
-    VkResult createBuffer(
-        VulkanDeviceData* deviceData,
-        VkDeviceSize size,
-        VkBufferUsageFlags usage, 
-        VkMemoryPropertyFlags properties, 
-        VkBuffer& buffer,
-        VkDeviceMemory& bufferMemory
-    );
-
-    void copyBuffer(
-        VkQueue, 
-        VkDevice,
-        VkBuffer, 
-        VkBuffer, 
-        VkDeviceSize, 
-        VkCommandPool
-    );
-
-    bool findMemoryType(
-        VkPhysicalDevice physicalDevice, 
-        uint32_t* memoryType,
-        uint32_t typeFilter, 
-        VkMemoryPropertyFlags properties
     );
 }
 
