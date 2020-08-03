@@ -811,7 +811,8 @@ namespace VulkanUtils {
         Buffers::VertexBuffer* vertexBuffer,
         Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers,
-        VkDescriptorSetLayout* descriptorSetLayout
+        VkDescriptorSetLayout* descriptorSetLayout,
+        std::vector<Buffers::BufferData>* uniformBuffers
     ) {
 
         vkDeviceWaitIdle(deviceData->logicalDevice);
@@ -842,6 +843,12 @@ namespace VulkanUtils {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
+
+        if (createUniformBuffers(deviceData, uniformBuffers) != VK_SUCCESS) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
@@ -1044,11 +1051,11 @@ namespace VulkanUtils {
     }
 
     VkResult createUniformBuffers(VulkanDeviceData* deviceData, 
-        std::vector<Buffers::BufferData>& uBuffers) {
+        std::vector<Buffers::BufferData>* uBuffers) {
 
         VkDeviceSize bufferSize = sizeof(Buffers::UniformBufferObject);
 
-        for (size_t i = 0; i < uBuffers.size(); i++) {
+        for (size_t i = 0; i < uBuffers->size(); i++) {
             if (Buffers::createBuffer(
                 deviceData->physicalDevice,
                 deviceData->logicalDevice,
@@ -1056,7 +1063,7 @@ namespace VulkanUtils {
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                uBuffers[i]) != VK_SUCCESS) {
+                uBuffers->at(i)) != VK_SUCCESS) {
                 
                 return VK_ERROR_INITIALIZATION_FAILED;
             }

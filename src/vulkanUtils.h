@@ -109,7 +109,8 @@ namespace VulkanUtils {
         Buffers::VertexBuffer* vertexBuffer,
         Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers,
-        VkDescriptorSetLayout* descriptorSetLayout
+        VkDescriptorSetLayout* descriptorSetLayout,
+        std::vector<Buffers::BufferData>* uniformBuffers
     );
 
     void cleanupSwapchain(
@@ -131,6 +132,11 @@ namespace VulkanUtils {
         VulkanDeviceData* deviceData,
         Buffers::IndexBuffer* indexBuffer, 
         VkCommandPool commandPool
+    );
+
+    VkResult createUniformBuffers(
+        VulkanDeviceData* deviceData, 
+        std::vector<Buffers::BufferData>* uBuffers
     );
 }
 

@@ -777,7 +777,8 @@ int main() {
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
-                &descriptorSetLayout
+                &descriptorSetLayout,
+                &uniformBuffers
             );
             
             pongData.framebufferResized = false;
@@ -871,7 +872,8 @@ int main() {
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
-                &descriptorSetLayout);
+                &descriptorSetLayout),
+                &uniformBuffers;
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
