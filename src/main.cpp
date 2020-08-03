@@ -1,4 +1,8 @@
 #define GLFW_INCLUDE_VULKAN
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstdlib>
@@ -135,6 +139,49 @@ struct AppData {
     // Boolean for checking if the window has been resized
     bool framebufferResized;
 };
+
+void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, 
+    VkExtent2D swapchainExtent) {
+
+    static auto startTime = std::chrono::high_resolution_clock::now();
+    auto currentTime = std::chrono::high_resolution_clock::now();
+
+    float time = std::chrono::duration<float, 
+        std::chrono::seconds::period>(currentTime - startTime).count();
+
+    Buffers::UniformBufferObject ubo{};
+    // Rotate the model matrix
+    ubo.model = glm::rotate(
+        glm::mat4(1.0f), 
+        time * glm::radians(90.0f), 
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    
+    // Set the view
+    ubo.view = glm::lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f), 
+        glm::vec3(0.0f, 0.0f, 0.0f), 
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    // Set our projection to be a perspective view
+    ubo.proj = glm::perspective(
+        glm::radians(45.0f), 
+        swapchainExtent.width / (float) swapchainExtent.height, 
+        0.1f, 
+        10.0f
+    );
+
+    // Flip the projection matrix (since the Y coordinate is inverted in
+    // OpenGL).
+    ubo.proj[1][1] *= -1;
+
+    // Now we bind our data to the UBO for later use
+    void* data;
+    vkMapMemory(device, *memory, 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(device, *memory);
+
+}
 
 int main() {  
 
@@ -800,6 +847,8 @@ int main() {
         // Now, use the image in this frame!.
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
+        updateUniformBuffer(&uniformBuffers[imageIndex].bufferMemory, 
+            deviceData.logicalDevice, swapchain.swapchainExtent);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -872,8 +921,8 @@ int main() {
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
-                &descriptorSetLayout),
-                &uniformBuffers;
+                &descriptorSetLayout,
+                &uniformBuffers);
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
