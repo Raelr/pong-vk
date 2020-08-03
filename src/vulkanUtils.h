@@ -70,6 +70,12 @@ namespace VulkanUtils {
         VkDescriptorSetLayout* descriptorSetLayout
     );
 
+    VkResult createDescriptorPool(
+        VkDevice device,
+        uint32_t imageCount,
+        VkDescriptorPool* descriptorPool
+    );
+
     VkResult createGraphicsPipeline(
         VkDevice, 
         GraphicsPipelineData*, 
@@ -110,6 +116,7 @@ namespace VulkanUtils {
         Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
+        VkDescriptorPool* descriptorPool,
         std::vector<Buffers::BufferData>* uniformBuffers
     );
 

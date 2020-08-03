@@ -436,6 +436,30 @@ namespace VulkanUtils {
 
         return VK_SUCCESS;
     }
+    
+    VkResult createDescriptorPool(
+        VkDevice device,
+        uint32_t imageCount,
+        VkDescriptorPool* descriptorPool
+    ) {
+        
+        VkDescriptorPoolSize poolSize{};
+        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSize.descriptorCount = imageCount;
+
+        VkDescriptorPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.poolSizeCount = 1;
+        poolInfo.pPoolSizes = &poolSize;
+        poolInfo.maxSets = imageCount;
+        
+        if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool)
+            != VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return VK_SUCCESS;
+    }
 
     // Vulkan requires that you define your own graphics pipelines when you
     // want to use different combinations of shaders. This is because the·
@@ -812,6 +836,7 @@ namespace VulkanUtils {
         Buffers::IndexBuffer* indexBuffer,
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
+        VkDescriptorPool* descriptorPool,
         std::vector<Buffers::BufferData>* uniformBuffers
     ) {
 
@@ -846,6 +871,12 @@ namespace VulkanUtils {
 
         if (createUniformBuffers(deviceData, uniformBuffers) != VK_SUCCESS) {
             
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        if (createDescriptorPool(deviceData->logicalDevice, pSwapchain->imageCount, 
+            descriptorPool) != VK_SUCCESS) {
+
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 

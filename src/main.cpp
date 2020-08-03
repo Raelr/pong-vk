@@ -689,6 +689,16 @@ int main() {
 
     std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
 
+    // ---------------------- DESCRIPTOR POOL ---------------------------
+
+    VkDescriptorPool descriptorPool{};
+
+    if (VulkanUtils::createDescriptorPool(deviceData.logicalDevice, swapchain.imageCount, 
+        &descriptorPool) != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create descriptor pool.");
+    }
+
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
     // With the command pool created, we can now start creating and allocating
@@ -825,6 +835,7 @@ int main() {
                 &indexBuffer,
                 commandBuffers.data(),
                 &descriptorSetLayout,
+                &descriptorPool,
                 &uniformBuffers
             );
             
@@ -922,6 +933,7 @@ int main() {
                 &indexBuffer,
                 commandBuffers.data(),
                 &descriptorSetLayout,
+                &descriptorPool,
                 &uniformBuffers);
 
             pongData.framebufferResized = false;
@@ -954,6 +966,8 @@ int main() {
         vkDestroyBuffer(deviceData.logicalDevice, uniformBuffers[i].buffer, nullptr);
         vkFreeMemory(deviceData.logicalDevice, uniformBuffers[i].bufferMemory, nullptr);
     }
+
+    vkDestroyDescriptorPool(deviceData.logicalDevice, descriptorPool, nullptr);
     
     vkDestroyDescriptorSetLayout(deviceData.logicalDevice, descriptorSetLayout, 
         nullptr);
