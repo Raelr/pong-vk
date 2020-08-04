@@ -595,7 +595,7 @@ namespace VulkanUtils {
         // Determines the vertex order for faces. Determines which are 
         // front-facing and which re back-facing. Can be clockwise or 
         // counter-clockwise.
-        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
 
         // We also need to specify a MultiSampling struct. Multisampling allows
@@ -737,8 +737,8 @@ namespace VulkanUtils {
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
         VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
-        Buffers::VertexBuffer* vertexBuffer, 
-        Buffers::IndexBuffer* indexBuffer) {
+        Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer, 
+        VkDescriptorSet* descriptorSets) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -810,7 +810,10 @@ namespace VulkanUtils {
            
            vkCmdBindIndexBuffer(buffers[i], indexBuffer->bufferData.buffer, 0, 
                 VK_INDEX_TYPE_UINT16);
-           
+
+           vkCmdBindDescriptorSets(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+           pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+
            // Now we can tell Vulkan to draw our triangle. This function has the parameters:
            vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
   
@@ -837,6 +840,7 @@ namespace VulkanUtils {
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
+        VkDescriptorSet* descriptorSets,
         std::vector<Buffers::BufferData>* uniformBuffers
     ) {
 
@@ -880,10 +884,17 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
+        if (createDescriptorSets(deviceData, descriptorSets, *descriptorSetLayout, 
+            *descriptorPool, pSwapchain->imageCount, uniformBuffers->data()) 
+            != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer, indexBuffer) 
+            vertexBuffer, indexBuffer, descriptorSets) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -1100,6 +1111,48 @@ namespace VulkanUtils {
             }
         }
         
+        return VK_SUCCESS;
+    }
+
+    VkResult createDescriptorSets(VulkanDeviceData* deviceData, 
+        VkDescriptorSet* sets, VkDescriptorSetLayout& layout, 
+        VkDescriptorPool& pool, uint32_t imageCount, 
+        Buffers::BufferData* uBuffers) {
+
+        std::vector<VkDescriptorSetLayout> layouts(imageCount, layout);
+
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = pool;
+        allocInfo.descriptorSetCount = imageCount;
+        allocInfo.pSetLayouts = layouts.data();
+
+        if (vkAllocateDescriptorSets(deviceData->logicalDevice, &allocInfo, 
+            sets) != VK_SUCCESS) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        for (size_t i = 0; i < imageCount; i++) {
+            
+            VkDescriptorBufferInfo bufferInfo; 
+            bufferInfo.buffer = uBuffers[i].buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(Buffers::UniformBufferObject);
+
+            VkWriteDescriptorSet descriptorWrite{};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = sets[i];
+            descriptorWrite.dstBinding = 0; 
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &bufferInfo;
+            
+            vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite, 
+                0, nullptr);
+        }
+
         return VK_SUCCESS;
     }
 }

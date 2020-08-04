@@ -103,7 +103,8 @@ namespace VulkanUtils {
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool,
         Buffers::VertexBuffer*,
-        Buffers::IndexBuffer*
+        Buffers::IndexBuffer*,
+        VkDescriptorSet* descriptorSets
     );
 
     VkResult recreateSwapchain(
@@ -117,6 +118,7 @@ namespace VulkanUtils {
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
+        VkDescriptorSet* descriptorSets,
         std::vector<Buffers::BufferData>* uniformBuffers
     );
 
@@ -144,6 +146,15 @@ namespace VulkanUtils {
     VkResult createUniformBuffers(
         VulkanDeviceData* deviceData, 
         std::vector<Buffers::BufferData>* uBuffers
+    );
+
+    VkResult createDescriptorSets(
+        VulkanDeviceData* deviceData,
+        VkDescriptorSet* sets,
+        VkDescriptorSetLayout& layout,
+        VkDescriptorPool& pool,
+        uint32_t imageCount,
+        Buffers::BufferData* uBuffers
     );
 }
 

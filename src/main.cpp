@@ -689,14 +689,31 @@ int main() {
 
     std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
 
-    // ---------------------- DESCRIPTOR POOL ---------------------------
+    if (VulkanUtils::createUniformBuffers(&deviceData, &uniformBuffers) 
+        != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create uniform buffers!");
+    }
+
+    // ---------------------- DESCRIPTOR POOL --------------------------------
 
     VkDescriptorPool descriptorPool{};
 
-    if (VulkanUtils::createDescriptorPool(deviceData.logicalDevice, swapchain.imageCount, 
-        &descriptorPool) != VK_SUCCESS) {
+    if (VulkanUtils::createDescriptorPool(deviceData.logicalDevice, 
+        swapchain.imageCount, &descriptorPool) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create descriptor pool.");
+    }
+
+    // --------------------------- DESCRIPTOR SETS ----------------------------
+
+    std::vector<VkDescriptorSet> descriptorSets(swapchain.imageCount);
+
+    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets.data(), 
+        descriptorSetLayout, descriptorPool, swapchain.imageCount, 
+        uniformBuffers.data()) != VK_SUCCESS) {
+        
+        PONG_FATAL_ERROR("Failed to create descriptor sets!");
     }
 
     // ------------------ COMMAND BUFFER CREATION -----------------------
@@ -713,7 +730,8 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
-        swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer) 
+        swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
+        descriptorSets.data())
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -836,6 +854,7 @@ int main() {
                 commandBuffers.data(),
                 &descriptorSetLayout,
                 &descriptorPool,
+                descriptorSets.data(),
                 &uniformBuffers
             );
             
@@ -934,6 +953,7 @@ int main() {
                 commandBuffers.data(),
                 &descriptorSetLayout,
                 &descriptorPool,
+                descriptorSets.data(),
                 &uniformBuffers);
 
             pongData.framebufferResized = false;
