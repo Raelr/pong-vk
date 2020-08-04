@@ -689,8 +689,8 @@ int main() {
 
     std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
 
-    if (VulkanUtils::createUniformBuffers(&deviceData, &uniformBuffers) 
-        != VK_SUCCESS) {
+    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers.data(), 
+        swapchain.imageCount) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create uniform buffers!");
     }
@@ -855,7 +855,7 @@ int main() {
                 &descriptorSetLayout,
                 &descriptorPool,
                 descriptorSets.data(),
-                &uniformBuffers
+                uniformBuffers.data()
             );
             
             pongData.framebufferResized = false;
@@ -954,7 +954,7 @@ int main() {
                 &descriptorSetLayout,
                 &descriptorPool,
                 descriptorSets.data(),
-                &uniformBuffers);
+                uniformBuffers.data());
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {

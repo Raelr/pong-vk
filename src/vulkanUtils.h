@@ -119,7 +119,7 @@ namespace VulkanUtils {
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
         VkDescriptorSet* descriptorSets,
-        std::vector<Buffers::BufferData>* uniformBuffers
+        Buffers::BufferData* uniformBuffers
     );
 
     void cleanupSwapchain(
@@ -145,7 +145,8 @@ namespace VulkanUtils {
 
     VkResult createUniformBuffers(
         VulkanDeviceData* deviceData, 
-        std::vector<Buffers::BufferData>* uBuffers
+        Buffers::BufferData* uBuffers,
+        uint32_t imageCount
     );
 
     VkResult createDescriptorSets(

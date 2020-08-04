@@ -841,7 +841,7 @@ namespace VulkanUtils {
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
         VkDescriptorSet* descriptorSets,
-        std::vector<Buffers::BufferData>* uniformBuffers
+        Buffers::BufferData* uniformBuffers
     ) {
 
         vkDeviceWaitIdle(deviceData->logicalDevice);
@@ -873,7 +873,8 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createUniformBuffers(deviceData, uniformBuffers) != VK_SUCCESS) {
+        if (createUniformBuffers(deviceData, uniformBuffers, 
+            pSwapchain->imageCount) != VK_SUCCESS) {
             
             return VK_ERROR_INITIALIZATION_FAILED;
         }
@@ -885,7 +886,7 @@ namespace VulkanUtils {
         }
 
         if (createDescriptorSets(deviceData, descriptorSets, *descriptorSetLayout, 
-            *descriptorPool, pSwapchain->imageCount, uniformBuffers->data()) 
+            *descriptorPool, pSwapchain->imageCount, uniformBuffers) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -1093,11 +1094,11 @@ namespace VulkanUtils {
     }
 
     VkResult createUniformBuffers(VulkanDeviceData* deviceData, 
-        std::vector<Buffers::BufferData>* uBuffers) {
+        Buffers::BufferData* uBuffers, uint32_t imageCount) {
 
         VkDeviceSize bufferSize = sizeof(Buffers::UniformBufferObject);
 
-        for (size_t i = 0; i < uBuffers->size(); i++) {
+        for (size_t i = 0; i < imageCount; i++) {
             if (Buffers::createBuffer(
                 deviceData->physicalDevice,
                 deviceData->logicalDevice,
@@ -1105,7 +1106,7 @@ namespace VulkanUtils {
                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                uBuffers->at(i)) != VK_SUCCESS) {
+                uBuffers[i]) != VK_SUCCESS) {
                 
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
