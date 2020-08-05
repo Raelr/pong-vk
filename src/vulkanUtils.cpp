@@ -847,7 +847,7 @@ namespace VulkanUtils {
         vkDeviceWaitIdle(deviceData->logicalDevice);
 
         cleanupSwapchain(deviceData->logicalDevice, pSwapchain, pGraphicsPipeline, 
-            commandPool, pFramebuffers, pCommandbuffers);
+            commandPool, pFramebuffers, pCommandbuffers, uniformBuffers, *descriptorPool);
         
         // Re-populate the swapchain
         if (createSwapchain(pSwapchain, deviceData) != VK_SUCCESS) {
@@ -885,8 +885,8 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createDescriptorSets(deviceData, descriptorSets, *descriptorSetLayout, 
-            *descriptorPool, pSwapchain->imageCount, uniformBuffers) 
+        if (createDescriptorSets(deviceData, descriptorSets, descriptorSetLayout, 
+            descriptorPool, pSwapchain->imageCount, uniformBuffers) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -911,7 +911,9 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VkCommandBuffer* pCommandbuffers) {
+        VkCommandBuffer* pCommandbuffers,
+        Buffers::BufferData* uniformBuffers,
+        VkDescriptorPool& descriptorPool) {
 
         for (size_t i = 0; i < pSwapchain->imageCount; i++) {
             vkDestroyFramebuffer(device, pFramebuffers[i], nullptr);
@@ -938,6 +940,13 @@ namespace VulkanUtils {
 
         // Destroy the Swapchain
         vkDestroySwapchainKHR(device, pSwapchain->swapchain, nullptr);
+
+        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
+            vkDestroyBuffer(device, uniformBuffers[i].buffer, nullptr);
+            vkFreeMemory(device, uniformBuffers[i].bufferMemory, nullptr);
+        }
+ 
+        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     }
 
     // All shaders must be wrapped in a shader module. This is a helper 
@@ -1116,15 +1125,15 @@ namespace VulkanUtils {
     }
 
     VkResult createDescriptorSets(VulkanDeviceData* deviceData, 
-        VkDescriptorSet* sets, VkDescriptorSetLayout& layout, 
-        VkDescriptorPool& pool, uint32_t imageCount, 
+        VkDescriptorSet* sets, VkDescriptorSetLayout* layout, 
+        VkDescriptorPool* pool, uint32_t imageCount, 
         Buffers::BufferData* uBuffers) {
 
-        std::vector<VkDescriptorSetLayout> layouts(imageCount, layout);
+        std::vector<VkDescriptorSetLayout> layouts(imageCount, *layout);
 
         VkDescriptorSetAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = pool;
+        allocInfo.descriptorPool = *pool;
         allocInfo.descriptorSetCount = imageCount;
         allocInfo.pSetLayouts = layouts.data();
 

@@ -710,7 +710,7 @@ int main() {
     std::vector<VkDescriptorSet> descriptorSets(swapchain.imageCount);
 
     if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets.data(), 
-        descriptorSetLayout, descriptorPool, swapchain.imageCount, 
+        &descriptorSetLayout, &descriptorPool, swapchain.imageCount, 
         uniformBuffers.data()) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
@@ -841,6 +841,8 @@ int main() {
             // storage
             handleMinimisation(window, &deviceData.framebufferWidth, 
                 &deviceData.framebufferHeight);
+
+            INFO(descriptorSets.size());
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
@@ -979,16 +981,11 @@ int main() {
         &graphicsPipeline, 
         commandPool, 
         swapchainFramebuffers.data(), 
-        commandBuffers.data()
+        commandBuffers.data(),
+        uniformBuffers.data(),
+        descriptorPool
     );
 
-    for (size_t i = 0; i < uniformBuffers.size(); i++) {
-        vkDestroyBuffer(deviceData.logicalDevice, uniformBuffers[i].buffer, nullptr);
-        vkFreeMemory(deviceData.logicalDevice, uniformBuffers[i].bufferMemory, nullptr);
-    }
-
-    vkDestroyDescriptorPool(deviceData.logicalDevice, descriptorPool, nullptr);
-    
     vkDestroyDescriptorSetLayout(deviceData.logicalDevice, descriptorSetLayout, 
         nullptr);
 

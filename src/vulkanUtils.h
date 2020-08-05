@@ -128,7 +128,9 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
-        VkCommandBuffer* pCommandbuffers
+        VkCommandBuffer* pCommandbuffers,
+        Buffers::BufferData* uniformBuffers,
+        VkDescriptorPool& descriptorPool
     );
 
     VkResult createVertexBuffer(
@@ -152,8 +154,8 @@ namespace VulkanUtils {
     VkResult createDescriptorSets(
         VulkanDeviceData* deviceData,
         VkDescriptorSet* sets,
-        VkDescriptorSetLayout& layout,
-        VkDescriptorPool& pool,
+        VkDescriptorSetLayout* layout,
+        VkDescriptorPool* pool,
         uint32_t imageCount,
         Buffers::BufferData* uBuffers
     );
