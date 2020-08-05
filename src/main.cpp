@@ -150,30 +150,27 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device,
         std::chrono::seconds::period>(currentTime - startTime).count();
 
     Buffers::UniformBufferObject ubo{};
-    // Rotate the model matrix
-    ubo.model = glm::rotate(
-        glm::mat4(1.0f), 
-        time * glm::radians(90.0f), 
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
     
+
+    glm::mat4 m = glm::mat4(1.0f);
+    
+    m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f));
+    
+    m = glm::rotate(m, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    m = glm::scale(m, glm::vec3(200.0f, 200.0f, 1.0f));
+    // Rotate the model matrix
+    ubo.model = m;
+
     // Set the view
-    ubo.view = glm::lookAt(
-        glm::vec3(2.0f, 2.0f, 2.0f), 
-        glm::vec3(0.0f, 0.0f, 0.0f), 
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
+    ubo.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
     // Set our projection to be a perspective view
-    ubo.proj = glm::perspective(
-        glm::radians(45.0f), 
-        swapchainExtent.width / (float) swapchainExtent.height, 
-        0.1f, 
-        10.0f
-    );
+    ubo.proj = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH), 
+        static_cast<float>(WINDOW_HEIGHT), 0.0f, -1.0f, 1.0f);
 
     // Flip the projection matrix (since the Y coordinate is inverted in
     // OpenGL).
-    ubo.proj[1][1] *= -1;
+    //ubo.proj[1][1] *= -1;
 
     // Now we bind our data to the UBO for later use
     void* data;
