@@ -159,18 +159,18 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device,
     m = glm::rotate(m, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
     m = glm::scale(m, glm::vec3(200.0f, 200.0f, 1.0f));
+
     // Rotate the model matrix
     ubo.model = m;
 
     // Set the view
     ubo.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-    // Set our projection to be a perspective view
-    ubo.proj = glm::ortho(0.0f, static_cast<float>(WINDOW_WIDTH), 
-        static_cast<float>(WINDOW_HEIGHT), 0.0f, -1.0f, 1.0f);
-
-    // Flip the projection matrix (since the Y coordinate is inverted in
-    // OpenGL).
-    //ubo.proj[1][1] *= -1;
+    // Set our projection to be an orthographic view (for 3D)
+    ubo.proj = glm::ortho(
+        -(static_cast<float>(WINDOW_WIDTH) / 2), 
+        static_cast<float>(WINDOW_WIDTH) / 2, 
+        static_cast<float>(WINDOW_HEIGHT) / 2, 
+        -(static_cast<float>(WINDOW_HEIGHT) / 2), -1.0f, 1.0f);
 
     // Now we bind our data to the UBO for later use
     void* data;
@@ -678,14 +678,16 @@ int main() {
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
     }
 
+    // Create a uniform buffer for storing vertex data. 
     if (VulkanUtils::createIndexBuffer(&deviceData, &indexBuffer, commandPool)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create index buffer.");
     }
-
+    // Define a vector for storing uniform buffer information
     std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
-
+    
+    // Create our uniform buffers (one per image)
     if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers.data(), 
         swapchain.imageCount) != VK_SUCCESS) {
 
