@@ -8,13 +8,11 @@ This repo will primarily follow the Vulkan tutorials by [Alexander Overvoorde](h
 
 ## Progress
 
-The project is still very much in its infant stages. Right now the focus is on setting up all dependencies such as [`GLFW`](https://github.com/glfw/glfw), [`GLM`](https://github.com/g-truc/glm), and [`Vulkan`](https://www.khronos.org/vulkan/). 
-
-Once this is done we'll be going over the Vulkan API to try and set up the basics of the project. 
+So far, the project has successfully achieved the rendering of a 2D rectangle using a MVP matrix. The next goal is to determine how multiple objects can be rendered in Vulkan. 
 
 ## Setup Notes
 
-NOTE: This prject contains submodules. Please remember to clone the project with --recursive-submodules prepended. I.e:
+**NOTE:** This prject contains submodules. Please remember to clone the project with --recursive-submodules prepended. I.e:
 
 ```
 $ git clone --recurse-submodules https://github.com/Raelr/pong-vk.git
@@ -27,13 +25,17 @@ $ git submodules init
 $ git submodules update
 ```
 
-You find that the submodules fail to install, you should try and delete the following directories:
+If you find that the submodules fail to install, you should try and delete the following directories:
 
 * vendor/glm
 * vendor/spdlog
 * vendor/GLFW/glfw
 
 Then try and re-run the submodules command and see if it works.
+
+### Required Compiler
+
+Please compile the project using [Clang](https://clang.llvm.org/). 
 
 ## MacOS Setup
 
@@ -104,3 +106,5 @@ premake\premake5.exe vs2019
 ```
 
 This should generate the appropriate visual studio files. After that, open the generated .sln file and you should be able to run the project from there!
+
+**NOTE:** Remember to change your Visual Studio compiler to Clang. You can do so by following the instructions laid out [here](https://docs.microsoft.com/en-us/cpp/build/clang-support-msbuild?view=vs-2019). 
