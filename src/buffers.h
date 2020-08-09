@@ -89,7 +89,6 @@ namespace Buffers {
     // Return vertex input attributes. This describes how a vertex attribute
     // can be extracted from a chunk of vertex data. 
     std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
-
 }
 
 #endif // !BUFFERS_H

@@ -14,6 +14,7 @@
 #include <cstdint>
 #include "utils.h"
 #include "vulkanUtils.h"
+#include "quad.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -226,12 +227,12 @@ int main() {
     // Get the number of layers available for vulkan.
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-    std::vector<VkLayerProperties> layerProperties(layerCount);
+    VkLayerProperties layerProperties[layerCount];
 
     if (enableValidationLayers) {
         
         // Get the layer names themselves USING the count variable.
-        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
+        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties);
 
         uint8_t foundCount = 0;
 
@@ -655,9 +656,9 @@ int main() {
         // Define all the vertices of our triangle and the colors for every vertex
         Buffers::Vertex vertices[] = {
             // Positions        // Colors
-            { {-0.5f, -0.5f},   {1.0f, 0.0f, 0.0f} },
-            { {0.5f, -0.5f},    {0.0f, 1.0f, 0.0f} },
-            { {0.5f, 0.5f},     {0.0f, 0.0f, 1.0f} },
+            { {-0.5f, -0.5f},   {1.0f, 1.0f, 1.0f} },
+            { {0.5f, -0.5f},    {1.0f, 1.0f, 1.0f} },
+            { {0.5f, 0.5f},     {1.0f, 1.0f, 1.0f} },
             { {-0.5f, 0.5f},    {1.0f, 1.0f, 1.0f} }
         };
 
