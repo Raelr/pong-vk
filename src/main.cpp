@@ -685,33 +685,54 @@ int main() {
 
         PONG_FATAL_ERROR("Failed to create index buffer.");
     }
+
+    size_t objects = 2;
     // Define a vector for storing uniform buffer information
-    std::vector<Buffers::BufferData> uniformBuffers(swapchain.imageCount);
-    
+    Buffers::BufferData uniformBuffers[swapchain.imageCount];
+    Buffers::BufferData uniformBuffers2[swapchain.imageCount]; 
+
     // Create our uniform buffers (one per image)
-    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers.data(), 
+    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers, 
         swapchain.imageCount) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create uniform buffers!");
     }
 
+    // Create uniform buffers for second object
+    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers2, 
+        swapchain.imageCount) != VK_SUCCESS) {
+
+        PONG_FATAL_ERROR("Failed to create uniform buffers!");
+    }
+    
+    Buffers::BufferData* uBuffers[] = {
+        uniformBuffers, uniformBuffers2
+    };
     // ---------------------- DESCRIPTOR POOL --------------------------------
 
     VkDescriptorPool descriptorPool{};
 
     if (VulkanUtils::createDescriptorPool(deviceData.logicalDevice, 
-        swapchain.imageCount, &descriptorPool) != VK_SUCCESS) {
+        swapchain.imageCount, &descriptorPool, objects) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create descriptor pool.");
     }
 
     // --------------------------- DESCRIPTOR SETS ----------------------------
 
-    std::vector<VkDescriptorSet> descriptorSets(swapchain.imageCount);
+    VkDescriptorSet descriptorSets[swapchain.imageCount];
+    VkDescriptorSet descriptorSets2[swapchain.imageCount];
 
-    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets.data(), 
+    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets, 
         &descriptorSetLayout, &descriptorPool, swapchain.imageCount, 
-        uniformBuffers.data()) != VK_SUCCESS) {
+        uBuffers[0]) != VK_SUCCESS) {
+        
+        PONG_FATAL_ERROR("Failed to create descriptor sets!");
+    }
+
+    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets2, 
+        &descriptorSetLayout, &descriptorPool, swapchain.imageCount, 
+        uBuffers[1]) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
     }
@@ -722,6 +743,10 @@ int main() {
     // command buffers. Because these commands involve allocating a framebuffer,
     // we'll need to record a command buffer for every image in the swap chain.
     
+    VkDescriptorSet* sets[] =  {
+        descriptorSets, descriptorSets2
+    };
+
     // Make this the same size as our images. 
     std::vector<VkCommandBuffer> commandBuffers(swapchain.imageCount);
 
@@ -731,7 +756,7 @@ int main() {
     if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
         swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
-        descriptorSets.data())
+        descriptorSets)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -842,7 +867,6 @@ int main() {
             handleMinimisation(window, &deviceData.framebufferWidth, 
                 &deviceData.framebufferHeight);
 
-            INFO(descriptorSets.size());
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
@@ -856,8 +880,9 @@ int main() {
                 commandBuffers.data(),
                 &descriptorSetLayout,
                 &descriptorPool,
-                descriptorSets.data(),
-                uniformBuffers.data()
+                sets,
+                uBuffers,
+                objects
             );
             
             pongData.framebufferResized = false;
@@ -879,7 +904,7 @@ int main() {
         // Now, use the image in this frame!.
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-        updateUniformBuffer(&uniformBuffers[imageIndex].bufferMemory, 
+        updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
             deviceData.logicalDevice, swapchain.swapchainExtent);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
@@ -955,8 +980,9 @@ int main() {
                 commandBuffers.data(),
                 &descriptorSetLayout,
                 &descriptorPool,
-                descriptorSets.data(),
-                uniformBuffers.data());
+                sets,
+                uBuffers,
+                objects);
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
@@ -974,7 +1000,7 @@ int main() {
     vkDeviceWaitIdle(deviceData.logicalDevice);
     
     // --------------------------- CLEANUP ------------------------------
-    
+
     VulkanUtils::cleanupSwapchain(
         deviceData.logicalDevice, 
         &swapchain, 
@@ -982,8 +1008,9 @@ int main() {
         commandPool, 
         swapchainFramebuffers.data(), 
         commandBuffers.data(),
-        uniformBuffers.data(),
-        descriptorPool
+        uBuffers,
+        descriptorPool,
+        objects
     );
 
     vkDestroyDescriptorSetLayout(deviceData.logicalDevice, descriptorSetLayout, 

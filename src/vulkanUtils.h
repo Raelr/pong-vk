@@ -73,7 +73,8 @@ namespace VulkanUtils {
     VkResult createDescriptorPool(
         VkDevice device,
         uint32_t imageCount,
-        VkDescriptorPool* descriptorPool
+        VkDescriptorPool* descriptorPool,
+        size_t objectCount
     );
 
     VkResult createGraphicsPipeline(
@@ -118,8 +119,9 @@ namespace VulkanUtils {
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
-        VkDescriptorSet* descriptorSets,
-        Buffers::BufferData* uniformBuffers
+        VkDescriptorSet** descriptorSets,
+        Buffers::BufferData** uniformBuffers,
+        size_t objectCount
     );
 
     void cleanupSwapchain(
@@ -129,8 +131,9 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers,
-        Buffers::BufferData* uniformBuffers,
-        VkDescriptorPool& descriptorPool
+        Buffers::BufferData** uniformBuffers,
+        VkDescriptorPool& descriptorPool,
+        size_t objectCount
     );
 
     VkResult createVertexBuffer(

@@ -440,18 +440,26 @@ namespace VulkanUtils {
     VkResult createDescriptorPool(
         VkDevice device,
         uint32_t imageCount,
-        VkDescriptorPool* descriptorPool
+        VkDescriptorPool* descriptorPool,
+        size_t objectCount
     ) {
+
+        VkDescriptorPoolSize sizes[objectCount];
         
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = imageCount;
+        for (int i = 0; i < objectCount; i++) {
+            
+            VkDescriptorPoolSize poolSize{};
+            poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSize.descriptorCount = imageCount * objectCount;
+
+            sizes[i] = poolSize;
+        }
 
         VkDescriptorPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = 1;
-        poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = imageCount;
+        poolInfo.poolSizeCount = objectCount;
+        poolInfo.pPoolSizes = sizes;
+        poolInfo.maxSets = imageCount * objectCount;
         
         if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool)
             != VK_SUCCESS) {
@@ -840,14 +848,16 @@ namespace VulkanUtils {
         VkCommandBuffer* pCommandbuffers,
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
-        VkDescriptorSet* descriptorSets,
-        Buffers::BufferData* uniformBuffers
+        VkDescriptorSet** descriptorSets,
+        Buffers::BufferData** uniformBuffers,
+        size_t objectCount
     ) {
 
         vkDeviceWaitIdle(deviceData->logicalDevice);
 
         cleanupSwapchain(deviceData->logicalDevice, pSwapchain, pGraphicsPipeline, 
-            commandPool, pFramebuffers, pCommandbuffers, uniformBuffers, *descriptorPool);
+            commandPool, pFramebuffers, pCommandbuffers, uniformBuffers, 
+            *descriptorPool, objectCount);
         
         // Re-populate the swapchain
         if (createSwapchain(pSwapchain, deviceData) != VK_SUCCESS) {
@@ -873,20 +883,33 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createUniformBuffers(deviceData, uniformBuffers, 
+        if (createUniformBuffers(deviceData, uniformBuffers[0], 
+            pSwapchain->imageCount) != VK_SUCCESS) {
+            
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        if (createUniformBuffers(deviceData, uniformBuffers[1], 
             pSwapchain->imageCount) != VK_SUCCESS) {
             
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         if (createDescriptorPool(deviceData->logicalDevice, pSwapchain->imageCount, 
-            descriptorPool) != VK_SUCCESS) {
+            descriptorPool, objectCount) != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createDescriptorSets(deviceData, descriptorSets, descriptorSetLayout, 
-            descriptorPool, pSwapchain->imageCount, uniformBuffers) 
+        if (createDescriptorSets(deviceData, descriptorSets[0], descriptorSetLayout, 
+            descriptorPool, pSwapchain->imageCount, uniformBuffers[0]) 
+            != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        if (createDescriptorSets(deviceData, descriptorSets[1], descriptorSetLayout, 
+            descriptorPool, pSwapchain->imageCount, uniformBuffers[1]) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -895,7 +918,7 @@ namespace VulkanUtils {
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer, indexBuffer, descriptorSets) 
+            vertexBuffer, indexBuffer, descriptorSets[0]) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -912,8 +935,9 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers,
-        Buffers::BufferData* uniformBuffers,
-        VkDescriptorPool& descriptorPool) {
+        Buffers::BufferData** uniformBuffers,
+        VkDescriptorPool& descriptorPool,
+        size_t objectCount) {
 
         for (size_t i = 0; i < pSwapchain->imageCount; i++) {
             vkDestroyFramebuffer(device, pFramebuffers[i], nullptr);
@@ -942,10 +966,15 @@ namespace VulkanUtils {
         vkDestroySwapchainKHR(device, pSwapchain->swapchain, nullptr);
 
         for (size_t i = 0; i < pSwapchain->imageCount; i++) {
-            vkDestroyBuffer(device, uniformBuffers[i].buffer, nullptr);
-            vkFreeMemory(device, uniformBuffers[i].bufferMemory, nullptr);
+            vkDestroyBuffer(device, uniformBuffers[0][i].buffer, nullptr);
+            vkFreeMemory(device, uniformBuffers[0][i].bufferMemory, nullptr);
         }
- 
+
+        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
+            vkDestroyBuffer(device, uniformBuffers[1][i].buffer, nullptr);
+            vkFreeMemory(device, uniformBuffers[1][i].bufferMemory, nullptr);
+        }
+
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     }
 
