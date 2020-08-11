@@ -105,7 +105,8 @@ namespace VulkanUtils {
         VkCommandPool commandPool,
         Buffers::VertexBuffer*,
         Buffers::IndexBuffer*,
-        VkDescriptorSet* descriptorSets
+        VkDescriptorSet** descriptorSets,
+        size_t objectCount
     );
 
     VkResult recreateSwapchain(

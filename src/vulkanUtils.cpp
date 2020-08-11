@@ -746,7 +746,7 @@ namespace VulkanUtils {
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
         VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
         Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer, 
-        VkDescriptorSet* descriptorSets) {
+        VkDescriptorSet** descriptorSets, size_t objectCount) {
         
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -818,13 +818,17 @@ namespace VulkanUtils {
            
            vkCmdBindIndexBuffer(buffers[i], indexBuffer->bufferData.buffer, 0, 
                 VK_INDEX_TYPE_UINT16);
+            
+           for (size_t j = 0; j < objectCount; j++) {
+                
+                vkCmdBindDescriptorSets(buffers[i], 
+                VK_PIPELINE_BIND_POINT_GRAPHICS, 
+                pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[j][i], 
+                0, nullptr);
 
-           vkCmdBindDescriptorSets(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, 
-           pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-
-           // Now we can tell Vulkan to draw our triangle. This function has the parameters:
-           vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
-  
+                // Now we can tell Vulkan to draw our triangle. This function has the parameters:
+                vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
+           } 
            // Now we can end the render pass:
            vkCmdEndRenderPass(buffers[i]);
   
@@ -918,7 +922,7 @@ namespace VulkanUtils {
         // Re-create command buffers
         if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
             pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer, indexBuffer, descriptorSets[0]) 
+            vertexBuffer, indexBuffer, descriptorSets, objectCount) 
             != VK_SUCCESS) {
 
             return VK_ERROR_INITIALIZATION_FAILED;

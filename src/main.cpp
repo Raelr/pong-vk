@@ -142,7 +142,7 @@ struct AppData {
 };
 
 void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, 
-    VkExtent2D swapchainExtent) {
+    VkExtent2D swapchainExtent, float x, float y) {
 
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -155,7 +155,7 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device,
 
     glm::mat4 m = glm::mat4(1.0f);
     
-    m = glm::translate(m, glm::vec3(0.0f, 0.0f, 0.0f));
+    m = glm::translate(m, glm::vec3(x, y, 0.0f));
     
     m = glm::rotate(m, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -756,7 +756,7 @@ int main() {
     if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
         commandBuffers.data(), &graphicsPipeline, &swapchain, 
         swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
-        descriptorSets)
+        sets, objects)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -905,7 +905,10 @@ int main() {
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
-            deviceData.logicalDevice, swapchain.swapchainExtent);
+            deviceData.logicalDevice, swapchain.swapchainExtent, -200.0f, 0.0f);
+
+        updateUniformBuffer(&uBuffers[1][imageIndex].bufferMemory, 
+            deviceData.logicalDevice, swapchain.swapchainExtent, 200.0f, 0.0f);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
