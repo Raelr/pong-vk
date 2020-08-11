@@ -8,7 +8,17 @@ This repo will primarily follow the Vulkan tutorials by [Alexander Overvoorde](h
 
 ## Progress
 
-So far, the project has successfully achieved the rendering of a 2D rectangle using a MVP matrix. The next goal is to determine how multiple objects can be rendered in Vulkan. 
+So far, we've succeeded in getting multiple objects rendering to screen.
+
+<img src="https://github.com/Raelr/pong-vk/blob/master/assets/mulipleObjects.png" alt="Quads" width="400" height="300">
+
+The next step is to move render code into its own module. The plan is to explore the following features:
+
+* Push constants for handling transforms
+* Dynamic Uniform Buffers
+* Texture overlays
+
+With these, we should be able to create a simple renderer which can return quads and apply simple textures to them. 
 
 ## Setup Notes
 
