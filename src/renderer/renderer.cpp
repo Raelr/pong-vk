@@ -50,18 +50,11 @@ namespace Renderer {
         Renderer* renderer,
         bool enableValidationLayers,
         GLFWwindow* window,
-        const char** vLayers,           // optional
-        uint32_t vLayerCount            // optional
+        const char** deviceExtensions,
+        uint32_t deviceExtensionsCount// optional
     ) {
 
         // ========================== VALIDATION LAYER CHECKING ==============================
-
-        // A list of default validation layers that we want to configure with Vulkan
-        const char* validationLayers[] = {
-            "VK_LAYER_KHRONOS_validation",
-        };
-        // A static count of all our layers
-        uint32_t validationLayerCount = 1;
 
         uint32_t layerCount = 0;
 
@@ -70,21 +63,12 @@ namespace Renderer {
 
         VkLayerProperties layerProperties[layerCount];
 
-        renderer->validationLayers = nullptr;
-        renderer->validationLayerCount = 0;
-
         if (enableValidationLayers) {
 
-            const char** layers = (vLayers == nullptr) ? validationLayers : vLayers;
-            uint32_t count = (vLayers == nullptr) ? validationLayerCount : vLayerCount;
-
-            if (checkValidationLayerSupport(layerCount,layerProperties, layers,layerCount)
-                != Status::SUCCESS) {
+            if (checkValidationLayerSupport(layerCount,layerProperties, renderer->validationLayers,
+                renderer->validationLayerCount) != Status::SUCCESS) {
                 return Status::FAILURE;
             }
-
-            renderer->validationLayers = layers;
-            renderer->validationLayerCount = count;
         }
 
         // ========================= VULKAN INSTANCE CREATION ================================
@@ -108,10 +92,20 @@ namespace Renderer {
             }
         }
 
+        // ============================ SURFACE CREATION ====================================
+
         INFO("Initialised Vulkan instance.");
 
         if (createWindowSurface(renderer->instance, window, &renderer->deviceData.surface)
             != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Retrieved Surface from GLFW.");
+
+        // ========================= PHYSICAL DEVICE CREATION ===============================
+
+        if (createPhysicalDevice(renderer) != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
 
@@ -308,5 +302,66 @@ namespace Renderer {
         }
 
         return Status::SUCCESS;
+    }
+
+    Status createPhysicalDevice(Renderer* renderer) {
+
+        renderer->deviceData.physicalDevice = VK_NULL_HANDLE;
+
+        // Begin by querying which devices are supported by Vulkan on this machine.
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(renderer->instance, &deviceCount, nullptr);
+
+        if (deviceCount == 0) {
+            ERROR("Failed to find GPUs that support Vulkan!");
+            return Status::FAILURE;
+        }
+
+        // Now we query which specific devices we have
+        VkPhysicalDevice devices[deviceCount];
+        vkEnumeratePhysicalDevices(renderer->instance, &deviceCount, devices);
+
+        // Now search for the GPU we want.
+        for (size_t i = 0; i < deviceCount; i++) {
+
+            // We need a device that has the queue families that we need.
+            VulkanUtils::QueueFamilyIndices indices = VulkanUtils::findQueueFamilies(devices[i],
+                renderer->deviceData.surface);
+
+            // Now we query all available extensions on this device
+            uint32_t extensionCount = 0;
+            vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, nullptr);
+
+            VkExtensionProperties availableExtensions[extensionCount];
+            vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, availableExtensions);
+
+
+        }
+
+        return Status::SUCCESS;
+    }
+
+    void loadDefaultValidationLayers(Renderer* renderer) {
+
+        const char* validationLayers[] = {
+            "VK_LAYER_KHRONOS_validation"
+        };
+
+        renderer->validationLayers = validationLayers;
+        renderer->validationLayerCount = 1;
+    }
+
+    Status loadCustomValidationLayers(Renderer* renderer, const char** validationLayers, uint32_t validationLayersCount) {
+
+        Status status = Status::FAILURE;
+        if (validationLayers != nullptr && validationLayersCount != 0) {
+            renderer->validationLayers = validationLayers;
+            renderer->validationLayerCount = validationLayersCount;
+            status = Status::SUCCESS;
+        } else {
+            ERROR("Unable to load in validation layers! Invalid validation layers have been provided");
+        }
+
+        return status;
     }
 }

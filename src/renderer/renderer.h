@@ -36,6 +36,10 @@ namespace Renderer {
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
+    Status createPhysicalDevice(Renderer*);
+    // Functions for pre-loading the renderer with data prior to creation
+    void loadDefaultValidationLayers(Renderer* renderer);
+    Status loadCustomValidationLayers(Renderer*, const char**, uint32_t);
 }
 
 
