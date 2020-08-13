@@ -3,6 +3,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include "../vulkanUtils.h"
 
 namespace Renderer {
 
@@ -19,6 +20,7 @@ namespace Renderer {
         const char** extensions;
         uint32_t extensionCount;
         VkDebugUtilsMessengerEXT debugMessenger;
+        VulkanUtils::VulkanDeviceData deviceData;
     };
 
     struct QuadData {
@@ -33,6 +35,7 @@ namespace Renderer {
     bool checkGlfwViability(const char**, uint32_t, VkExtensionProperties*, uint32_t);
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
+    Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
 }
 
 

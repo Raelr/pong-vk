@@ -3,7 +3,6 @@
 #include <cstring>
 #include <GLFW/glfw3.h>
 
-
 namespace Renderer {
 
     // A debug function callback - where the message data actually goes when triggered by the
@@ -80,7 +79,7 @@ namespace Renderer {
             uint32_t count = (vLayers == nullptr) ? validationLayerCount : vLayerCount;
 
             if (checkValidationLayerSupport(layerCount,layerProperties, layers,layerCount)
-                == Status::FAILURE) {
+                != Status::SUCCESS) {
                 return Status::FAILURE;
             }
 
@@ -98,17 +97,23 @@ namespace Renderer {
         }
 
         if (initialiseVulkanInstance(renderer, enableValidationLayers) == Status::FAILURE) {
-            return Status::FAILURE;
+            return Status::INITIALIZATION_FAILURE;
         }
 
         if (enableValidationLayers) {
             if (initialiseDebugUtilsMessenger(renderer->instance, &renderer->debugMessenger)
-                == Status::FAILURE) {
+                != Status::SUCCESS) {
                 ERROR("Failed to create Debug utils messenger!");
+                return Status::INITIALIZATION_FAILURE;
             }
         }
 
         INFO("Initialised Vulkan instance.");
+
+        if (createWindowSurface(renderer->instance, window, &renderer->deviceData.surface)
+            != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
 
         return Status::SUCCESS;
     }
@@ -292,6 +297,16 @@ namespace Renderer {
                                         | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         // Finally, you can store the actual debug callback in the struct
         messengerInfo.pfnUserCallback = debugCallback;
-        messengerInfo.pUserData = nullptr;
+        messengerInfo.pUserData =       nullptr;
+    }
+
+    Status createWindowSurface(VkInstance instance, GLFWwindow* window, VkSurfaceKHR* surface) {
+        if (glfwCreateWindowSurface(instance, window, nullptr,
+                                    surface) != VK_SUCCESS) {
+            ERROR("Failed to create window surface!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        return Status::SUCCESS;
     }
 }
