@@ -4,7 +4,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
@@ -12,9 +11,7 @@
 #include <string>
 #include <set>
 #include <cstdint>
-#include "utils.h"
 #include "vulkanUtils.h"
-#include "quad.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -151,7 +148,6 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device,
         std::chrono::seconds::period>(currentTime - startTime).count();
 
     Buffers::UniformBufferObject ubo{};
-    
 
     glm::mat4 m = glm::mat4(1.0f);
     
@@ -178,7 +174,6 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device,
     vkMapMemory(device, *memory, 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, *memory);
-
 }
 
 int main() {  
@@ -246,7 +241,7 @@ int main() {
         }
 
         // Throw an error and end the program if the validation layers aren't found. 
-        if (!(foundCount == validationLayersCount)) {
+        if (foundCount != validationLayersCount) {
             PONG_FATAL_ERROR("Requested validation layers are not available!");
         }
 
@@ -859,11 +854,7 @@ int main() {
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-           
-            // TODO: create a standalone function for handling re-creation of 
-            // swapchains for re-usability.
-            // TODO: Move all swapchain items into a standalone struct for 
-            // storage
+
             handleMinimisation(window, &deviceData.framebufferWidth, 
                 &deviceData.framebufferHeight);
 
