@@ -334,8 +334,6 @@ namespace Renderer {
 
             VkExtensionProperties availableExtensions[extensionCount];
             vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, availableExtensions);
-
-
         }
 
         return Status::SUCCESS;
@@ -360,6 +358,29 @@ namespace Renderer {
             status = Status::SUCCESS;
         } else {
             ERROR("Unable to load in validation layers! Invalid validation layers have been provided");
+        }
+
+        return status;
+    }
+
+    void loadDefaultDeviceExtensions(Renderer* renderer) {
+
+        const char* deviceExtensions[] = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+
+        renderer->extensions = deviceExtensions;
+        renderer->extensionCount = 1;
+    }
+
+    Status loadCustomDeviceExtensions(Renderer* renderer, const char** extensions, uint32_t extensionCount) {
+
+        Status status = Status::FAILURE;
+
+        if (extensions != nullptr && extensionCount > 0) {
+            renderer->extensions = extensions;
+            renderer->extensionCount = extensionCount;
+            status = Status::SUCCESS;
         }
 
         return status;

@@ -38,8 +38,10 @@ namespace Renderer {
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
     Status createPhysicalDevice(Renderer*);
     // Functions for pre-loading the renderer with data prior to creation
-    void loadDefaultValidationLayers(Renderer* renderer);
+    void loadDefaultValidationLayers(Renderer*);
     Status loadCustomValidationLayers(Renderer*, const char**, uint32_t);
+    void loadDefaultDeviceExtensions(Renderer*);
+    Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
 }
 
 
