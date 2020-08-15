@@ -106,8 +106,15 @@ namespace Renderer {
         // ========================= PHYSICAL DEVICE CREATION ===============================
 
         if (createPhysicalDevice(renderer) != Status::SUCCESS) {
+            ERROR("Failed to create physical device!");
             return Status::INITIALIZATION_FAILURE;
         }
+
+        INFO("Created physical device!");
+
+        // ========================== LOGICAL DEVICE CREATION ===============================
+
+
 
         return Status::SUCCESS;
     }
@@ -321,6 +328,8 @@ namespace Renderer {
         VkPhysicalDevice devices[deviceCount];
         vkEnumeratePhysicalDevices(renderer->instance, &deviceCount, devices);
 
+        Status status = Status::FAILURE;
+
         // Now search for the GPU we want.
         for (size_t i = 0; i < deviceCount; i++) {
 
@@ -334,9 +343,46 @@ namespace Renderer {
 
             VkExtensionProperties availableExtensions[extensionCount];
             vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, availableExtensions);
+
+            // Check if our device has all our required extensions
+            size_t found = 0;
+            for (size_t i = 0; i < renderer->deviceExtensionCount; i++) {
+                for (size_t j = 0; j < extensionCount; j++) {
+                    if (strcmp(renderer->deviceExtensions[i], availableExtensions[j].extensionName) == 0) {
+                        found++;
+                    }
+                }
+            }
+
+            bool extensionsSupported = (found == renderer->extensionCount);
+            bool swapchainAdequate = false;
+
+            if (extensionsSupported) {
+                // Get the swapchain details
+                VulkanUtils::SwapchainSupportDetails supportDetails =
+                    VulkanUtils::querySwapchainSupport(devices[i], renderer->deviceData.surface);
+                // Make sure that we have at least one supported format and one supported presentation mode.
+                swapchainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
+            }
+
+            bool is_supported = (
+                indices.graphicsFamily.has_value()
+                && indices.presentFamily.has_value())
+                // If all available extensions were 'ticked off' the set then we know we have all
+                // required extensions.
+                && extensionsSupported
+                && swapchainAdequate;
+            
+            // If the device has all our required extensions and has a valid swapchain and has our 
+            // required queue families, then we can use that device for rendering!
+            if (is_supported) {
+                renderer->deviceData.physicalDevice = devices[i];
+                status = Status::SUCCESS;
+                break;
+            }
         }
 
-        return Status::SUCCESS;
+        return status;
     }
 
     void loadDefaultValidationLayers(Renderer* renderer) {
@@ -369,8 +415,8 @@ namespace Renderer {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
-        renderer->extensions = deviceExtensions;
-        renderer->extensionCount = 1;
+        renderer->deviceExtensions = deviceExtensions;
+        renderer->deviceExtensionCount = 1;
     }
 
     Status loadCustomDeviceExtensions(Renderer* renderer, const char** extensions, uint32_t extensionCount) {
@@ -378,8 +424,8 @@ namespace Renderer {
         Status status = Status::FAILURE;
 
         if (extensions != nullptr && extensionCount > 0) {
-            renderer->extensions = extensions;
-            renderer->extensionCount = extensionCount;
+            renderer->deviceExtensions = extensions;
+            renderer->deviceExtensionCount = extensionCount;
             status = Status::SUCCESS;
         }
 

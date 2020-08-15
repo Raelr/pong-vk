@@ -19,6 +19,8 @@ namespace Renderer {
         uint32_t validationLayerCount;
         const char** extensions;
         uint32_t extensionCount;
+        const char** deviceExtensions;
+        uint32_t deviceExtensionCount;
         VkDebugUtilsMessengerEXT debugMessenger;
         VulkanUtils::VulkanDeviceData deviceData;
     };
