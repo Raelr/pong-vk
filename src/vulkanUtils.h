@@ -22,8 +22,10 @@ namespace VulkanUtils {
     // support.
     struct SwapchainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
+        VkSurfaceFormatKHR* formats;
+        uint32_t formatCount;
+        VkPresentModeKHR* presentModes;
+        uint32_t presentModesCount;
     };
     // Struct storing all queue families
     struct QueueFamilyIndices {

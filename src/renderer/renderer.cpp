@@ -366,7 +366,10 @@ namespace Renderer {
                 VulkanUtils::SwapchainSupportDetails supportDetails =
                     VulkanUtils::querySwapchainSupport(devices[i], renderer->deviceData.surface);
                 // Make sure that we have at least one supported format and one supported presentation mode.
-                swapchainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
+                swapchainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
+
+                free(supportDetails.presentModes);
+                free(supportDetails.formats);
             }
 
             bool is_supported = (

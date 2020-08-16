@@ -23,6 +23,7 @@ namespace Renderer {
         uint32_t deviceExtensionCount;
         VkDebugUtilsMessengerEXT debugMessenger;
         VulkanUtils::VulkanDeviceData deviceData;
+        VulkanUtils::SwapchainData swapchainData;
     };
 
     struct QuadData {

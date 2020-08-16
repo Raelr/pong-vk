@@ -449,7 +449,10 @@ int main() {
             VulkanUtils::SwapchainSupportDetails supportDetails = 
                     VulkanUtils::querySwapchainSupport(device, deviceData.surface);
             // Make sure that we have at least one supported format and one supported presentation mode.
-            swapChainAdequate = !supportDetails.formats.empty() && !supportDetails.presentModes.empty();
+            swapChainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
+
+            free(supportDetails.presentModes);
+            free(supportDetails.formats);
         }
 
         bool is_supported = (
@@ -467,6 +470,7 @@ int main() {
             deviceData.physicalDevice = device;
             break;
         }
+
     }
 
     // Finally, we just need to make sure that an actual valid device was returned to us from 

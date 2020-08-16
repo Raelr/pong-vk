@@ -19,15 +19,18 @@ namespace VulkanUtils {
                 &details.capabilities);
 
         uint32_t formatCount = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, 
-                details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+ nullptr);
 
         // Using a vector for the utility functions - statically resize the 
         // data within it to hold·the data we need.
         if (formatCount != 0) {
-            details.formats.resize(formatCount);
+            VkSurfaceFormatKHR* formats = static_cast<VkSurfaceFormatKHR *>(malloc(
+                    formatCount * sizeof(VkSurfaceFormatKHR)));
             vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                    details.formats.data());
+                formats);
+            details.formats = formats;
+            details.formatCount = formatCount;
         }
        
         uint32_t presentModeCount = 0;
@@ -36,9 +39,12 @@ namespace VulkanUtils {
 
         // Same as above ^
         if (presentModeCount != 0) {
-            details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, 
-                    &presentModeCount,details.presentModes.data());
+            VkPresentModeKHR* presentModes = static_cast<VkPresentModeKHR *>(malloc(
+                    presentModeCount * sizeof(VkPresentModeKHR)));
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+                &presentModeCount, presentModes);
+            details.presentModes = presentModes;
+            details.presentModesCount = presentModeCount;
         }
        
         // Return the details we need
@@ -115,16 +121,16 @@ namespace VulkanUtils {
         // 1. Format - The color channels and types used by the Vulkan.
         // 2. Colorspace - Checks if the SRGB color space is supported or not
 
-        for (auto& format : supportDetails.formats) {
+        for (size_t i = 0; i < supportDetails.formatCount; i++) {
         
             // We'll be looking for the SRGB color space since it results in 
             // more accurate perceived colors.
             // Each color channel will be stored in 8 bit integers (32 bits
             // total)
-            if (format.format == VK_FORMAT_B8G8R8A8_SRGB && 
-            format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if (supportDetails.formats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
+            supportDetails.formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 
-                chosenFormat = format;
+                chosenFormat = supportDetails.formats[i];
                 INFO("Found SRGB channel for rendering format");
                 break;
                 // TODO: Might be good to have a fallback for when we fail to
@@ -139,12 +145,12 @@ namespace VulkanUtils {
         // Ideally, we want to use triple buffering as it results in less screen
         // tear and less performance issues than normal vsync. The present
         // mode we're looking for here is the VL_PRESENT_MODE_MAILBOX_KHR.
-        for (auto& presentMode : supportDetails.presentModes) {
+        for (int i = 0 ; i < supportDetails.presentModesCount; i++) {
             // If we can get triple buffering instead of vsync then we'll take
             // it. 
-            if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+            if (supportDetails.presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
 
-                chosenPresentMode = presentMode;
+                chosenPresentMode = supportDetails.presentModes[i];
                 INFO("Triple buffering enabled for present mode!");
                 break;
             }
@@ -269,6 +275,9 @@ namespace VulkanUtils {
         if (createImageViews(deviceData->logicalDevice, data) != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
+
+        free(supportDetails.formats);
+        free(supportDetails.presentModes);
 
         return VK_SUCCESS;
     }
