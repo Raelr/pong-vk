@@ -7,6 +7,7 @@
 
 namespace Renderer {
 
+    // A simple Enum for judging the success/failure of a function (kinda like VkResult)
     enum Status {
         FAILURE = 0,
         INITIALIZATION_FAILURE = 1,
@@ -14,25 +15,22 @@ namespace Renderer {
     };
 
     struct Renderer {
-        VkInstance instance;
-        const char** validationLayers;
-        uint32_t validationLayerCount;
-        const char** extensions;
-        uint32_t extensionCount;
-        const char** deviceExtensions;
-        uint32_t deviceExtensionCount;
-        VkDebugUtilsMessengerEXT debugMessenger;
-        VulkanUtils::VulkanDeviceData deviceData;
-        VulkanUtils::SwapchainData swapchainData;
-    };
-
-    struct QuadData {
-
-
+        // Default parameters for our validation layer and extensions
+        const char** validationLayers               {nullptr};
+        uint32_t validationLayerCount               {0};
+        const char** extensions                     {nullptr};
+        uint32_t extensionCount                     {0};
+        const char** deviceExtensions               {nullptr};
+        uint32_t deviceExtensionCount               {0};
+        // Vulkan structs:
+        VkInstance instance                         {nullptr};
+        VkDebugUtilsMessengerEXT debugMessenger     {nullptr};
+        VulkanUtils::VulkanDeviceData deviceData    {nullptr};
+        VulkanUtils::SwapchainData swapchainData    {nullptr};
     };
 
     // Device creation functions
-    Status initialiseRenderer(Renderer*, bool, GLFWwindow*, const char** = nullptr, uint32_t = 0);
+    Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
     Status initialiseVulkanInstance(Renderer*, bool);
     Status checkVulkanExtensions(Renderer*, bool);
     Status checkValidationLayerSupport(uint32_t, VkLayerProperties*, const char**, uint32_t);
@@ -41,16 +39,18 @@ namespace Renderer {
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
     Status createPhysicalDevice(Renderer*);
     Status createLogicalDevice(Renderer*);
-    Status cleanupRenderer(Renderer*,  bool enableValidationLayers);
+
+    // Cleanup code
+    Status cleanupRenderer(Renderer*,  bool);
+
     // Functions for pre-loading the renderer with data prior to creation
+
+    // Default data
     void loadDefaultValidationLayers(Renderer*);
-    Status loadCustomValidationLayers(Renderer*, const char**, uint32_t);
     void loadDefaultDeviceExtensions(Renderer*);
-    Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
+    // Custom data
+    [[maybe_unused]] Status loadCustomValidationLayers(Renderer*, const char**, uint32_t);
+    [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
 }
-
-
-
-
 
 #endif //PONG_VK_RENDERER_H

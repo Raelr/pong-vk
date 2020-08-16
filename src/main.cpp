@@ -1,14 +1,11 @@
 #define GLFW_INCLUDE_VULKAN
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 #include <GLFW/glfw3.h>
 #include <cstdlib>
-#include <cstring>
 #include <vector>
 #include "logger.h"
-#include <string>
 #include <set>
 #include <cstdint>
 #include "vulkanUtils.h"
@@ -51,8 +48,7 @@ struct AppData {
     bool framebufferResized;
 };
 
-void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, 
-    VkExtent2D swapchainExtent, float x, float y) {
+void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float y) {
 
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -111,13 +107,10 @@ int main() {
 
     glfwSetWindowUserPointer(window, &pongData);
 
-    // NOTE: THIS IS JUST A TEST, WILL NEED TO SET A BETTER POINTER THAN A 
-    // SINGLE INT IN FUTURE
-    // TODO: Replace this resize boolean with a struct containing our app data.
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
         int height) {
 
-        AppData* data = 
+        auto data =
             reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
 
         data->framebufferResized = true;
@@ -143,7 +136,7 @@ int main() {
     
     // ------------------------ RENDER PASS -----------------------------
 
-    VulkanUtils::GraphicsPipelineData graphicsPipeline;
+    VulkanUtils::GraphicsPipelineData graphicsPipeline{nullptr};
     
     // In Vulkan, a render pass represents all information that our 
     // framebuffers will need to process our images.
@@ -232,8 +225,8 @@ int main() {
 
     // --------------------- VERTEX DEFINITION --------------------------
 
-    Buffers::VertexBuffer vertexBuffer;
-    Buffers::IndexBuffer indexBuffer;
+    Buffers::VertexBuffer vertexBuffer{0};
+    Buffers::IndexBuffer indexBuffer{nullptr};
     // Define a vertex buffer for configuring vertex data.
     vertexBuffer.vertexCount = 4;
 
@@ -486,10 +479,10 @@ int main() {
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
-            renderer.deviceData.logicalDevice, renderer.swapchainData.swapchainExtent, -200.0f, 0.0f);
+            renderer.deviceData.logicalDevice, -200.0f, 0.0f);
 
         updateUniformBuffer(&uBuffers[1][imageIndex].bufferMemory, 
-            renderer.deviceData.logicalDevice, renderer.swapchainData.swapchainExtent, 200.0f, 0.0f);
+            renderer.deviceData.logicalDevice, 200.0f, 0.0f);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
