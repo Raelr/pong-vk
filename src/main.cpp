@@ -451,8 +451,7 @@ int main() {
             // Make sure that we have at least one supported format and one supported presentation mode.
             swapChainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
 
-            free(supportDetails.presentModes);
-            free(supportDetails.formats);
+            VulkanUtils::cleanupSwapchainSupportDetails(&supportDetails);
         }
 
         bool is_supported = (

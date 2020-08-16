@@ -50,6 +50,8 @@ namespace VulkanUtils {
         VkQueue presentQueue;
     };
 
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetails*);
+
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 

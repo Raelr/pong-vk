@@ -49,7 +49,12 @@ namespace VulkanUtils {
        
         // Return the details we need
         return details;
+    }
 
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetails* details) {
+
+        free(details->formats);
+        free(details->presentModes);
     }
     
     // Returns information about the queue families available by our physical
@@ -276,8 +281,7 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        free(supportDetails.formats);
-        free(supportDetails.presentModes);
+        cleanupSwapchainSupportDetails(&supportDetails);
 
         return VK_SUCCESS;
     }
