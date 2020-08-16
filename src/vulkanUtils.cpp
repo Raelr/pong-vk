@@ -412,9 +412,9 @@ namespace VulkanUtils {
         // Create the render pass
         if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) 
                 != VK_SUCCESS) {
-
             return VK_ERROR_INITIALIZATION_FAILED;
         }
+
         // Pass the render pass back to our storage struct.
         data->renderPass = renderPass;
         return VK_SUCCESS;

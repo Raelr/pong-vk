@@ -12,6 +12,7 @@
 #include <set>
 #include <cstdint>
 #include "vulkanUtils.h"
+#include "renderer/renderer.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -43,64 +44,64 @@ const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const bool enableValidationLayers = false;
 #endif
 
-// A debug function callback - where the message data actually goes when triggered by the 
-// validation layer. 
-// This function uses three mactros to define it's signature (used to help Vulkan know that
-// this method is valid).
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,     // The severity of the message
-    VkDebugUtilsMessageTypeFlagsEXT messageType,                // The actual TYPE of message
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,  // Struct with data of the message
-    void* pUserData) {                                          // User defined data (optional)
-    
-    // In this case we simply print out the message itself to the console. 
-    ERROR(pCallbackData->pMessage);
-
-    // Return value determines whether the call that triggers this message should be aborted.
-    // Generally these should return false. 
-    return VK_FALSE;
-}
-
-// A proxy function which calls the vkCreateDebugUtilsMessengerEXT function. 
-// The reason we need this function is because 'vkCreateDebugUtilsMessengerEXT' is an
-// extension function - meaning that it isn't automatically loaded into memory. As such,
-// we need to manually look up it's memory and call it from there. Vulkan provides us
-// with a utility function: 'vkGetInstanceProcAddr' for this exact purpose.
-static VkResult createDebugUtilsMessengerEXT(VkInstance instance, 
-    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
-    VkDebugUtilsMessengerEXT* pDebugMessenger) {
-    
-    // Store the function in a variable 'func'.
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-        instance, "vkCreateDebugUtilsMessengerEXT");
-
-    // Make sure we got the correct function.
-    if (func != nullptr) {
-        // Call the function
-        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-    } else {
-        // Return an error
-        return VkResult::VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-}
-
-// Simply accepts a reference to a messenger config struct and fills it with data.
-void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
-    messengerInfo = {};
-    // Specify the type of struct that's being populated
-    messengerInfo.sType =           VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    // You can specify the severity levels of logs that this struct will accept. 
-    messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
-                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
-                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    // You can also limit the actual message type to specific types. 
-    messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
-                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    // Finally, you can store the actual debug callback in the struct
-    messengerInfo.pfnUserCallback = debugCallback;
-    messengerInfo.pUserData = nullptr;
-}
+//// A debug function callback - where the message data actually goes when triggered by the
+//// validation layer.
+//// This function uses three mactros to define it's signature (used to help Vulkan know that
+//// this method is valid).
+//static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+//    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,     // The severity of the message
+//    VkDebugUtilsMessageTypeFlagsEXT messageType,                // The actual TYPE of message
+//    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,  // Struct with data of the message
+//    void* pUserData) {                                          // User defined data (optional)
+//
+//    // In this case we simply print out the message itself to the console.
+//    ERROR(pCallbackData->pMessage);
+//
+//    // Return value determines whether the call that triggers this message should be aborted.
+//    // Generally these should return false.
+//    return VK_FALSE;
+//}
+//
+//// A proxy function which calls the vkCreateDebugUtilsMessengerEXT function.
+//// The reason we need this function is because 'vkCreateDebugUtilsMessengerEXT' is an
+//// extension function - meaning that it isn't automatically loaded into memory. As such,
+//// we need to manually look up it's memory and call it from there. Vulkan provides us
+//// with a utility function: 'vkGetInstanceProcAddr' for this exact purpose.
+//static VkResult createDebugUtilsMessengerEXT(VkInstance instance,
+//    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+//    VkDebugUtilsMessengerEXT* pDebugMessenger) {
+//
+//    // Store the function in a variable 'func'.
+//    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+//        instance, "vkCreateDebugUtilsMessengerEXT");
+//
+//    // Make sure we got the correct function.
+//    if (func != nullptr) {
+//        // Call the function
+//        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+//    } else {
+//        // Return an error
+//        return VkResult::VK_ERROR_EXTENSION_NOT_PRESENT;
+//    }
+//}
+//
+//// Simply accepts a reference to a messenger config struct and fills it with data.
+//void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
+//    messengerInfo = {};
+//    // Specify the type of struct that's being populated
+//    messengerInfo.sType =           VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+//    // You can specify the severity levels of logs that this struct will accept.
+//    messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+//                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+//                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+//    // You can also limit the actual message type to specific types.
+//    messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+//                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+//                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+//    // Finally, you can store the actual debug callback in the struct
+//    messengerInfo.pfnUserCallback = debugCallback;
+//    messengerInfo.pUserData = nullptr;
+//}
 
 // Similar to messenger creation - destroying the messenger also requires the calling of
 // an unloaded message. We need to do the same thing as before and load the method from memory.
@@ -213,355 +214,29 @@ int main() {
 
     INFO("Created GLFW window");
 
-    // ========================= VULKAN SETUP ================================
+    // ========================= RENDERER ================================
 
-    // ------------------ VALIDATION LAYER SUPPORT CHECKING ------------------
+    // ==================== INITIALISE RENDERER ==========================
 
-    uint32_t layerCount = 0;
+    Renderer::Renderer renderer;
 
-    // Get the number of layers available for vulkan.
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+    // Let the renderer know that we want to load in default validation layers
+    Renderer::loadDefaultValidationLayers(&renderer);
+    Renderer::loadDefaultDeviceExtensions(&renderer);
 
-    VkLayerProperties layerProperties[layerCount];
-
-    if (enableValidationLayers) {
-        
-        // Get the layer names themselves USING the count variable.
-        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties);
-
-        uint8_t foundCount = 0;
-
-        // Search to see whether the validation layers requested are supported by Vulkan.
-        for (size_t i = 0; i < validationLayersCount; i++) {
-            for (auto& layer : layerProperties) {
-                if (strcmp(validationLayers[i], layer.layerName) == 0) {
-                    foundCount++;
-                }
-            }
-        }
-
-        // Throw an error and end the program if the validation layers aren't found. 
-        if (foundCount != validationLayersCount) {
-            PONG_FATAL_ERROR("Requested validation layers are not available!");
-        }
-
-        INFO("Requested Validation layers exist!");
-    }
-
-    // ------------------ INITIALISE VULKAN INSTANCE ---------------------
-
-    // Initialise the Vulkan instance struct. 
-    VkInstance instance; 
-
-    // Define the configuration details of the vulkan application. 
-    VkApplicationInfo appInfo {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Pong";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
-
-    // Configuration parameters for Vulkan instance creation.
-    VkInstanceCreateInfo createInfo {};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-
-    // -------------------- VULKAN EXTENSION VERIFICATION -------------------------------
-
-    // Get all supported extensions by Vulkan:
-    uint32_t vulkanExtensionCount = 0;
-
-    // This instance of the method will return the number of supported extensions. 
-    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, nullptr);
-
-    std::vector<VkExtensionProperties> vkExtensions(vulkanExtensionCount);
-
-    // This instance of the method will return the exact extensions supported
-    vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions.data());
-
-    // Print out and display all extensions.
-    INFO("Checking Extensions: ");
-
-    std::string extensionStr = "\n";
-    for (auto& extension : vkExtensions) {
-        std::string str = extension.extensionName;
-        extensionStr += '\t' + str + '\n';
-    }
-
-    INFO(extensionStr);
-
-    // Now we need to get the extensions required by GLFW in order for it to work with Vulkan.
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
-
-    // Get the names of all glfw extensions.
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    size_t foundCount = 0;
-    // Check if the GLFW extensions match the supported extensions by Vulkan.
-    for (size_t i = 0; i < glfwExtensionCount; i++) {
-        for (size_t j = 0; j < vulkanExtensionCount; j++) {
-            if (strcmp(vkExtensions[j].extensionName, glfwExtensions[i]) == 0) {
-                foundCount++;
-            }
-        }
-    }
-
-    // Check if all GLFW extensions are supported by Vulkan.
-    if (foundCount == glfwExtensionCount) {
-        INFO("GLFW extensions are supported by Vulkan!");
-    } else {
-        PONG_FATAL_ERROR("GLFW extensions are NOT supported by Vulkan!");
-    }
-
-    // A combined vector for all extensions.
-    std::vector<const char*> extensions(glfwExtensions + 0, glfwExtensions + glfwExtensionCount);
-
-    if (enableValidationLayers) {
-        // Push back the debug utils extension for Vulkan ONLY if validation layers are enabled
-        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-
-    // --------------------- CONTINUE INSTANCE CREATION ------------------------
-
-    // Set the extensions in the configuration struct. 
-    createInfo.enabledExtensionCount = extensions.size();
-    createInfo.ppEnabledExtensionNames = extensions.data();
-
-    // If we want to see DEBUG messages from instance creation, we need to manually create a new
-    // debug messenger that can be used in the function.
-    VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
-
-    // Only enable the layer names in Vulkan if we're using validationlayers
-    if (enableValidationLayers) {
-        createInfo.ppEnabledLayerNames = validationLayers;
-        // populate the messenger with our callback data.
-        populateDebugMessengerCreateInfo(debugInfo);
-        createInfo.enabledLayerCount = validationLayersCount;
-        // pNext is an extension field. This is where pointers to callbacks and 
-        // messengers can be stored.
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
-    } else {
-        createInfo.enabledLayerCount = 0;
-        createInfo.pNext = nullptr;
-    }
-
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        PONG_FATAL_ERROR("FAILED TO CREATE VULKAN INSTANCE!");
-    }
-
-        // ---------------- VALIDATION LAYER LOG MESSAGES -------------------
-
-    // Struct for holding the debug callback
-    VkDebugUtilsMessengerEXT debugMessenger;
-
-    // We only care about debug messages if we're using validation layers. 
-    if (enableValidationLayers) {
-        // Messengers also have a configuration struct that needs to be filled in. 
-        VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
-        // Fill the struct with configuration data.
-        populateDebugMessengerCreateInfo(messengerInfo);
-        // Now we need to create the messenger and ensure it was successful:
-        if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, &debugMessenger)
-        != VK_SUCCESS) {
-            // Throw an error and then stop execution if we weren't able to create the messenger
-            PONG_FATAL_ERROR("Failed to set up DEBUG messenger!");
-        }
-    }
-
-    // ----------------- VULKAN DEVICE INSTANTIATION --------------------
-    
-    // Create a struct to store Vulkan device information     
-    VulkanUtils::VulkanDeviceData deviceData;
-
-    // --------------- WINDOW SYSTEM INTEGRATION SETUP ------------------
-
-    // Vulkan doesn't handle integrating with window systems automatically. We need
-    // to manually set this up wth our windowing system (which is GLFW).
-
-    if (glfwCreateWindowSurface(instance, window, nullptr, 
-        &deviceData.surface) != VK_SUCCESS) {
-        PONG_FATAL_ERROR("Failed to create window surface!");
-    }
-
-    // ------------------- PHYSICAL DEVICE SETUP ------------------------
-    
-    // Set the phsyical device to null to start.
-    deviceData.physicalDevice = VK_NULL_HANDLE;
-
-    // Vulkan requires us to specify the device that we'll be using for our rendering. 
-    // Generally this means the GPUs that are available to us. 
-
-    // Following a similar pattern as before - we need to query for the number of supported 
-    // devices and get the actual counts.
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-
-    // Make sure at least one device is supported. 
-    if (deviceCount == 0) {
-        PONG_FATAL_ERROR("Failed to find GPUs that support Vulkan!");
-    }
-
-    // Get the actual device details.
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-
-    // Now we need to actually find a device to use. This can be done using a number of
-    // methods. One such method is to assign a rating to each GPU and pick the best rated one. 
-    // In this case, since this is a tutorial, we'll just take the first GPU we find. 
-    for (auto& device: devices) {
-
-        // Now we need to actually find the exact queue families that this device uses. 
-        // In Vulkan, all commands are executed in a queue of similar types. 
-        // We need to find exactly which queues this device uses so we can use them
-        // to execute commands. 
-        
-        VulkanUtils::QueueFamilyIndices indices = 
-                VulkanUtils::findQueueFamilies(device, deviceData.surface);
-
-        // Now we need to check whether our physical device supports drawing images to the screen.
-
-        // Get the number of extensions
-        uint32_t extensionCount = 0;
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-        // Store the unique extensions in a set so we can quickly remove duplicates.
-        std::set<std::string> requiredExtensions(deviceExtensions+0, deviceExtensions+deviceExtensionsCount);
-
-        for (auto& extension : availableExtensions) {
-            // If all required extensions are available from our GPU then we know we have full 
-            // Vulkan support!
-            requiredExtensions.erase(extension.extensionName);
-        }
-
-        bool extensionsSupported = requiredExtensions.empty();
-        
-        // Check if we have support for swapchains!
-        bool swapChainAdequate = false;
-
-        // Only check if we have supported extensions.
-        if (extensionsSupported) {
-            // Get the swapchain details
-            VulkanUtils::SwapchainSupportDetails supportDetails = 
-                    VulkanUtils::querySwapchainSupport(device, deviceData.surface);
-            // Make sure that we have at least one supported format and one supported presentation mode.
-            swapChainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
-
-            VulkanUtils::cleanupSwapchainSupportDetails(&supportDetails);
-        }
-
-        bool is_supported = (
-            indices.graphicsFamily.has_value() 
-            && indices.presentFamily.has_value()) 
-            // If all available extensions were 'ticked off' the set then we know we have all
-            // required extensions.
-            && extensionsSupported
-            && swapChainAdequate;
-
-        // Finally, we check if the current device has a valid graphics queue. If so then we just
-        // use it (at least for now).
-        // TODO: Add some sort of function to get a graphics card that's most suitable for us.
-        if (is_supported) {
-            deviceData.physicalDevice = device;
-            break;
-        }
-
-    }
-
-    // Finally, we just need to make sure that an actual valid device was returned to us from 
-    // our search.
-    if (deviceData.physicalDevice == VK_NULL_HANDLE) {
-        PONG_FATAL_ERROR("Failed to find a suitable GPU for Vulkan!");
-    }
-
-    // --------------------- LOGICAL DEVICE SETUP -----------------------
-
-    // Once a physical device has been set up we then need to setup a logical device.
-    // A logical device interfaces with the physical device and is used to actually execute
-    // commands to the hardware. 
-
-    // Get the queue families from the physical device that we got previously. 
-    deviceData.indices = 
-            VulkanUtils::findQueueFamilies(deviceData.physicalDevice, 
-            deviceData.surface);
-
-    std::vector<VkDeviceQueueCreateInfo> createInfos;
-    // Create a set so we can store queue families by their unique index (stops us from 
-    // using the same index twice.)
-    std::set<uint32_t> uniqueFamilies = {
-        deviceData.indices.graphicsFamily.value(), 
-        deviceData.indices.presentFamily.value()
-    };
-
-    // Set a priority for these queues - for now we'll set to maximum.
-    float priority = 1.0f;
-
-    // Create a queue creation struct for each unique queue family we have
-    for (auto& queueFamily : uniqueFamilies) {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &priority;
-        createInfos.push_back(queueCreateInfo);
-    }
-
-    // Leave this empty for now - can add things later when we need.
-    VkPhysicalDeviceFeatures deviceFeatures{};
-
-    // Now we need to actually configure the logical device (note that it uses the queue info
-    // and the device features we defined earlier).
-    VkDeviceCreateInfo logicalDeviceInfo{};
-    logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    logicalDeviceInfo.pQueueCreateInfos = createInfos.data();
-    logicalDeviceInfo.queueCreateInfoCount = createInfos.size();
-    logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
-    logicalDeviceInfo.enabledExtensionCount = deviceExtensionsCount;
-    logicalDeviceInfo.ppEnabledExtensionNames = deviceExtensions;
-
-    // Now we create the logical device using the data we've accumulated thus far. 
-    if (vkCreateDevice(deviceData.physicalDevice, &logicalDeviceInfo, 
-        nullptr, &deviceData.logicalDevice) != VK_SUCCESS) {
-        PONG_FATAL_ERROR("Failed to create logical device!");
-    }
-
-    // Now we just need to create the queue which will be used for our commands.
-
-    // Create the queue using the struct and logical device we created eariler.
-    vkGetDeviceQueue(deviceData.logicalDevice, 
-        deviceData.indices.graphicsFamily.value(), 0, &deviceData.graphicsQueue);
-    // Create the presentation queue using the struct.
-    vkGetDeviceQueue(deviceData.logicalDevice, 
-        deviceData.indices.presentFamily.value(), 0, &deviceData.presentQueue);
-
-    // --------------------- SWAP CHAIN CREATION ------------------------
-
-    // Create a basic swapchain strucutre - this is a custom struct that
-    // stores all our swapchain data.
-    VulkanUtils::SwapchainData swapchain;
-
-    glfwGetFramebufferSize(window, &deviceData.framebufferWidth, 
-        &deviceData.framebufferHeight);
-
-    // Create the swapchain (should initialise both the swapchain and image
-    // views). See vulkanUtils.cpp for implementation details.
-    if (VulkanUtils::createSwapchain(&swapchain, &deviceData) != VK_SUCCESS) {
-
-       PONG_FATAL_ERROR("Failed to create swapchain!");
+    if (Renderer::initialiseRenderer(&renderer, enableValidationLayers, window)
+        != Renderer::Status::SUCCESS) {
+        PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
     
     // ------------------------ RENDER PASS -----------------------------
-   
+
     VulkanUtils::GraphicsPipelineData graphicsPipeline;
     
     // In Vulkan, a render pass represents all information that our 
     // framebuffers will need to process our images.
-    if (VulkanUtils::createRenderPass(deviceData.logicalDevice, 
-        swapchain.swapchainFormat, &graphicsPipeline) != VK_SUCCESS) {
+    if (VulkanUtils::createRenderPass(renderer.deviceData.logicalDevice,
+        renderer.swapchainData.swapchainFormat, &graphicsPipeline) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create render pass!");
     }
@@ -570,7 +245,7 @@ int main() {
 
     VkDescriptorSetLayout descriptorSetLayout{};
 
-    if (VulkanUtils::createDescriptorSetLayout(deviceData.logicalDevice, 
+    if (VulkanUtils::createDescriptorSetLayout(renderer.deviceData.logicalDevice,
         &descriptorSetLayout) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create descriptor set!");
@@ -585,8 +260,8 @@ int main() {
     // that the pipeline can be very well optimised (but will also require
     // a complete rewrite if you need anything different).
     
-    if (VulkanUtils::createGraphicsPipeline(deviceData.logicalDevice, 
-        &graphicsPipeline, &swapchain, &descriptorSetLayout) != VK_SUCCESS) {
+    if (VulkanUtils::createGraphicsPipeline(renderer.deviceData.logicalDevice,
+        &graphicsPipeline, &renderer.swapchainData, &descriptorSetLayout) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
     }
@@ -603,10 +278,10 @@ int main() {
     // namely the color attachment.
     
     // First, we create an array to hold our framebuffers. 
-    std::vector<VkFramebuffer> swapchainFramebuffers(swapchain.imageCount);
+    std::vector<VkFramebuffer> swapchainFramebuffers(renderer.swapchainData.imageCount);
 
-    if (VulkanUtils::createFramebuffer(deviceData.logicalDevice, 
-        swapchainFramebuffers.data(), &swapchain, &graphicsPipeline) 
+    if (VulkanUtils::createFramebuffer(renderer.deviceData.logicalDevice,
+        swapchainFramebuffers.data(), &renderer.swapchainData, &graphicsPipeline)
         != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create framebuffers!");
@@ -633,11 +308,11 @@ int main() {
 
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = deviceData.indices.graphicsFamily.value();
+    poolInfo.queueFamilyIndex = renderer.deviceData.indices.graphicsFamily.value();
     poolInfo.flags = 0; // optional
     
     // Create the command pool
-    if (vkCreateCommandPool(deviceData.logicalDevice, &poolInfo, nullptr, 
+    if (vkCreateCommandPool(renderer.deviceData.logicalDevice, &poolInfo, nullptr,
         &commandPool) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create command pool!");
@@ -671,14 +346,14 @@ int main() {
     indexBuffer.indices = indices;
 
     // Create the vertex buffer and allocate the memory for it
-    if (VulkanUtils::createVertexBuffer(&deviceData, &vertexBuffer, commandPool) 
+    if (VulkanUtils::createVertexBuffer(&renderer.deviceData, &vertexBuffer, commandPool)
         != VK_SUCCESS) {
     
         PONG_FATAL_ERROR("Failed to create vertex buffer.");
     }
 
     // Create a uniform buffer for storing vertex data. 
-    if (VulkanUtils::createIndexBuffer(&deviceData, &indexBuffer, commandPool)
+    if (VulkanUtils::createIndexBuffer(&renderer.deviceData, &indexBuffer, commandPool)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create index buffer.");
@@ -686,19 +361,19 @@ int main() {
 
     size_t objects = 2;
     // Define a vector for storing uniform buffer information
-    Buffers::BufferData uniformBuffers[swapchain.imageCount];
-    Buffers::BufferData uniformBuffers2[swapchain.imageCount]; 
+    Buffers::BufferData uniformBuffers[renderer.swapchainData.imageCount];
+    Buffers::BufferData uniformBuffers2[renderer.swapchainData.imageCount];
 
     // Create our uniform buffers (one per image)
-    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers, 
-        swapchain.imageCount) != VK_SUCCESS) {
+    if (VulkanUtils::createUniformBuffers(&renderer.deviceData, uniformBuffers,
+        renderer.swapchainData.imageCount) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create uniform buffers!");
     }
 
     // Create uniform buffers for second object
-    if (VulkanUtils::createUniformBuffers(&deviceData, uniformBuffers2, 
-        swapchain.imageCount) != VK_SUCCESS) {
+    if (VulkanUtils::createUniformBuffers(&renderer.deviceData, uniformBuffers2,
+        renderer.swapchainData.imageCount) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create uniform buffers!");
     }
@@ -710,26 +385,26 @@ int main() {
 
     VkDescriptorPool descriptorPool{};
 
-    if (VulkanUtils::createDescriptorPool(deviceData.logicalDevice, 
-        swapchain.imageCount, &descriptorPool, objects) != VK_SUCCESS) {
+    if (VulkanUtils::createDescriptorPool(renderer.deviceData.logicalDevice,
+        renderer.swapchainData.imageCount, &descriptorPool, objects) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create descriptor pool.");
     }
 
     // --------------------------- DESCRIPTOR SETS ----------------------------
 
-    VkDescriptorSet descriptorSets[swapchain.imageCount];
-    VkDescriptorSet descriptorSets2[swapchain.imageCount];
+    VkDescriptorSet descriptorSets[renderer.swapchainData.imageCount];
+    VkDescriptorSet descriptorSets2[renderer.swapchainData.imageCount];
 
-    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets, 
-        &descriptorSetLayout, &descriptorPool, swapchain.imageCount, 
+    if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets,
+        &descriptorSetLayout, &descriptorPool, renderer.swapchainData.imageCount,
         uBuffers[0]) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
     }
 
-    if (VulkanUtils::createDescriptorSets(&deviceData, descriptorSets2, 
-        &descriptorSetLayout, &descriptorPool, swapchain.imageCount, 
+    if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets2,
+        &descriptorSetLayout, &descriptorPool, renderer.swapchainData.imageCount,
         uBuffers[1]) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
@@ -746,13 +421,13 @@ int main() {
     };
 
     // Make this the same size as our images. 
-    std::vector<VkCommandBuffer> commandBuffers(swapchain.imageCount);
+    std::vector<VkCommandBuffer> commandBuffers(renderer.swapchainData.imageCount);
 
     // It should be noted that command buffers are automatically cleaned up when
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
-    if (VulkanUtils::createCommandBuffers(deviceData.logicalDevice, 
-        commandBuffers.data(), &graphicsPipeline, &swapchain, 
+    if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
+        commandBuffers.data(), &graphicsPipeline, &renderer.swapchainData,
         swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
         sets, objects)
         != VK_SUCCESS) {
@@ -794,10 +469,10 @@ int main() {
     VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
     // We'll have a second array of fences to track whether an image is being
     // used by a fence. 
-    std::vector<VkFence> imagesInFlight(swapchain.imageCount);
+    std::vector<VkFence> imagesInFlight(renderer.swapchainData.imageCount);
 
     // Initialise all these images to 0 to start with. 
-    for (size_t i = 0; i < swapchain.imageCount; i++) {
+    for (size_t i = 0; i < renderer.swapchainData.imageCount; i++) {
         imagesInFlight[i] = VK_NULL_HANDLE;
     }
     // As always with Vulkan, we create a create info struct to handle the 
@@ -810,13 +485,13 @@ int main() {
     // Now we simply create both semaphores, making sure that both succeed before we 
     // move on.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(deviceData.logicalDevice, &semaphoreInfo, nullptr, 
+        if (vkCreateSemaphore(renderer.deviceData.logicalDevice, &semaphoreInfo, nullptr,
             &imageAvailableSemaphores[i]) != VK_SUCCESS 
             || 
-            vkCreateSemaphore(deviceData.logicalDevice, &semaphoreInfo, nullptr, 
+            vkCreateSemaphore(renderer.deviceData.logicalDevice, &semaphoreInfo, nullptr,
             &renderFinishedSemaphores[i]) != VK_SUCCESS 
             ||
-            vkCreateFence(deviceData.logicalDevice, &fenceInfo, nullptr, 
+            vkCreateFence(renderer.deviceData.logicalDevice, &fenceInfo, nullptr,
             &inFlightFences[i]) != VK_SUCCESS) {
 
             PONG_FATAL_ERROR("Failed to create synchronisation objects for frame!");
@@ -837,7 +512,7 @@ int main() {
         // waiting for all fences to be signalled before moving on. The last 
         // parameter takes a timeout period which we set really high (effectively
         // making it null)
-        vkWaitForFences(deviceData.logicalDevice, 1, 
+        vkWaitForFences(renderer.deviceData.logicalDevice, 1,
             &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         // In each frame of the main loop, we'll need to perform the following
@@ -851,21 +526,21 @@ int main() {
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
-        VkResult result = vkAcquireNextImageKHR(deviceData.logicalDevice, 
-            swapchain.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], 
+        VkResult result = vkAcquireNextImageKHR(renderer.deviceData.logicalDevice,
+            renderer.swapchainData.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 
-            handleMinimisation(window, &deviceData.framebufferWidth, 
-                &deviceData.framebufferHeight);
+            handleMinimisation(window, &renderer.deviceData.framebufferWidth,
+                &renderer.deviceData.framebufferHeight);
 
             // Re-create the swap chain in its entirety if the pipeline is no 
             // longer valid or is out of date. 
             VulkanUtils::recreateSwapchain(
-                &deviceData,
-                &swapchain,
+                &renderer.deviceData,
+                &renderer.swapchainData,
                 &graphicsPipeline, 
                 commandPool, 
                 swapchainFramebuffers.data(), 
@@ -892,17 +567,17 @@ int main() {
             // Wait for the fence to signal that it's available for usage. This 
             // will now ensure that there are no more than 2 frames in use, and 
             // that these frames are not accidentally using the same image!
-            vkWaitForFences(deviceData.logicalDevice, 1, &imagesInFlight[imageIndex], 
+            vkWaitForFences(renderer.deviceData.logicalDevice, 1, &imagesInFlight[imageIndex],
                 VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
         updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
-            deviceData.logicalDevice, swapchain.swapchainExtent, -200.0f, 0.0f);
+            renderer.deviceData.logicalDevice, renderer.swapchainData.swapchainExtent, -200.0f, 0.0f);
 
         updateUniformBuffer(&uBuffers[1][imageIndex].bufferMemory, 
-            deviceData.logicalDevice, swapchain.swapchainExtent, 200.0f, 0.0f);
+            renderer.deviceData.logicalDevice, renderer.swapchainData.swapchainExtent, 200.0f, 0.0f);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -928,10 +603,10 @@ int main() {
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // We need to reset the fence to an unsignalled state before moving on.
-        vkResetFences(deviceData.logicalDevice, 1, &inFlightFences[currentFrame]);
+        vkResetFences(renderer.deviceData.logicalDevice, 1, &inFlightFences[currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
-        if (vkQueueSubmit(deviceData.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) 
+        if (vkQueueSubmit(renderer.deviceData.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame])
             != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
@@ -946,7 +621,7 @@ int main() {
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
         // Next we need to specify which swapchains we're using:
-        VkSwapchainKHR swapchains[] = { swapchain.swapchain };
+        VkSwapchainKHR swapchains[] = { renderer.swapchainData.swapchain };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapchains;
         // Get the index of the image we're using:
@@ -956,19 +631,19 @@ int main() {
         presentInfo.pResults = nullptr; // optional
         
         // Now we submit a request to present an image to the swapchain. 
-        result = vkQueuePresentKHR(deviceData.presentQueue, &presentInfo);
+        result = vkQueuePresentKHR(renderer.deviceData.presentQueue, &presentInfo);
         // Again, we make sure that we're using the best possible swapchain.
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR 
             || pongData.framebufferResized) {
             
-            handleMinimisation(window,&deviceData.framebufferWidth, 
-                &deviceData.framebufferHeight);
+            handleMinimisation(window,&renderer.deviceData.framebufferWidth,
+                &renderer.deviceData.framebufferHeight);
             
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
             VulkanUtils::recreateSwapchain(
-                &deviceData,
-                &swapchain,
+                &renderer.deviceData,
+                &renderer.swapchainData,
                 &graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),
@@ -994,13 +669,13 @@ int main() {
 
     // Since our image drawing is asynchronous, we need to make sure that
     // our resources aren't in use when trying to clean them up:
-    vkDeviceWaitIdle(deviceData.logicalDevice);
+    vkDeviceWaitIdle(renderer.deviceData.logicalDevice);
     
     // --------------------------- CLEANUP ------------------------------
 
     VulkanUtils::cleanupSwapchain(
-        deviceData.logicalDevice, 
-        &swapchain, 
+        renderer.deviceData.logicalDevice,
+        &renderer.swapchainData,
         &graphicsPipeline, 
         commandPool, 
         swapchainFramebuffers.data(), 
@@ -1010,41 +685,43 @@ int main() {
         objects
     );
 
-    vkDestroyDescriptorSetLayout(deviceData.logicalDevice, descriptorSetLayout, 
+    vkDestroyDescriptorSetLayout(renderer.deviceData.logicalDevice, descriptorSetLayout,
         nullptr);
 
     // Cleans up the memory buffer 
-    vkDestroyBuffer(deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);
+    vkDestroyBuffer(renderer.deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);
 
     // Frees the allocated vertex buffer memory 
-    vkFreeMemory(deviceData.logicalDevice, vertexBuffer.bufferData.bufferMemory, nullptr);
+    vkFreeMemory(renderer.deviceData.logicalDevice, vertexBuffer.bufferData.bufferMemory, nullptr);
 
-    vkDestroyBuffer(deviceData.logicalDevice, indexBuffer.bufferData.buffer, nullptr);
+    vkDestroyBuffer(renderer.deviceData.logicalDevice, indexBuffer.bufferData.buffer, nullptr);
 
-    vkFreeMemory(deviceData.logicalDevice, indexBuffer.bufferData.bufferMemory, nullptr);
+    vkFreeMemory(renderer.deviceData.logicalDevice, indexBuffer.bufferData.bufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(deviceData.logicalDevice, renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(deviceData.logicalDevice, imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(deviceData.logicalDevice, inFlightFences[i], nullptr);
+        vkDestroySemaphore(renderer.deviceData.logicalDevice, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(renderer.deviceData.logicalDevice, imageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(renderer.deviceData.logicalDevice, inFlightFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(deviceData.logicalDevice, commandPool, nullptr);
+    vkDestroyCommandPool(renderer.deviceData.logicalDevice, commandPool, nullptr);
 
     // Cleaning up memory
     if(enableValidationLayers) {
-        destroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+        destroyDebugUtilsMessengerEXT(renderer.instance, renderer.debugMessenger, nullptr);
     }
 
     // Destroy window surface
-    vkDestroySurfaceKHR(instance, deviceData.surface, nullptr);
+    vkDestroySurfaceKHR(renderer.instance, renderer.deviceData.surface, nullptr);
 
     // Destroy logical device
-    vkDestroyDevice(deviceData.logicalDevice, nullptr);
+    vkDestroyDevice(renderer.deviceData.logicalDevice, nullptr);
 
     // Vulkan cleanup
-    vkDestroyInstance(instance, nullptr);
+    vkDestroyInstance(renderer.instance, nullptr);
+
+    free(renderer.extensions);
     
     // GLFW cleanup
     glfwDestroyWindow(window);

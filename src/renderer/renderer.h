@@ -31,12 +31,12 @@ namespace Renderer {
 
     };
 
+    // Device creation functions
     Status initialiseRenderer(Renderer*, bool, GLFWwindow*, const char** = nullptr, uint32_t = 0);
     Status initialiseVulkanInstance(Renderer*, bool);
     Status checkVulkanExtensions(Renderer*, bool);
     Status checkValidationLayerSupport(uint32_t, VkLayerProperties*, const char**, uint32_t);
     bool checkGlfwViability(const char**, uint32_t, VkExtensionProperties*, uint32_t);
-    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
     Status createPhysicalDevice(Renderer*);
