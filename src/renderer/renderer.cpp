@@ -28,9 +28,9 @@ namespace Renderer {
     // extension function - meaning that it isn't automatically loaded into memory. As such,
     // we need to manually look up it's memory and call it from there. Vulkan provides us
     // with a utility function: 'vkGetInstanceProcAddr' for this exact purpose.
-    static VkResult createDebugUtilsMessengerEXT(VkInstance instance,
-                                                 const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
-                                                 VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    static VkResult createDebugUtilsMessengerEXT(
+        VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
 
         // Store the function in a variable 'func'.
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
@@ -71,7 +71,7 @@ namespace Renderer {
             }
         }
 
-        // ========================= VULKAN INSTANCE CREATION ================================
+        // ======================= VULKAN INSTANCE CREATION ==================================
 
         renderer->debugMessenger = VK_NULL_HANDLE;
 
@@ -114,7 +114,11 @@ namespace Renderer {
 
         // ========================== LOGICAL DEVICE CREATION ===============================
 
+        if (createLogicalDevice(renderer) != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
 
+        INFO("Created logical device!");
 
         return Status::SUCCESS;
     }
@@ -383,6 +387,75 @@ namespace Renderer {
         }
 
         return status;
+    }
+
+    Status createLogicalDevice(Renderer* pRenderer) {
+
+        // First, we need to query which queue families our physical device supports.
+        pRenderer->deviceData.indices = VulkanUtils::findQueueFamilies(pRenderer->deviceData.physicalDevice,
+            pRenderer->deviceData.surface);
+
+        // It's possible that multiple queues are actually the same (such as graphics and present
+        // queues). We therefore check if the two that we're looking for are the same.
+        size_t createSize = (pRenderer->deviceData.indices.graphicsFamily.value()
+                             != pRenderer->deviceData.indices.presentFamily.value()) ? 1 : 2;
+
+        // Now we need an array for storing the queues that we want to create in future.
+        VkDeviceQueueCreateInfo createInfos[createSize];
+        uint32_t uniqueFamilies[createSize];
+
+        uniqueFamilies[0] = pRenderer->deviceData.indices.graphicsFamily.value();
+
+        // If we have multiple graphics families then add those into the array
+        if (createSize == 2) {
+            uniqueFamilies[1] = pRenderer->deviceData.indices.presentFamily.value();
+        }
+
+        // Each queue is given a priority - we'll set these ones to their maximum value
+        float priority = 1.0f;
+
+        // Now create a queue creation struct for each unique family that we have
+        for (size_t i = 0; i < createSize; i++) {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = uniqueFamilies[i];
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &priority;
+            createInfos[i] = queueCreateInfo;
+        }
+
+        // Leave this empty for now - can add things later when we need.
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        // Now we need to actually configure the logical device (note that it uses the queue info
+        // and the device features we defined earlier).
+        VkDeviceCreateInfo logicalDeviceInfo{};
+        logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        logicalDeviceInfo.pQueueCreateInfos = createInfos;
+        logicalDeviceInfo.queueCreateInfoCount = static_cast<uint32_t>(createSize);
+        logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
+        logicalDeviceInfo.enabledExtensionCount = pRenderer->deviceExtensionCount;
+        logicalDeviceInfo.ppEnabledExtensionNames = pRenderer->deviceExtensions;
+
+        // Now we create the logical device using the data we've accumulated thus far.
+        if (vkCreateDevice(pRenderer->deviceData.physicalDevice, &logicalDeviceInfo,nullptr,
+                &pRenderer->deviceData.logicalDevice) != VK_SUCCESS) {
+            ERROR("Failed to create logical device!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        // Now we just need to create the queue which will be used for our commands.
+
+        // Create the queue using the struct and logical device we created eariler.
+        vkGetDeviceQueue(pRenderer->deviceData.logicalDevice,
+             pRenderer->deviceData.indices.graphicsFamily.value(), 0,
+             &pRenderer->deviceData.graphicsQueue);
+        // Create the presentation queue using the struct.
+        vkGetDeviceQueue(pRenderer->deviceData.logicalDevice,
+             pRenderer->deviceData.indices.presentFamily.value(), 0,
+             &pRenderer->deviceData.presentQueue);
+
+        return Status::SUCCESS;
     }
 
     void loadDefaultValidationLayers(Renderer* renderer) {
