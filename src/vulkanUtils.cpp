@@ -918,18 +918,13 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createDescriptorSets(deviceData, descriptorSets[0], descriptorSetLayout, 
-            descriptorPool, pSwapchain->imageCount, uniformBuffers[0]) 
-            != VK_SUCCESS) {
+        for (size_t i = 0; i < objectCount; i++) {
+            if (createDescriptorSets(deviceData, descriptorSets[i], descriptorSetLayout,
+                 descriptorPool, pSwapchain->imageCount, uniformBuffers[i])
+                != VK_SUCCESS) {
 
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        if (createDescriptorSets(deviceData, descriptorSets[1], descriptorSetLayout, 
-            descriptorPool, pSwapchain->imageCount, uniformBuffers[1]) 
-            != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
         }
 
         // Re-create command buffers

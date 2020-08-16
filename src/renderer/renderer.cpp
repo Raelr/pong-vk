@@ -192,10 +192,10 @@ namespace Renderer {
         // Print out and display all extensions.
         INFO("Checking Extensions: ");
 
-//        for (size_t i = 0; i < vulkanExtensionCount; i++) {
-//            char* extension = vkExtensions[i].extensionName;
-//            INFO(extension);
-//        }
+        for (size_t i = 0; i < vulkanExtensionCount; i++) {
+            char* extension = vkExtensions[i].extensionName;
+            INFO(extension);
+        }
 
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);

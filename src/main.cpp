@@ -58,25 +58,25 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float
 
     Buffers::UniformBufferObject ubo{};
 
-    glm::mat4 m = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
     
-    m = glm::translate(m, glm::vec3(x, y, 0.0f));
+    model = glm::translate(model, glm::vec3(x, y, 0.0f));
     
-    m = glm::rotate(m, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    m = glm::scale(m, glm::vec3(200.0f, 200.0f, 1.0f));
-
-    // Rotate the model matrix
-    ubo.model = m;
+    model = glm::scale(model, glm::vec3(200.0f, 200.0f, 1.0f));
 
     // Set the view
-    ubo.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
     // Set our projection to be an orthographic view (for 3D)
-    ubo.proj = glm::ortho(
-        -(static_cast<float>(WINDOW_WIDTH) / 2), 
-        static_cast<float>(WINDOW_WIDTH) / 2, 
-        static_cast<float>(WINDOW_HEIGHT) / 2, 
-        -(static_cast<float>(WINDOW_HEIGHT) / 2), -1.0f, 1.0f);
+    glm::mat4 proj = glm::ortho(
+            -(static_cast<float>(WINDOW_WIDTH) / 2),
+            static_cast<float>(WINDOW_WIDTH) / 2,
+            static_cast<float>(WINDOW_HEIGHT) / 2,
+            -(static_cast<float>(WINDOW_HEIGHT) / 2), -1.0f, 1.0f);
+
+    // Rotate the model matrix
+    ubo.mvp = proj * view * model;
 
     // Now we bind our data to the UBO for later use
     void* data;
@@ -154,7 +154,6 @@ int main() {
         &descriptorSetLayout) != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create descriptor set!");
-
     }
 
     // --------------------- GRAPHICS PIPELINE -------------------------------
