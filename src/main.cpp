@@ -20,20 +20,6 @@
 const int WINDOW_HEIGHT = 600;
 const int WINDOW_WIDTH = 800;
 
-// An array to specify the vaidation layers we want to use.
-const char* validationLayers[] = {
-    "VK_LAYER_KHRONOS_validation"
-};
-
-const char* deviceExtensions[] = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-// Number of layers we want to use (the number of values in the validationLayers array)
-// REMEMBER TO UPDATE THIS IF NEW LAYERS ARE ADDED!
-const uint32_t validationLayersCount = 1;
-
-const uint32_t deviceExtensionsCount = 1;
-
 // Specifying how many frames we allow to re-use for the next frame.
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -43,80 +29,6 @@ const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 #else
     const bool enableValidationLayers = false;
 #endif
-
-//// A debug function callback - where the message data actually goes when triggered by the
-//// validation layer.
-//// This function uses three mactros to define it's signature (used to help Vulkan know that
-//// this method is valid).
-//static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-//    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,     // The severity of the message
-//    VkDebugUtilsMessageTypeFlagsEXT messageType,                // The actual TYPE of message
-//    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,  // Struct with data of the message
-//    void* pUserData) {                                          // User defined data (optional)
-//
-//    // In this case we simply print out the message itself to the console.
-//    ERROR(pCallbackData->pMessage);
-//
-//    // Return value determines whether the call that triggers this message should be aborted.
-//    // Generally these should return false.
-//    return VK_FALSE;
-//}
-//
-//// A proxy function which calls the vkCreateDebugUtilsMessengerEXT function.
-//// The reason we need this function is because 'vkCreateDebugUtilsMessengerEXT' is an
-//// extension function - meaning that it isn't automatically loaded into memory. As such,
-//// we need to manually look up it's memory and call it from there. Vulkan provides us
-//// with a utility function: 'vkGetInstanceProcAddr' for this exact purpose.
-//static VkResult createDebugUtilsMessengerEXT(VkInstance instance,
-//    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
-//    VkDebugUtilsMessengerEXT* pDebugMessenger) {
-//
-//    // Store the function in a variable 'func'.
-//    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-//        instance, "vkCreateDebugUtilsMessengerEXT");
-//
-//    // Make sure we got the correct function.
-//    if (func != nullptr) {
-//        // Call the function
-//        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-//    } else {
-//        // Return an error
-//        return VkResult::VK_ERROR_EXTENSION_NOT_PRESENT;
-//    }
-//}
-//
-//// Simply accepts a reference to a messenger config struct and fills it with data.
-//void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
-//    messengerInfo = {};
-//    // Specify the type of struct that's being populated
-//    messengerInfo.sType =           VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-//    // You can specify the severity levels of logs that this struct will accept.
-//    messengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
-//                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-//                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-//    // You can also limit the actual message type to specific types.
-//    messengerInfo.messageType =     VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-//                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-//                                    | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-//    // Finally, you can store the actual debug callback in the struct
-//    messengerInfo.pfnUserCallback = debugCallback;
-//    messengerInfo.pUserData = nullptr;
-//}
-
-// Similar to messenger creation - destroying the messenger also requires the calling of
-// an unloaded message. We need to do the same thing as before and load the method from memory.
-// In this case we want to get a method for cleaning up messenger memory.
-static void destroyDebugUtilsMessengerEXT(VkInstance instance, 
-     VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-    // Load the method from memory
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
-        instance, "vkDestroyDebugUtilsMessengerEXT");
-
-    if (func != nullptr) {
-        // Call the method if it was returned successfully.
-        func(instance, debugMessenger, pAllocator);
-    }
-}
 
 // Handles a case where the window is minimised
 void handleMinimisation(GLFWwindow* window, int* width, int* height) {
@@ -707,21 +619,7 @@ int main() {
 
     vkDestroyCommandPool(renderer.deviceData.logicalDevice, commandPool, nullptr);
 
-    // Cleaning up memory
-    if(enableValidationLayers) {
-        destroyDebugUtilsMessengerEXT(renderer.instance, renderer.debugMessenger, nullptr);
-    }
-
-    // Destroy window surface
-    vkDestroySurfaceKHR(renderer.instance, renderer.deviceData.surface, nullptr);
-
-    // Destroy logical device
-    vkDestroyDevice(renderer.deviceData.logicalDevice, nullptr);
-
-    // Vulkan cleanup
-    vkDestroyInstance(renderer.instance, nullptr);
-
-    free(renderer.extensions);
+    Renderer::cleanupRenderer(&renderer, enableValidationLayers);
     
     // GLFW cleanup
     glfwDestroyWindow(window);

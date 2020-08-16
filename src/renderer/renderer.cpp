@@ -63,6 +63,21 @@ void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& messen
     messengerInfo.pUserData =       nullptr;
 }
 
+// Similar to messenger creation - destroying the messenger also requires the calling of
+// an unloaded message. We need to do the same thing as before and load the method from memory.
+// In this case we want to get a method for cleaning up messenger memory.
+static void destroyDebugUtilsMessengerEXT(VkInstance instance,
+                                          VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+    // Load the method from memory
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+            instance, "vkDestroyDebugUtilsMessengerEXT");
+
+    if (func != nullptr) {
+        // Call the method if it was returned successfully.
+        func(instance, debugMessenger, pAllocator);
+    }
+}
+
 namespace Renderer {
 
     static const char* validationLayers[] = {
@@ -519,5 +534,23 @@ namespace Renderer {
         }
 
         return status;
+    }
+
+    Status cleanupRenderer(Renderer* pRenderer, bool enableValidationLayers) {
+
+        free(pRenderer->extensions);
+
+        if (enableValidationLayers) {
+            destroyDebugUtilsMessengerEXT(pRenderer->instance, pRenderer->debugMessenger, nullptr);
+        }
+
+        // Destroy window surface
+        vkDestroySurfaceKHR(pRenderer->instance, pRenderer->deviceData.surface, nullptr);
+
+        // Destroy logical device
+        vkDestroyDevice(pRenderer->deviceData.logicalDevice, nullptr);
+
+        // Vulkan cleanup
+        vkDestroyInstance(pRenderer->instance, nullptr);
     }
 }
