@@ -549,6 +549,7 @@ namespace Renderer {
     Status cleanupRenderer(Renderer* pRenderer, bool enableValidationLayers) {
 
         free(pRenderer->extensions);
+        free(pRenderer->renderer2DData.frameBuffers);
 
         if (enableValidationLayers) {
             destroyDebugUtilsMessengerEXT(pRenderer->instance, pRenderer->debugMessenger, nullptr);

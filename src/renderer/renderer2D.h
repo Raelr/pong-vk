@@ -11,11 +11,14 @@ namespace Renderer2D {
         VkDescriptorSet descriptorSets[1024]            {nullptr};
         size_t stride                                   {3};
         size_t maxQuads                                 {10};
+        Buffers::VertexBuffer vertexBuffer              {0};
+        Buffers::IndexBuffer indexBuffer                {nullptr};
     };
 
     struct Renderer2DData {
         VulkanUtils::GraphicsPipelineData graphicsPipeline  {nullptr};
-        QuadData quadData                                   ;
+        QuadData quadData;
+        VkFramebuffer *frameBuffers;
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);

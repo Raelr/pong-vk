@@ -134,42 +134,6 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    // --------------------- GRAPHICS PIPELINE -------------------------------
-    
-    // Vulkan requires that you define your own graphics pipelines when you
-    // want to use different combinations of shaders. This is because the 
-    // graphics pipeline in Vulkan is almost completely immutable. This means
-    // that the pipeline can be very well optimised (but will also require
-    // a complete rewrite if you need anything different).
-    
-    if (VulkanUtils::createGraphicsPipeline(renderer.deviceData.logicalDevice,
-        &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-        &renderer.renderer2DData.quadData.descriptorSetLayout) != VK_SUCCESS) {
-        
-        PONG_FATAL_ERROR("Failed to create graphics pipeline!");
-    }
-
-    // --------------------- FRAMEBUFFER SETUP --------------------------
-    
-    // At this point, we now need to create the framebuffers which will be 
-    // used for our renderpass. These framebuffers should be used in the 
-    // same format as our swapchain images (which we defined before).
-
-    // We use a VkFramebuffer object to store the attachments which were specified
-    // during the render pass. A framebuffer references all the image views that
-    // represent these attachments. In our case, we only have one to reference, 
-    // namely the color attachment.
-    
-    // First, we create an array to hold our framebuffers. 
-    std::vector<VkFramebuffer> swapchainFramebuffers(renderer.swapchainData.imageCount);
-
-    if (VulkanUtils::createFramebuffer(renderer.deviceData.logicalDevice,
-        swapchainFramebuffers.data(), &renderer.swapchainData, &renderer.renderer2DData.graphicsPipeline)
-        != VK_SUCCESS) {
-        
-        PONG_FATAL_ERROR("Failed to create framebuffers!");
-    }
-
     // ------------------- COMMAND POOL CREATION ------------------------
 
     // In vulkan, all steps and operations that happen are not handled via
@@ -311,7 +275,7 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
         commandBuffers.data(), &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-        swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
+        renderer.renderer2DData.frameBuffers, commandPool, &vertexBuffer, &indexBuffer,
         sets, objects)
         != VK_SUCCESS) {
 
@@ -426,7 +390,7 @@ int main() {
                 &renderer.swapchainData,
                 &renderer.renderer2DData.graphicsPipeline,
                 commandPool, 
-                swapchainFramebuffers.data(), 
+                renderer.renderer2DData.frameBuffers,
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
@@ -529,7 +493,7 @@ int main() {
                 &renderer.swapchainData,
                 &renderer.renderer2DData.graphicsPipeline,
                 commandPool,
-                swapchainFramebuffers.data(),
+                renderer.renderer2DData.frameBuffers,
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
@@ -561,7 +525,7 @@ int main() {
         &renderer.swapchainData,
         &renderer.renderer2DData.graphicsPipeline,
         commandPool, 
-        swapchainFramebuffers.data(), 
+        renderer.renderer2DData.frameBuffers,
         commandBuffers.data(),
         uBuffers,
         descriptorPool,
