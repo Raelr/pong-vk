@@ -133,28 +133,6 @@ int main() {
         != Renderer::Status::SUCCESS) {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
-    
-    // ------------------------ RENDER PASS -----------------------------
-
-    VulkanUtils::GraphicsPipelineData graphicsPipeline{nullptr};
-    
-    // In Vulkan, a render pass represents all information that our 
-    // framebuffers will need to process our images.
-    if (VulkanUtils::createRenderPass(renderer.deviceData.logicalDevice,
-        renderer.swapchainData.swapchainFormat, &graphicsPipeline) != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create render pass!");
-    }
-
-    // ------------------- DESCRIPTOR SET LAYOUT -----------------------------
-
-    VkDescriptorSetLayout descriptorSetLayout{};
-
-    if (VulkanUtils::createDescriptorSetLayout(renderer.deviceData.logicalDevice,
-        &descriptorSetLayout) != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create descriptor set!");
-    }
 
     // --------------------- GRAPHICS PIPELINE -------------------------------
     
@@ -165,7 +143,8 @@ int main() {
     // a complete rewrite if you need anything different).
     
     if (VulkanUtils::createGraphicsPipeline(renderer.deviceData.logicalDevice,
-        &graphicsPipeline, &renderer.swapchainData, &descriptorSetLayout) != VK_SUCCESS) {
+        &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+        &renderer.renderer2DData.quadData.descriptorSetLayout) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create graphics pipeline!");
     }
@@ -174,7 +153,7 @@ int main() {
     
     // At this point, we now need to create the framebuffers which will be 
     // used for our renderpass. These framebuffers should be used in the 
-    // format as our swapchain images (which we defined before).
+    // same format as our swapchain images (which we defined before).
 
     // We use a VkFramebuffer object to store the attachments which were specified
     // during the render pass. A framebuffer references all the image views that
@@ -185,7 +164,7 @@ int main() {
     std::vector<VkFramebuffer> swapchainFramebuffers(renderer.swapchainData.imageCount);
 
     if (VulkanUtils::createFramebuffer(renderer.deviceData.logicalDevice,
-        swapchainFramebuffers.data(), &renderer.swapchainData, &graphicsPipeline)
+        swapchainFramebuffers.data(), &renderer.swapchainData, &renderer.renderer2DData.graphicsPipeline)
         != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create framebuffers!");
@@ -301,15 +280,15 @@ int main() {
     VkDescriptorSet descriptorSets2[renderer.swapchainData.imageCount];
 
     if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets,
-        &descriptorSetLayout, &descriptorPool, renderer.swapchainData.imageCount,
-        uBuffers[0]) != VK_SUCCESS) {
+        &renderer.renderer2DData.quadData.descriptorSetLayout,
+        &descriptorPool, renderer.swapchainData.imageCount,uBuffers[0]) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
     }
 
     if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets2,
-        &descriptorSetLayout, &descriptorPool, renderer.swapchainData.imageCount,
-        uBuffers[1]) != VK_SUCCESS) {
+        &renderer.renderer2DData.quadData.descriptorSetLayout, &descriptorPool,
+        renderer.swapchainData.imageCount,uBuffers[1]) != VK_SUCCESS) {
         
         PONG_FATAL_ERROR("Failed to create descriptor sets!");
     }
@@ -331,7 +310,7 @@ int main() {
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
     if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
-        commandBuffers.data(), &graphicsPipeline, &renderer.swapchainData,
+        commandBuffers.data(), &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
         swapchainFramebuffers.data(), commandPool, &vertexBuffer, &indexBuffer,
         sets, objects)
         != VK_SUCCESS) {
@@ -445,13 +424,13 @@ int main() {
             VulkanUtils::recreateSwapchain(
                 &renderer.deviceData,
                 &renderer.swapchainData,
-                &graphicsPipeline, 
+                &renderer.renderer2DData.graphicsPipeline,
                 commandPool, 
                 swapchainFramebuffers.data(), 
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
-                &descriptorSetLayout,
+                &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
                 sets,
                 uBuffers,
@@ -548,13 +527,13 @@ int main() {
             VulkanUtils::recreateSwapchain(
                 &renderer.deviceData,
                 &renderer.swapchainData,
-                &graphicsPipeline,
+                &renderer.renderer2DData.graphicsPipeline,
                 commandPool,
                 swapchainFramebuffers.data(),
                 &vertexBuffer,
                 &indexBuffer,
                 commandBuffers.data(),
-                &descriptorSetLayout,
+                &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
                 sets,
                 uBuffers,
@@ -580,7 +559,7 @@ int main() {
     VulkanUtils::cleanupSwapchain(
         renderer.deviceData.logicalDevice,
         &renderer.swapchainData,
-        &graphicsPipeline, 
+        &renderer.renderer2DData.graphicsPipeline,
         commandPool, 
         swapchainFramebuffers.data(), 
         commandBuffers.data(),
@@ -589,8 +568,8 @@ int main() {
         objects
     );
 
-    vkDestroyDescriptorSetLayout(renderer.deviceData.logicalDevice, descriptorSetLayout,
-        nullptr);
+    vkDestroyDescriptorSetLayout(renderer.deviceData.logicalDevice,
+         renderer.renderer2DData.quadData.descriptorSetLayout,nullptr);
 
     // Cleans up the memory buffer 
     vkDestroyBuffer(renderer.deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);

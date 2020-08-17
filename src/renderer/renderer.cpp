@@ -174,6 +174,16 @@ namespace Renderer {
 
         INFO("Initialised Swapchain");
 
+        // ================================= RENDERER 2D ====================================
+
+        if (!Renderer2D::initialiseRenderer2D(&renderer->deviceData,
+            &renderer->renderer2DData, renderer->swapchainData)) {
+            ERROR("Failed to create renderer2D");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Initialised renderer2D!");
+
         return Status::SUCCESS;
     }
 

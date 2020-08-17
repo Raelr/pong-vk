@@ -9,6 +9,7 @@
 namespace Renderer {
 
     // A simple Enum for judging the success/failure of a function (kinda like VkResult)
+    // TODO: Move this to a core header file
     enum Status {
         FAILURE = 0,
         INITIALIZATION_FAILURE = 1,
@@ -28,6 +29,7 @@ namespace Renderer {
         VkDebugUtilsMessengerEXT debugMessenger     {nullptr};
         VulkanUtils::VulkanDeviceData deviceData    {nullptr};
         VulkanUtils::SwapchainData swapchainData    {nullptr};
+        Renderer2D::Renderer2DData renderer2DData   {nullptr};
     };
 
     // Device creation functions
