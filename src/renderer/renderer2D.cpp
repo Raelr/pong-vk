@@ -11,7 +11,7 @@ namespace Renderer2D {
             { {-0.5f, 0.5f},    {1.0f, 1.0f, 1.0f} }
     };
 
-    static uint32_t quadIndices[] = {
+    static uint16_t quadIndices[] = {
         0, 1, 2, 2, 3, 0
     };
 
@@ -66,6 +66,53 @@ namespace Renderer2D {
             ERROR("Failed to create framebuffers!");
             return false;
         }
+
+        // ========================= COMMAND POOL CREATION =========================
+
+        // In vulkan, all steps and operations that happen are not handled via
+        // function calls. Rather, these steps are recorded in a CommandBuffer
+        // object which are then executed later in runtime. As such, commands
+        // allow us to set everything up in advance and in multiple threads if
+        // need be. These commands are then handled by Vulkan in the main loop.
+
+        // Command buffers are generally executed by submitting them to one of the
+        // device queues (such as the graphics and presentation queues we set earlier).
+        // Command pools can only submit buffers to a single type of queue. Since
+        // we're going to be submitting data for drawing, we'll use the graphics
+        // queue.
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = deviceData->indices.graphicsFamily.value();
+        poolInfo.flags = 0; // optional
+
+        // Create the command pool
+        if (vkCreateCommandPool(deviceData->logicalDevice, &poolInfo, nullptr,
+            &renderer2D->commandPool) != VK_SUCCESS) {
+            ERROR("Failed to create command pool!");
+            return false;
+        }
+
+        renderer2D->quadData.vertexBuffer.vertices = quadVertices;
+        renderer2D->quadData.vertexBuffer.vertexCount = 4;
+
+        renderer2D->quadData.indexBuffer.indices = quadIndices;
+        renderer2D->quadData.indexBuffer.indexCount = 6;
+
+        // Create the vertex buffer and allocate the memory for it
+        if (VulkanUtils::createVertexBuffer(deviceData, &renderer2D->quadData.vertexBuffer,
+            renderer2D->commandPool) != VK_SUCCESS) {
+            ERROR("Failed to create vertex buffer.");
+            return false;
+        }
+
+        // Create a uniform buffer for storing vertex data.
+        if (VulkanUtils::createIndexBuffer(deviceData, &renderer2D->quadData.indexBuffer,
+            renderer2D->commandPool) != VK_SUCCESS) {
+            ERROR("Failed to create index buffer.");
+            return false;
+        }
+
 
         return true;
     }

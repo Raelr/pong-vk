@@ -17,8 +17,9 @@ namespace Renderer2D {
 
     struct Renderer2DData {
         VulkanUtils::GraphicsPipelineData graphicsPipeline  {nullptr};
-        QuadData quadData;
-        VkFramebuffer *frameBuffers;
+        QuadData quadData                                   {nullptr};
+        VkFramebuffer *frameBuffers                         {nullptr};
+        VkCommandPool commandPool                           {nullptr};
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);

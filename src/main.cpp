@@ -134,78 +134,6 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    // ------------------- COMMAND POOL CREATION ------------------------
-
-    // In vulkan, all steps and operations that happen are not handled via
-    // function calls. Rather, these steps are recorded in a CommandBuffer 
-    // object which are then executed later in runtime. As such, commands
-    // allow us to set everything up in advance and in multiple threds if 
-    // need be. These commands are then handled by Vulkan in the main loop. 
-    
-    // First, we need to create a command pool, which manage the memory used 
-    // to allocate and store the command buffers which are given to them. We do
-    // this with the VkCommandPool struct:
-    VkCommandPool commandPool;
-
-    // Command buffers are generally executed by submitting them to one of the 
-    // device queues (such as the graphics and presentation queues we set earlier).
-    // Command pools can only submit buffers to a single type of queue. Since 
-    // we're going to be submitting data for drawing, we'll use the graphics 
-    // queue. 
-
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = renderer.deviceData.indices.graphicsFamily.value();
-    poolInfo.flags = 0; // optional
-    
-    // Create the command pool
-    if (vkCreateCommandPool(renderer.deviceData.logicalDevice, &poolInfo, nullptr,
-        &commandPool) != VK_SUCCESS) {
-        
-        PONG_FATAL_ERROR("Failed to create command pool!");
-    }
-
-    // --------------------- VERTEX DEFINITION --------------------------
-
-    Buffers::VertexBuffer vertexBuffer{0};
-    Buffers::IndexBuffer indexBuffer{nullptr};
-    // Define a vertex buffer for configuring vertex data.
-    vertexBuffer.vertexCount = 4;
-
-    {
-        // Define all the vertices of our triangle and the colors for every vertex
-        Buffers::Vertex vertices[] = {
-            // Positions        // Colors
-            { {-0.5f, -0.5f},   {1.0f, 1.0f, 1.0f} },
-            { {0.5f, -0.5f},    {1.0f, 1.0f, 1.0f} },
-            { {0.5f, 0.5f},     {1.0f, 1.0f, 1.0f} },
-            { {-0.5f, 0.5f},    {1.0f, 1.0f, 1.0f} }
-        };
-
-        vertexBuffer.vertices = vertices;
-    }
-
-    uint16_t indices[] = {
-        0, 1, 2, 2, 3, 0
-    };
-
-    indexBuffer.indexCount = 6;
-    indexBuffer.indices = indices;
-
-    // Create the vertex buffer and allocate the memory for it
-    if (VulkanUtils::createVertexBuffer(&renderer.deviceData, &vertexBuffer, commandPool)
-        != VK_SUCCESS) {
-    
-        PONG_FATAL_ERROR("Failed to create vertex buffer.");
-    }
-
-    // Create a uniform buffer for storing vertex data. 
-    if (VulkanUtils::createIndexBuffer(&renderer.deviceData, &indexBuffer, commandPool)
-        != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create index buffer.");
-    }
-
     size_t objects = 2;
     // Define a vector for storing uniform buffer information
     Buffers::BufferData uniformBuffers[renderer.swapchainData.imageCount];
@@ -275,7 +203,8 @@ int main() {
 
     if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
         commandBuffers.data(), &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-        renderer.renderer2DData.frameBuffers, commandPool, &vertexBuffer, &indexBuffer,
+        renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
+        &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
         sets, objects)
         != VK_SUCCESS) {
 
@@ -389,10 +318,10 @@ int main() {
                 &renderer.deviceData,
                 &renderer.swapchainData,
                 &renderer.renderer2DData.graphicsPipeline,
-                commandPool, 
+                renderer.renderer2DData.commandPool,
                 renderer.renderer2DData.frameBuffers,
-                &vertexBuffer,
-                &indexBuffer,
+                &renderer.renderer2DData.quadData.vertexBuffer,
+                &renderer.renderer2DData.quadData.indexBuffer,
                 commandBuffers.data(),
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
@@ -492,10 +421,10 @@ int main() {
                 &renderer.deviceData,
                 &renderer.swapchainData,
                 &renderer.renderer2DData.graphicsPipeline,
-                commandPool,
+                renderer.renderer2DData.commandPool,
                 renderer.renderer2DData.frameBuffers,
-                &vertexBuffer,
-                &indexBuffer,
+                &renderer.renderer2DData.quadData.vertexBuffer,
+                &renderer.renderer2DData.quadData.indexBuffer,
                 commandBuffers.data(),
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
@@ -524,7 +453,7 @@ int main() {
         renderer.deviceData.logicalDevice,
         &renderer.swapchainData,
         &renderer.renderer2DData.graphicsPipeline,
-        commandPool, 
+        renderer.renderer2DData.commandPool,
         renderer.renderer2DData.frameBuffers,
         commandBuffers.data(),
         uBuffers,
@@ -536,14 +465,18 @@ int main() {
          renderer.renderer2DData.quadData.descriptorSetLayout,nullptr);
 
     // Cleans up the memory buffer 
-    vkDestroyBuffer(renderer.deviceData.logicalDevice, vertexBuffer.bufferData.buffer, nullptr);
+    vkDestroyBuffer(renderer.deviceData.logicalDevice,
+        renderer.renderer2DData.quadData.vertexBuffer.bufferData.buffer, nullptr);
 
     // Frees the allocated vertex buffer memory 
-    vkFreeMemory(renderer.deviceData.logicalDevice, vertexBuffer.bufferData.bufferMemory, nullptr);
+    vkFreeMemory(renderer.deviceData.logicalDevice,
+        renderer.renderer2DData.quadData.vertexBuffer.bufferData.bufferMemory, nullptr);
 
-    vkDestroyBuffer(renderer.deviceData.logicalDevice, indexBuffer.bufferData.buffer, nullptr);
+    vkDestroyBuffer(renderer.deviceData.logicalDevice,
+        renderer.renderer2DData.quadData.indexBuffer.bufferData.buffer, nullptr);
 
-    vkFreeMemory(renderer.deviceData.logicalDevice, indexBuffer.bufferData.bufferMemory, nullptr);
+    vkFreeMemory(renderer.deviceData.logicalDevice,
+        renderer.renderer2DData.quadData.indexBuffer.bufferData.bufferMemory, nullptr);
 
     // Clean up the semaphores we created earlier.
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -552,7 +485,7 @@ int main() {
         vkDestroyFence(renderer.deviceData.logicalDevice, inFlightFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(renderer.deviceData.logicalDevice, commandPool, nullptr);
+    vkDestroyCommandPool(renderer.deviceData.logicalDevice, renderer.renderer2DData.commandPool, nullptr);
 
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
     
