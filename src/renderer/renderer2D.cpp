@@ -93,6 +93,8 @@ namespace Renderer2D {
             return false;
         }
 
+        // ==================== VERTEX + INDEX BUFFER CREATION ===========================
+
         renderer2D->quadData.vertexBuffer.vertices = quadVertices;
         renderer2D->quadData.vertexBuffer.vertexCount = 4;
 

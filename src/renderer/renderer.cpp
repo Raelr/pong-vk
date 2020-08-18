@@ -551,6 +551,9 @@ namespace Renderer {
         free(pRenderer->extensions);
         free(pRenderer->renderer2DData.frameBuffers);
 
+        vkDestroyCommandPool(pRenderer->deviceData.logicalDevice, pRenderer->renderer2DData.commandPool,
+    nullptr);
+
         if (enableValidationLayers) {
             destroyDebugUtilsMessengerEXT(pRenderer->instance, pRenderer->debugMessenger, nullptr);
         }

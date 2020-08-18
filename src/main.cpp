@@ -57,14 +57,12 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float
         std::chrono::seconds::period>(currentTime - startTime).count();
 
     Buffers::UniformBufferObject ubo{};
-
-    glm::mat4 model = glm::mat4(1.0f);
     
-    model = glm::translate(model, glm::vec3(x, y, 0.0f));
+    ubo.mvp = glm::translate(ubo.mvp, glm::vec3(x, y, 0.0f));
     
-    model = glm::rotate(model, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.mvp = glm::rotate(ubo.mvp, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    model = glm::scale(model, glm::vec3(200.0f, 200.0f, 1.0f));
+    ubo.mvp = glm::scale(ubo.mvp, glm::vec3(200.0f, 200.0f, 1.0f));
 
     // Set the view
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -76,7 +74,7 @@ void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float
             -(static_cast<float>(WINDOW_HEIGHT) / 2), -1.0f, 1.0f);
 
     // Rotate the model matrix
-    ubo.mvp = proj * view * model;
+    ubo.mvp = proj * view * ubo.mvp;
 
     // Now we bind our data to the UBO for later use
     void* data;
@@ -484,8 +482,6 @@ int main() {
         vkDestroySemaphore(renderer.deviceData.logicalDevice, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(renderer.deviceData.logicalDevice, inFlightFences[i], nullptr);
     }
-
-    vkDestroyCommandPool(renderer.deviceData.logicalDevice, renderer.renderer2DData.commandPool, nullptr);
 
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
     

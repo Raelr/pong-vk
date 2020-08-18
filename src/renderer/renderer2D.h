@@ -8,9 +8,10 @@ namespace Renderer2D {
     struct QuadData {
         VkDescriptorSetLayout descriptorSetLayout       {nullptr};
         size_t quadCount                                {0};
-        VkDescriptorSet descriptorSets[1024]            {nullptr};
+        VkDescriptorSet descriptorSets[64]            {nullptr};
+        Buffers::BufferData* uniformBuffers[64]       {nullptr};
         size_t stride                                   {3};
-        size_t maxQuads                                 {10};
+        size_t maxQuads                                 {20};
         Buffers::VertexBuffer vertexBuffer              {0};
         Buffers::IndexBuffer indexBuffer                {nullptr};
     };
@@ -23,6 +24,7 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
+    bool drawQuad2D();
 }
 
 #endif //PONG_VK_RENDERER2D_H

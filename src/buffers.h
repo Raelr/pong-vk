@@ -45,7 +45,7 @@ namespace Buffers {
     // ------------------------- UNIFORM BUFFER STRUCT -----------------------
     
     struct UniformBufferObject {
-        glm::mat4 mvp;
+        glm::mat4 mvp {glm::mat4(1.0f)};
     };
 
     // ---------------------------- BUFFER METHODS ---------------------------
