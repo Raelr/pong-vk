@@ -208,69 +208,6 @@ int main() {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
     }
-    // --------------------- SYNC OBJECT CREATION -------------------------
-    
-    // In Vulkan, drawing every frame can be done in a few simple function 
-    // calls. These function calls are executed asynchronously - they are 
-    // executed and returned in no particular order. As such, we aren't always
-    // guaranteed to get the images we need to execute the next frame. This 
-    // would then lead to serious memory violations. 
-
-    // As such, Vulkan requires us to synchronise our swap chain events, namely
-    // through the use of semaphores and fences. In both cases, our program will
-    // be forced to stop execution until a certain resource is made available
-    // to it (when the semaphore moves from 'signalled' to 'unsignalled'). 
-    
-    // The main difference between semaphores and fences is that fences can be 
-    // accessed by our program through a number of function calls. Semaphores, 
-    // on the other hand, cannot. Semaphores are primarily used to synchornise 
-    // operations within or across command queues. 
-    
-    // For now, we'll be using sempahores to get a triangle rendering!
-
-    // Create two semaphores - one which signals when an image is ready to be
-    // used, another for when the render pass has finished. 
-    VkSemaphore imageAvailableSemaphores [MAX_FRAMES_IN_FLIGHT];
-    VkSemaphore renderFinishedSemaphores [MAX_FRAMES_IN_FLIGHT];
-    
-    // The semaphore info struct only has one field
-    VkSemaphoreCreateInfo semaphoreInfo{};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    // We'll also create a fence to keep our CPU and GPU fully synced with one
-    // another. Fences are similar to semaphores, with their main difference 
-    // being that you must wait for them in code. 
-    VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
-    // We'll have a second array of fences to track whether an image is being
-    // used by a fence. 
-    std::vector<VkFence> imagesInFlight(renderer.swapchainData.imageCount);
-
-    // Initialise all these images to 0 to start with. 
-    for (size_t i = 0; i < renderer.swapchainData.imageCount; i++) {
-        imagesInFlight[i] = VK_NULL_HANDLE;
-    }
-    // As always with Vulkan, we create a create info struct to handle the 
-    // configuration.
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    // Specify that the fence should be started in a signalled state.
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    // Now we simply create both semaphores, making sure that both succeed before we 
-    // move on.
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        if (vkCreateSemaphore(renderer.deviceData.logicalDevice, &semaphoreInfo, nullptr,
-            &imageAvailableSemaphores[i]) != VK_SUCCESS 
-            || 
-            vkCreateSemaphore(renderer.deviceData.logicalDevice, &semaphoreInfo, nullptr,
-            &renderFinishedSemaphores[i]) != VK_SUCCESS 
-            ||
-            vkCreateFence(renderer.deviceData.logicalDevice, &fenceInfo, nullptr,
-            &inFlightFences[i]) != VK_SUCCESS) {
-
-            PONG_FATAL_ERROR("Failed to create synchronisation objects for frame!");
-        }
-    }
 
     // ======================= END OF SETUP =============================
 
@@ -287,7 +224,7 @@ int main() {
         // parameter takes a timeout period which we set really high (effectively
         // making it null)
         vkWaitForFences(renderer.deviceData.logicalDevice, 1,
-            &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+            &renderer.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         // In each frame of the main loop, we'll need to perform the following
         // operations:
@@ -301,7 +238,7 @@ int main() {
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
         VkResult result = vkAcquireNextImageKHR(renderer.deviceData.logicalDevice,
-            renderer.swapchainData.swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
+            renderer.swapchainData.swapchain, UINT64_MAX, renderer.imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
@@ -337,15 +274,15 @@ int main() {
         
         // Check if a previous frame is using this image. I.e: we're waiting on 
         // it's fence to be signalled. 
-        if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+        if (renderer.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
             // Wait for the fence to signal that it's available for usage. This 
             // will now ensure that there are no more than 2 frames in use, and 
             // that these frames are not accidentally using the same image!
-            vkWaitForFences(renderer.deviceData.logicalDevice, 1, &imagesInFlight[imageIndex],
+            vkWaitForFences(renderer.deviceData.logicalDevice, 1, &renderer.imagesInFlight[imageIndex],
                 VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
-        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+        renderer.imagesInFlight[imageIndex] = renderer.inFlightFences[currentFrame];
 
         updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
             renderer.deviceData.logicalDevice, -200.0f, 0.0f);
@@ -357,7 +294,7 @@ int main() {
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         
         // We need to specify which semaphores to wait on before executing the frame.
-        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+        VkSemaphore waitSemaphores[] = { renderer.imageAvailableSemaphores[currentFrame] };
         // We also need to specify which stages of the pipeline need to be done so we can move
         // on.
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -372,15 +309,15 @@ int main() {
         submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution. 
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+        VkSemaphore signalSemaphores[] = {renderer.renderFinishedSemaphores[currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // We need to reset the fence to an unsignalled state before moving on.
-        vkResetFences(renderer.deviceData.logicalDevice, 1, &inFlightFences[currentFrame]);
+        vkResetFences(renderer.deviceData.logicalDevice, 1, &renderer.inFlightFences[currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
-        if (vkQueueSubmit(renderer.deviceData.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame])
+        if (vkQueueSubmit(renderer.deviceData.graphicsQueue, 1, &submitInfo, renderer.inFlightFences[currentFrame])
             != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
@@ -475,13 +412,6 @@ int main() {
 
     vkFreeMemory(renderer.deviceData.logicalDevice,
         renderer.renderer2DData.quadData.indexBuffer.bufferData.bufferMemory, nullptr);
-
-    // Clean up the semaphores we created earlier.
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(renderer.deviceData.logicalDevice, renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(renderer.deviceData.logicalDevice, imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(renderer.deviceData.logicalDevice, inFlightFences[i], nullptr);
-    }
 
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
     

@@ -30,6 +30,12 @@ namespace Renderer {
         VulkanUtils::VulkanDeviceData deviceData    {nullptr};
         VulkanUtils::SwapchainData swapchainData    {nullptr};
         Renderer2D::Renderer2DData renderer2DData   {nullptr};
+        // Sync objects
+        uint32_t maxFramesInFlight                  {2};
+        VkSemaphore* imageAvailableSemaphores       {nullptr};
+        VkSemaphore* renderFinishedSemaphores       {nullptr};
+        VkFence* inFlightFences                     {nullptr};
+        VkFence* imagesInFlight                     {nullptr};
     };
 
     // Device creation functions
@@ -42,12 +48,12 @@ namespace Renderer {
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
     Status createPhysicalDevice(Renderer*);
     Status createLogicalDevice(Renderer*);
+    Status createSyncObjects(Renderer*, uint32_t = 2);
 
     // Cleanup code
     Status cleanupRenderer(Renderer*,  bool);
 
     // Functions for pre-loading the renderer with data prior to creation
-
     // Default data
     void loadDefaultValidationLayers(Renderer*);
     void loadDefaultDeviceExtensions(Renderer*);

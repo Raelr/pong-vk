@@ -2,16 +2,16 @@
 #define PONG_VK_RENDERER2D_H
 
 #include "../vulkanUtils.h"
+#include <glm/glm.hpp>
 
 namespace Renderer2D {
 
     struct QuadData {
         VkDescriptorSetLayout descriptorSetLayout       {nullptr};
         size_t quadCount                                {0};
-        VkDescriptorSet descriptorSets[64]            {nullptr};
-        Buffers::BufferData* uniformBuffers[64]       {nullptr};
-        size_t stride                                   {3};
-        size_t maxQuads                                 {20};
+        VkDescriptorSet* descriptorSets[64]             {nullptr};
+        Buffers::BufferData* uniformBuffers[64]         {nullptr};
+        size_t maxQuads                                 {64};
         Buffers::VertexBuffer vertexBuffer              {0};
         Buffers::IndexBuffer indexBuffer                {nullptr};
     };
@@ -24,7 +24,7 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
-    bool drawQuad2D();
+    bool drawQuad(size_t, glm::vec2);
 }
 
 #endif //PONG_VK_RENDERER2D_H

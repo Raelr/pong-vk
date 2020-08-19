@@ -184,6 +184,12 @@ namespace Renderer {
 
         INFO("Initialised renderer2D!");
 
+        // ================================ SYNC OBJECTS ====================================
+
+        createSyncObjects(renderer);
+
+        INFO("Created synchronisation objects");
+
         return Status::SUCCESS;
     }
 
@@ -551,6 +557,20 @@ namespace Renderer {
         free(pRenderer->extensions);
         free(pRenderer->renderer2DData.frameBuffers);
 
+        // Clean up the semaphores we created earlier.
+        for (size_t i = 0; i < pRenderer->maxFramesInFlight; i++) {
+            vkDestroySemaphore(pRenderer->deviceData.logicalDevice, pRenderer->renderFinishedSemaphores[i],
+        nullptr);
+            vkDestroySemaphore(pRenderer->deviceData.logicalDevice, pRenderer->imageAvailableSemaphores[i],
+        nullptr);
+            vkDestroyFence(pRenderer->deviceData.logicalDevice, pRenderer->inFlightFences[i], nullptr);
+        }
+
+        // Free the memory used by the arrays
+        free(pRenderer->imageAvailableSemaphores);
+        free(pRenderer->inFlightFences);
+        free(pRenderer->renderFinishedSemaphores);
+
         vkDestroyCommandPool(pRenderer->deviceData.logicalDevice, pRenderer->renderer2DData.commandPool,
     nullptr);
 
@@ -566,6 +586,81 @@ namespace Renderer {
 
         // Vulkan cleanup
         vkDestroyInstance(pRenderer->instance, nullptr);
+
+        return Status::SUCCESS;
+    }
+
+    Status createSyncObjects(Renderer* pRenderer, uint32_t maxFramesInFlight) {
+
+        // In Vulkan, drawing every frame can be done in a few simple function
+        // calls. These function calls are executed asynchronously - they are
+        // executed and returned in no particular order. As such, we aren't always
+        // guaranteed to get the images we need to execute the next frame. This
+        // would then lead to serious memory violations.
+
+        // As such, Vulkan requires us to synchronise our swap chain events, namely
+        // through the use of semaphores and fences. In both cases, our program will
+        // be forced to stop execution until a certain resource is made available
+        // to it (when the semaphore moves from 'signalled' to 'unsignalled').
+
+        // The main difference between semaphores and fences is that fences can be
+        // accessed by our program through a number of function calls. Semaphores,
+        // on the other hand, cannot. Semaphores are primarily used to synchornise
+        // operations within or across command queues.
+
+        // For now, we'll be using sempahores to get a triangle rendering!
+
+        // Create two semaphores - one which signals when an image is ready to be
+        // used, another for when the render pass has finished.
+
+        if (maxFramesInFlight > 0) {
+            pRenderer->maxFramesInFlight = maxFramesInFlight;
+        }
+
+        pRenderer->imageAvailableSemaphores = static_cast<VkSemaphore *>(malloc(
+        pRenderer->maxFramesInFlight * sizeof(VkSemaphore)));
+
+        pRenderer->renderFinishedSemaphores = static_cast<VkSemaphore *>(malloc(
+                pRenderer->maxFramesInFlight * sizeof(VkSemaphore)));
+
+        // The semaphore info struct only has one field
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        pRenderer->inFlightFences = static_cast<VkFence *>(malloc(
+                pRenderer->maxFramesInFlight * sizeof(VkFence)));
+
+        pRenderer->imagesInFlight = static_cast<VkFence *>(malloc(
+                pRenderer->swapchainData.imageCount * sizeof(VkFence)));
+
+        // Initialise all these images to 0 to start with.
+        for (size_t i = 0; i < pRenderer->swapchainData.imageCount; i++) {
+            pRenderer->imagesInFlight[i] = VK_NULL_HANDLE;
+        }
+
+        // As always with Vulkan, we create a create info struct to handle the
+        // configuration.
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        // Specify that the fence should be started in a signalled state.
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        // Now we simply create both semaphores, making sure that both succeed before we
+        // move on.
+        for (size_t i = 0; i < pRenderer->maxFramesInFlight; i++) {
+            if (vkCreateSemaphore(pRenderer->deviceData.logicalDevice, &semaphoreInfo, nullptr,
+                    &pRenderer->imageAvailableSemaphores[i]) != VK_SUCCESS
+                ||
+                vkCreateSemaphore(pRenderer->deviceData.logicalDevice, &semaphoreInfo, nullptr,
+                    &pRenderer->renderFinishedSemaphores[i]) != VK_SUCCESS
+                ||
+                vkCreateFence(pRenderer->deviceData.logicalDevice, &fenceInfo, nullptr,
+                    &pRenderer->inFlightFences[i]) != VK_SUCCESS) {
+
+                ERROR("Failed to create synchronisation objects for frame!");
+                return Status::INITIALIZATION_FAILURE;
+            }
+        }
 
         return Status::SUCCESS;
     }
