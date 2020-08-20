@@ -4,7 +4,6 @@
 #include <chrono>
 #include <GLFW/glfw3.h>
 #include <cstdlib>
-#include <vector>
 #include "logger.h"
 #include <set>
 #include <cstdint>
@@ -194,13 +193,13 @@ int main() {
     };
 
     // Make this the same size as our images. 
-    std::vector<VkCommandBuffer> commandBuffers(renderer.swapchainData.imageCount);
+    VkCommandBuffer commandBuffers[renderer.swapchainData.imageCount];
 
     // It should be noted that command buffers are automatically cleaned up when
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
     if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
-        commandBuffers.data(), &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+        commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
         renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
         &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
         sets, objects)
@@ -257,7 +256,7 @@ int main() {
                 renderer.renderer2DData.frameBuffers,
                 &renderer.renderer2DData.quadData.vertexBuffer,
                 &renderer.renderer2DData.quadData.indexBuffer,
-                commandBuffers.data(),
+                commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
                 sets,
@@ -360,7 +359,7 @@ int main() {
                 renderer.renderer2DData.frameBuffers,
                 &renderer.renderer2DData.quadData.vertexBuffer,
                 &renderer.renderer2DData.quadData.indexBuffer,
-                commandBuffers.data(),
+                commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &descriptorPool,
                 sets,
@@ -369,20 +368,18 @@ int main() {
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
-
             PONG_FATAL_ERROR("Failed to present swapchain image!");
-
         }
         
         // This should clamp the value of currentFrame between 0 and 1.
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
+    
+    // --------------------------- CLEANUP ------------------------------
 
     // Since our image drawing is asynchronous, we need to make sure that
     // our resources aren't in use when trying to clean them up:
     vkDeviceWaitIdle(renderer.deviceData.logicalDevice);
-    
-    // --------------------------- CLEANUP ------------------------------
 
     VulkanUtils::cleanupSwapchain(
         renderer.deviceData.logicalDevice,
@@ -390,7 +387,7 @@ int main() {
         &renderer.renderer2DData.graphicsPipeline,
         renderer.renderer2DData.commandPool,
         renderer.renderer2DData.frameBuffers,
-        commandBuffers.data(),
+        commandBuffers,
         uBuffers,
         descriptorPool,
         objects

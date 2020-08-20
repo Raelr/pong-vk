@@ -13,7 +13,8 @@ namespace Renderer {
     enum Status {
         FAILURE = 0,
         INITIALIZATION_FAILURE = 1,
-        SUCCESS = 2
+        SUCCESS = 2,
+        SKIPPED_FRAME = 3
     };
 
     struct Renderer {
@@ -36,6 +37,7 @@ namespace Renderer {
         VkSemaphore* renderFinishedSemaphores       {nullptr};
         VkFence* inFlightFences                     {nullptr};
         VkFence* imagesInFlight                     {nullptr};
+        uint32_t currentFrame                       {0};
     };
 
     // Device creation functions
@@ -49,6 +51,10 @@ namespace Renderer {
     Status createPhysicalDevice(Renderer*);
     Status createLogicalDevice(Renderer*);
     Status createSyncObjects(Renderer*, uint32_t = 2);
+    Status drawFrame(Renderer*, bool*);
+
+    // Code to handle window minimisation
+    Status onWindowMinimised(GLFWwindow*, int*, int*);
 
     // Cleanup code
     Status cleanupRenderer(Renderer*,  bool);

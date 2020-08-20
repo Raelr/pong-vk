@@ -664,4 +664,98 @@ namespace Renderer {
 
         return Status::SUCCESS;
     }
+
+    Status drawFrame(Renderer* pRenderer, bool* resized, GLFWwindow* window,
+
+        VkCommandBuffer* commandBuffers, VkDescriptorPool* descriptorPool, VkDescriptorSet** sets,
+        Buffers::BufferData** uBuffers) {
+
+        // This function takes an array of fences and waits for either one or all
+        // of them to be signalled. The fourth parameter specifies that we're
+        // waiting for all fences to be signalled before moving on. The last
+        // parameter takes a timeout period which we set really high (effectively
+        // making it null)
+        vkWaitForFences(pRenderer->deviceData.logicalDevice, 1,
+            &pRenderer->inFlightFences[pRenderer->currentFrame], VK_TRUE, UINT64_MAX);
+
+        // In each frame of the main loop, we'll need to perform the following
+        // operations:
+        // 1. acquire an image from the swapchain.
+        // 2. execute the command buffer with that image as an attachment.
+        // 3. Return the image to the swapchain for presentation.
+
+        uint32_t imageIndex;
+
+        // First we need to acquire an image from the swapchain. For this we need
+        // our logical device and swapchain. The third parameter is a timeout period
+        // which we disable using the max of a 64-bit integer. Next we provide our
+        // semaphore, and finally a variable to output the image index to.
+        VkResult result = vkAcquireNextImageKHR(pRenderer->deviceData.logicalDevice,
+            pRenderer->swapchainData.swapchain, UINT64_MAX, pRenderer->imageAvailableSemaphores[pRenderer->currentFrame],
+            VK_NULL_HANDLE, &imageIndex);
+        // If our swapchain is out of date (no longer valid, then we re-create
+        // it)
+
+        // If our swapchain is out of date (no longer valid, then we re-create
+        // it)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+
+            onWindowMinimised(window, &pRenderer->deviceData.framebufferWidth,
+                               &pRenderer->deviceData.framebufferHeight);
+
+            // Re-create the swap chain in its entirety if the pipeline is no
+            // longer valid or is out of date.
+            VulkanUtils::recreateSwapchain(
+                    &pRenderer->deviceData,
+                    &pRenderer->swapchainData,
+                    &pRenderer->renderer2DData.graphicsPipeline,
+                    pRenderer->renderer2DData.commandPool,
+                    pRenderer->renderer2DData.frameBuffers,
+                    &pRenderer->renderer2DData.quadData.vertexBuffer,
+                    &pRenderer->renderer2DData.quadData.indexBuffer,
+                    commandBuffers,
+                    &pRenderer->renderer2DData.quadData.descriptorSetLayout,
+                    descriptorPool,
+                    sets,
+                    uBuffers,
+                    pRenderer->renderer2DData.quadData.quadCount
+            );
+
+            *resized = false;
+            // Go to the next iteration of the loop
+            return Status::SKIPPED_FRAME;
+        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            ERROR("Failed to acquire swapchain image!");
+            return Status::FAILURE;
+        }
+
+        // Check if a previous frame is using this image. I.e: we're waiting on
+        // it's fence to be signalled.
+        if (pRenderer->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+            // Wait for the fence to signal that it's available for usage. This
+            // will now ensure that there are no more than 2 frames in use, and
+            // that these frames are not accidentally using the same image!
+            vkWaitForFences(pRenderer->deviceData.logicalDevice, 1,
+                &pRenderer->imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        }
+        // Now, use the image in this frame!.
+        pRenderer->imagesInFlight[imageIndex] = pRenderer->inFlightFences[pRenderer->currentFrame];
+
+        // WORK OUT WHAT TO DO WITH UNIFORM BUFFERS
+        
+    }
+
+    // Handles a case where the window is minimised - pauses rendering until its opened again.
+    Status onWindowMinimised(GLFWwindow* window, int* width, int* height) {
+
+        glfwGetFramebufferSize(window, width, height);
+
+        // If the window is minimized we simply pause rendering until it
+        // comes back!
+
+        while (*width == 0 && *height == 0) {
+            glfwGetFramebufferSize(window, width, height);
+            glfwWaitEvents();
+        }
+    }
 }
