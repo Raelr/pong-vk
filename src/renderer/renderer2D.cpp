@@ -114,8 +114,8 @@ namespace Renderer2D {
             ERROR("Failed to create index buffer.");
             return false;
         }
-
-
         return true;
     }
+
+
 }

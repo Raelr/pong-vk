@@ -244,14 +244,11 @@ int main() {
         if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[currentFrame])
             == VK_SUCCESS) {
 
-            vkResetCommandBuffer(commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-
-            if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
-              commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-              renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
-              &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
-              sets, objects)
-                != VK_SUCCESS) {
+            if (VulkanUtils::createCommandBuffer(renderer.deviceData.logicalDevice,
+                &commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+                renderer.renderer2DData.frameBuffers, &renderer.renderer2DData.commandPool,
+                &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
+                sets, objects) != VK_SUCCESS) {
 
                 PONG_FATAL_ERROR("Failed to create command buffers!");
             }

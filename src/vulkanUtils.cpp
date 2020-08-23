@@ -833,10 +833,10 @@ namespace VulkanUtils {
                 VK_INDEX_TYPE_UINT16);
             
            for (size_t j = 0; j < objectCount; j++) {
-                
-                vkCmdBindDescriptorSets(buffers[i], 
+
+                vkCmdBindDescriptorSets(buffers[i],
                 VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[j][i], 
+                pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[j][i],
                 0, nullptr);
 
                 // Now we can tell Vulkan to draw our triangle. This function has the parameters:
@@ -850,6 +850,97 @@ namespace VulkanUtils {
                return VK_ERROR_INITIALIZATION_FAILED;
            }
         }
+
+        return VK_SUCCESS;
+    }
+
+    // Command buffer creation method
+    VkResult createCommandBuffer(VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
+                                  GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
+                                  VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
+                                  Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
+                                  VkDescriptorSet** descriptorSets, size_t objectCount) {
+
+        // We allocate command buffers by using a CommandBufferAllocationInfo struct.
+        // // This struct specifies a command pool, as well as the number of buffers to
+        // allocate.·
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = *commandPool;
+        // Specifies that these buffers can be submitted to a queue for
+        // execution, but can't be called by other command buffers.
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = pSwapchain->imageCount;
+
+        // Now we need to start recording the command buffer. Recording a
+        // command buffer entails taking the draw commands and recording the
+        // same set of commands into them.
+
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+            if (vkBeginCommandBuffer(*buffer, &beginInfo) != VK_SUCCESS) {
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+
+            // Now we can start setting up our render pass. Render passes are
+            // configured using a RenderPassBeginInfo struct:
+
+            VkRenderPassBeginInfo renderPassInfo{};
+            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            // Pass in our renderPass
+            renderPassInfo.renderPass = pGraphicsPipeline->renderPass;
+            // Get the specific renderpass.
+            renderPassInfo.framebuffer = pFramebuffers[bufferIndex];
+            // These parameters define the size of the render area. Pixels
+            // outside the specified regions will have undefined values. For
+            // best performance, the render extent should match the size of the
+            // attachments.
+            renderPassInfo.renderArea.offset = {0,0};
+            renderPassInfo.renderArea.extent = pSwapchain->swapchainExtent;
+            // Now we can define a clear color. This color is used as a load
+            // operation for the color attachment. In our case we're setting it
+            // to black.
+            VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+            renderPassInfo.clearValueCount = 1;
+            renderPassInfo.pClearValues = &clearColor;
+
+            // Specify that render pass commands will be embedded in the primary
+            // command buffer. No secondary command buffers wll be executed.
+            vkCmdBeginRenderPass(*buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+            // Once the render pass has started, we can now attach the graphics pipeline. The second·
+            // parameter of this function call specifies whether this pipeline object is a graphics·
+            // or compute pipeline.
+            vkCmdBindPipeline(*buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
+
+            // Specify a list of vertex buffers that need to be recorded by the command buffer
+            VkBuffer vertexBuffers[] = { vertexBuffer->bufferData.buffer };
+            VkDeviceSize offsets[] = {0};
+
+            // Bind the vertex buffers to the command buffer being recorded.
+            vkCmdBindVertexBuffers(*buffer, 0, 1, vertexBuffers, offsets);
+
+            vkCmdBindIndexBuffer(*buffer, indexBuffer->bufferData.buffer, 0,
+                                 VK_INDEX_TYPE_UINT16);
+
+            for (size_t j = 0; j < objectCount; j++) {
+
+                vkCmdBindDescriptorSets(*buffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pGraphicsPipeline->pipelineLayout, 0, 1,
+                    &descriptorSets[j][bufferIndex],0, nullptr);
+
+                // Now we can tell Vulkan to draw our triangle. This function has the parameters:
+                vkCmdDrawIndexed(*buffer, indexBuffer->indexCount, 1, 0, 0, 0);
+            }
+            // Now we can end the render pass:
+            vkCmdEndRenderPass(*buffer);
+
+            //  Now we can end the command buffer recording
+            if (vkEndCommandBuffer(*buffer) != VK_SUCCESS) {
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
 
         return VK_SUCCESS;
     }

@@ -113,6 +113,20 @@ namespace VulkanUtils {
         size_t objectCount
     );
 
+    VkResult createCommandBuffer(
+            VkDevice device,
+            VkCommandBuffer* buffers,
+            size_t bufferIndex,
+            GraphicsPipelineData* pGraphicsPipeline,
+            SwapchainData* pSwapchain,
+            VkFramebuffer* pFramebuffers,
+            VkCommandPool* commandPool,
+            Buffers::VertexBuffer*,
+            Buffers::IndexBuffer*,
+            VkDescriptorSet** descriptorSets,
+            size_t objectCount
+    );
+
     VkResult recreateSwapchain(
         VulkanDeviceData* deviceData,
         SwapchainData* pSwapchain,
