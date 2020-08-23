@@ -2,6 +2,7 @@
 #include "../logger.h"
 #include <cstring>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 // A debug function callback - where the message data actually goes when triggered by the
 // validation layer.
@@ -798,9 +799,27 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    // A wrapper method for quad drawing. 
-    Status registerQuad2D(Renderer* pRenderer, glm::vec2 pos) {
-        Renderer2D::queueQuad(&pRenderer->renderer2DData, &pRenderer->deviceData,
-                              &pRenderer->swapchainData, glm::vec2(0.0, 0.0));
+    // A wrapper method for quad drawing.
+    Status registerQuad2D(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale) {
+
+        Buffers::UniformBufferObject ubo{};
+
+        ubo.mvp = glm::translate(ubo.mvp, pos);
+        ubo.mvp = glm::rotate(ubo.mvp, degrees, rot);
+        ubo.mvp = glm::scale(ubo.mvp, scale);
+
+        // Set the view
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+        glm::mat4 proj = glm::ortho(
+                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2),
+                static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2,
+                static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2,
+                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2), -1.0f, 1.0f);
+
+        // Rotate the model matrix
+        ubo.mvp = proj * view * ubo.mvp;
+
+        Renderer2D::queueQuad(&pRenderer->renderer2DData,&pRenderer->deviceData, &pRenderer->swapchainData, ubo);
     }
 }

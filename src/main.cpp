@@ -47,19 +47,21 @@ struct AppData {
     bool framebufferResized;
 };
 
-void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float y) {
-
+float getTime() {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
 
-    float time = std::chrono::duration<float, 
-        std::chrono::seconds::period>(currentTime - startTime).count();
+    return std::chrono::duration<float,
+            std::chrono::seconds::period>(currentTime - startTime).count();
+}
+
+void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float y) {
 
     Buffers::UniformBufferObject ubo{};
     
     ubo.mvp = glm::translate(ubo.mvp, glm::vec3(x, y, 0.0f));
     
-    ubo.mvp = glm::rotate(ubo.mvp, time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.mvp = glm::rotate(ubo.mvp, getTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
     ubo.mvp = glm::scale(ubo.mvp, glm::vec3(200.0f, 200.0f, 1.0f));
 
@@ -131,8 +133,11 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    Renderer::registerQuad2D(&renderer, glm::vec2(0.0, 0.0));
-    Renderer::registerQuad2D(&renderer, glm::vec2(0.0, 0.0));
+    // TODO: Find a way to prevent endless uniform + descriptor sets from being generated
+    Renderer::registerQuad2D(&renderer, {-200.0, 0.0, 0.0 },
+        {0.0,0.0, 1.0f}, getTime() * 90.0f, {200.0, 200.0, 1.0});
+    Renderer::registerQuad2D(&renderer, glm::vec3(200.0, 0.0, 0.0),
+        glm::vec3(0.0,0.0, 1.0f), getTime() * 90.0f, glm::vec3(200.0, 200.0, 1.0));
 
     // ------------------------- MAIN LOOP ------------------------------
 
@@ -170,6 +175,7 @@ int main() {
 
             vkResetCommandBuffer(renderer.commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
+            // TODO: Change this to just accept a renderer.
             if (VulkanUtils::createCommandBuffer(renderer.deviceData.logicalDevice,
                 &renderer.commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
                 renderer.renderer2DData.frameBuffers, &renderer.renderer2DData.commandPool,
@@ -224,11 +230,12 @@ int main() {
         // Now, use the image in this frame!.
         renderer.imagesInFlight[imageIndex] = renderer.inFlightFences[currentFrame];
 
+        // TODO: Find a way to replace these update functions
         updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[0][imageIndex].bufferMemory,
             renderer.deviceData.logicalDevice, -200.0f, 0.0f);
-
         updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[1][imageIndex].bufferMemory,
-            renderer.deviceData.logicalDevice, 200.0f, 0.0f);
+              renderer.deviceData.logicalDevice, 200.0f, 0.0f);
+
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

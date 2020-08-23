@@ -25,7 +25,7 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
-    bool queueQuad(Renderer2DData*, VulkanUtils::VulkanDeviceData*, VulkanUtils::SwapchainData*, glm::vec2);
+    bool queueQuad(Renderer2DData*, VulkanUtils::VulkanDeviceData*, VulkanUtils::SwapchainData*, Buffers::UniformBufferObject);
     bool drawQuads();
 }
 

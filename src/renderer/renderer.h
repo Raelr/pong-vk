@@ -69,7 +69,7 @@ namespace Renderer {
     [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
 
     // Drawing
-    Status registerQuad2D(Renderer*, glm::vec2);
+    Status registerQuad2D(Renderer*, glm::vec3, glm::vec3, float, glm::vec3);
 }
 
 #endif //PONG_VK_RENDERER_H
