@@ -67,6 +67,9 @@ namespace Renderer {
     // Custom data
     [[maybe_unused]] Status loadCustomValidationLayers(Renderer*, const char**, uint32_t);
     [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
+
+    // Drawing
+    Status registerQuad2D(Renderer*, glm::vec2);
 }
 
 #endif //PONG_VK_RENDERER_H

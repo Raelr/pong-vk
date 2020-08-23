@@ -131,34 +131,8 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    Renderer2D::queueQuad(&renderer.renderer2DData, &renderer.deviceData,
-        &renderer.swapchainData, glm::vec2(0.0, 0.0));
-    Renderer2D::queueQuad(&renderer.renderer2DData, &renderer.deviceData,
-        &renderer.swapchainData, glm::vec2(0.0, 0.0));
-
-    // ------------------ COMMAND BUFFER CREATION -----------------------
-
-    // With the command pool created, we can now start creating and allocating
-    // command buffers. Because these commands involve allocating a framebuffer,
-    // we'll need to record a command buffer for every image in the swap chain.
-
-    // Make this the same size as our images. 
-    VkCommandBuffer commandBuffers[renderer.swapchainData.imageCount];
-
-    // It should be noted that command buffers are automatically cleaned up when
-    // the commandpool is destroyed. As such they require no explicit cleanup.
-
-    if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
-          commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-          renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
-          &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
-          renderer.renderer2DData.quadData.descriptorSets, renderer.renderer2DData.quadData.quadCount)
-        != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create command buffers!");
-    }
-
-    // ======================= END OF SETUP =============================
+    Renderer::registerQuad2D(&renderer, glm::vec2(0.0, 0.0));
+    Renderer::registerQuad2D(&renderer, glm::vec2(0.0, 0.0));
 
     // ------------------------- MAIN LOOP ------------------------------
 
@@ -194,10 +168,10 @@ int main() {
         if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[currentFrame])
             == VK_SUCCESS) {
 
-            vkResetCommandBuffer(commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+            vkResetCommandBuffer(renderer.commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             if (VulkanUtils::createCommandBuffer(renderer.deviceData.logicalDevice,
-                &commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+                &renderer.commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
                 renderer.renderer2DData.frameBuffers, &renderer.renderer2DData.commandPool,
                 &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
                 renderer.renderer2DData.quadData.descriptorSets, renderer.renderer2DData.quadData.quadCount) != VK_SUCCESS) {
@@ -223,7 +197,7 @@ int main() {
                 renderer.renderer2DData.frameBuffers,
                 &renderer.renderer2DData.quadData.vertexBuffer,
                 &renderer.renderer2DData.quadData.indexBuffer,
-                commandBuffers,
+                renderer.commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &renderer.renderer2DData.descriptorPool,
                 renderer.renderer2DData.quadData.descriptorSets,
@@ -272,7 +246,7 @@ int main() {
         // Now we need to specify which command buffers to submit to. In our
         // case we need to submit to the buffer which corresponds to our image.
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+        submitInfo.pCommandBuffers = &renderer.commandBuffers[imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution. 
         VkSemaphore signalSemaphores[] = {renderer.renderFinishedSemaphores[currentFrame]};
@@ -326,7 +300,7 @@ int main() {
                 renderer.renderer2DData.frameBuffers,
                 &renderer.renderer2DData.quadData.vertexBuffer,
                 &renderer.renderer2DData.quadData.indexBuffer,
-                commandBuffers,
+                renderer.commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
                 &renderer.renderer2DData.descriptorPool,
                 renderer.renderer2DData.quadData.descriptorSets,
@@ -354,7 +328,7 @@ int main() {
         &renderer.renderer2DData.graphicsPipeline,
         renderer.renderer2DData.commandPool,
         renderer.renderer2DData.frameBuffers,
-        commandBuffers,
+        renderer.commandBuffers,
         renderer.renderer2DData.quadData.uniformBuffers,
         renderer.renderer2DData.descriptorPool,
         renderer.renderer2DData.quadData.quadCount

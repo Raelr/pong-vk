@@ -184,6 +184,35 @@ namespace Renderer {
 
         INFO("Initialised renderer2D!");
 
+        // =============================== COMMAND BUFFERS ==================================
+
+        renderer->commandBuffers = static_cast<VkCommandBuffer *>(malloc(
+                renderer->swapchainData.imageCount * sizeof(VkCommandBuffer)));
+
+        // With the command pool created, we can now start creating and allocating
+        // command buffers. Because these commands involve allocating a framebuffer,
+        // we'll need to record a command buffer for every image in the swap chain.
+
+        // It should be noted that command buffers are automatically cleaned up when
+        // the commandpool is destroyed. As such they require no explicit cleanup.
+
+        if (VulkanUtils::createCommandBuffers(
+                renderer->deviceData.logicalDevice,
+                renderer->commandBuffers,
+                &renderer->renderer2DData.graphicsPipeline,
+                &renderer->swapchainData,
+                renderer->renderer2DData.frameBuffers,
+                renderer->renderer2DData.commandPool,
+                &renderer->renderer2DData.quadData.vertexBuffer,
+                &renderer->renderer2DData.quadData.indexBuffer,
+                renderer->renderer2DData.quadData.descriptorSets,
+                renderer->renderer2DData.quadData.quadCount)
+            != VK_SUCCESS) {
+
+            ERROR("Failed to create command buffers!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
         // ================================ SYNC OBJECTS ====================================
 
         createSyncObjects(renderer);
@@ -570,7 +599,9 @@ namespace Renderer {
         free(pRenderer->imageAvailableSemaphores);
         free(pRenderer->inFlightFences);
         free(pRenderer->renderFinishedSemaphores);
+        free(pRenderer->commandBuffers);
 
+        // Free memory associated with descriptor sets and uniform buffers
         for (size_t i = 0; i < pRenderer->renderer2DData.quadData.quadCount; i++) {
             free(pRenderer->renderer2DData.quadData.descriptorSets[i]);
             free(pRenderer->renderer2DData.quadData.uniformBuffers[i]);
@@ -765,5 +796,11 @@ namespace Renderer {
         }
 
         return Status::SUCCESS;
+    }
+
+    // A wrapper method for quad drawing. 
+    Status registerQuad2D(Renderer* pRenderer, glm::vec2 pos) {
+        Renderer2D::queueQuad(&pRenderer->renderer2DData, &pRenderer->deviceData,
+                              &pRenderer->swapchainData, glm::vec2(0.0, 0.0));
     }
 }
