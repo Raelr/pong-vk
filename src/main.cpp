@@ -199,10 +199,10 @@ int main() {
     // the commandpool is destroyed. As such they require no explicit cleanup.
 
     if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
-        commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
-        renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
-        &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
-        sets, objects)
+          commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+          renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
+          &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
+          sets, objects)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -232,6 +232,7 @@ int main() {
         // 3. Return the image to the swapchain for presentation.
 
         uint32_t imageIndex;
+
         // First we need to acquire an image from the swapchain. For this we need
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
@@ -239,6 +240,23 @@ int main() {
         VkResult result = vkAcquireNextImageKHR(renderer.deviceData.logicalDevice,
             renderer.swapchainData.swapchain, UINT64_MAX, renderer.imageAvailableSemaphores[currentFrame],
             VK_NULL_HANDLE, &imageIndex);
+
+        if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[currentFrame])
+            == VK_SUCCESS) {
+
+            vkResetCommandBuffer(commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
+            if (VulkanUtils::createCommandBuffers(renderer.deviceData.logicalDevice,
+              commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+              renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
+              &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
+              sets, objects)
+                != VK_SUCCESS) {
+
+                PONG_FATAL_ERROR("Failed to create command buffers!");
+            }
+        }
+
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {

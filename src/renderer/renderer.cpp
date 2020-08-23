@@ -742,7 +742,8 @@ namespace Renderer {
         pRenderer->imagesInFlight[imageIndex] = pRenderer->inFlightFences[pRenderer->currentFrame];
 
         // WORK OUT WHAT TO DO WITH UNIFORM BUFFERS
-        
+
+        return Status::SUCCESS;
     }
 
     // Handles a case where the window is minimised - pauses rendering until its opened again.

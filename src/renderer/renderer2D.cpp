@@ -84,7 +84,7 @@ namespace Renderer2D {
         VkCommandPoolCreateInfo poolInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = deviceData->indices.graphicsFamily.value();
-        poolInfo.flags = 0; // optional
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // optional
 
         // Create the command pool
         if (vkCreateCommandPool(deviceData->logicalDevice, &poolInfo, nullptr,
