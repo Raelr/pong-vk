@@ -571,6 +571,11 @@ namespace Renderer {
         free(pRenderer->inFlightFences);
         free(pRenderer->renderFinishedSemaphores);
 
+        for (size_t i = 0; i < pRenderer->renderer2DData.quadData.quadCount; i++) {
+            free(pRenderer->renderer2DData.quadData.descriptorSets[i]);
+            free(pRenderer->renderer2DData.quadData.uniformBuffers[i]);
+        }
+
         vkDestroyCommandPool(pRenderer->deviceData.logicalDevice, pRenderer->renderer2DData.commandPool,
     nullptr);
 
@@ -758,5 +763,7 @@ namespace Renderer {
             glfwGetFramebufferSize(window, width, height);
             glfwWaitEvents();
         }
+
+        return Status::SUCCESS;
     }
 }

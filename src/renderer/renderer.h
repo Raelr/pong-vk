@@ -38,6 +38,7 @@ namespace Renderer {
         VkFence* inFlightFences                     {nullptr};
         VkFence* imagesInFlight                     {nullptr};
         uint32_t currentFrame                       {0};
+        VkCommandBuffer* commandBuffers             {nullptr};
     };
 
     // Device creation functions
@@ -51,7 +52,7 @@ namespace Renderer {
     Status createPhysicalDevice(Renderer*);
     Status createLogicalDevice(Renderer*);
     Status createSyncObjects(Renderer*, uint32_t = 2);
-    Status drawFrame(Renderer*, bool*);
+    Status drawFrame(Renderer*, bool*, GLFWwindow*);
 
     // Code to handle window minimisation
     Status onWindowMinimised(GLFWwindow*, int*, int*);

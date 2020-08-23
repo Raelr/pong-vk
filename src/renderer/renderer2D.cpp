@@ -114,8 +114,56 @@ namespace Renderer2D {
             ERROR("Failed to create index buffer.");
             return false;
         }
+
+        VkDescriptorSet* descriptorSet = static_cast<VkDescriptorSet*>(malloc(swapchain.imageCount * sizeof(VkDescriptorSet)));
+        renderer2D->quadData.descriptorSets[0] = descriptorSet;
+
+        if (VulkanUtils::createDescriptorPool(
+                deviceData->logicalDevice,
+                swapchain.imageCount, &renderer2D->descriptorPool,
+                renderer2D->quadData.maxQuads) != VK_SUCCESS) {
+
+            ERROR("Failed to create descriptor pool.");
+            return false;
+        }
+
         return true;
     }
 
+    bool queueQuad(Renderer2DData* pRenderer2D, VulkanUtils::VulkanDeviceData* pDeviceData,
+        VulkanUtils::SwapchainData* pSwapchain, glm::vec2 position) {
 
+        Buffers::BufferData* uniformBuffers =
+            static_cast<Buffers::BufferData*>(malloc(pSwapchain->imageCount * sizeof(Buffers::BufferData)));
+
+        // Create our uniform buffers (one per image)
+        if (VulkanUtils::createUniformBuffers(pDeviceData, uniformBuffers,
+            pSwapchain->imageCount) != VK_SUCCESS) {
+
+            ERROR("Failed to create uniform buffers!");
+            return false;
+        }
+
+        pRenderer2D->quadData.uniformBuffers[pRenderer2D->quadData.quadCount] = uniformBuffers;
+
+        VkDescriptorSet* descriptorSets =
+            static_cast<VkDescriptorSet*>(malloc(pSwapchain->imageCount * sizeof(VkDescriptorSet)));
+
+        if (VulkanUtils::createDescriptorSets(pDeviceData,
+            descriptorSets,
+            &pRenderer2D->quadData.descriptorSetLayout,
+            &pRenderer2D->descriptorPool,
+            pSwapchain->imageCount,
+            uniformBuffers) != VK_SUCCESS) {
+
+            ERROR("Failed to create descriptor sets!");
+            return false;
+        }
+
+        pRenderer2D->quadData.descriptorSets[pRenderer2D->quadData.quadCount] = descriptorSets;
+
+        pRenderer2D->quadData.quadCount += 1;
+
+        return true;
+    }
 }

@@ -991,18 +991,6 @@ namespace VulkanUtils {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        if (createUniformBuffers(deviceData, uniformBuffers[0], 
-            pSwapchain->imageCount) != VK_SUCCESS) {
-            
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        if (createUniformBuffers(deviceData, uniformBuffers[1], 
-            pSwapchain->imageCount) != VK_SUCCESS) {
-            
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
         if (createDescriptorPool(deviceData->logicalDevice, pSwapchain->imageCount, 
             descriptorPool, objectCount) != VK_SUCCESS) {
 
@@ -1010,6 +998,14 @@ namespace VulkanUtils {
         }
 
         for (size_t i = 0; i < objectCount; i++) {
+
+            if (createUniformBuffers(deviceData, uniformBuffers[i],
+                pSwapchain->imageCount) != VK_SUCCESS) {
+
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+
+
             if (createDescriptorSets(deviceData, descriptorSets[i], descriptorSetLayout,
                  descriptorPool, pSwapchain->imageCount, uniformBuffers[i])
                 != VK_SUCCESS) {

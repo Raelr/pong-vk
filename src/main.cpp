@@ -131,66 +131,16 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    size_t objects = 2;
-    // Define a vector for storing uniform buffer information
-    Buffers::BufferData uniformBuffers[renderer.swapchainData.imageCount];
-    Buffers::BufferData uniformBuffers2[renderer.swapchainData.imageCount];
-
-    // Create our uniform buffers (one per image)
-    if (VulkanUtils::createUniformBuffers(&renderer.deviceData, uniformBuffers,
-        renderer.swapchainData.imageCount) != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create uniform buffers!");
-    }
-
-    // Create uniform buffers for second object
-    if (VulkanUtils::createUniformBuffers(&renderer.deviceData, uniformBuffers2,
-        renderer.swapchainData.imageCount) != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create uniform buffers!");
-    }
-    
-    Buffers::BufferData* uBuffers[] = {
-        uniformBuffers, uniformBuffers2
-    };
-    // ---------------------- DESCRIPTOR POOL --------------------------------
-
-    VkDescriptorPool descriptorPool{};
-
-    if (VulkanUtils::createDescriptorPool(renderer.deviceData.logicalDevice,
-        renderer.swapchainData.imageCount, &descriptorPool, objects) != VK_SUCCESS) {
-
-        PONG_FATAL_ERROR("Failed to create descriptor pool.");
-    }
-
-    // --------------------------- DESCRIPTOR SETS ----------------------------
-
-    VkDescriptorSet descriptorSets[renderer.swapchainData.imageCount];
-    VkDescriptorSet descriptorSets2[renderer.swapchainData.imageCount];
-
-    if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets,
-        &renderer.renderer2DData.quadData.descriptorSetLayout,
-        &descriptorPool, renderer.swapchainData.imageCount,uBuffers[0]) != VK_SUCCESS) {
-        
-        PONG_FATAL_ERROR("Failed to create descriptor sets!");
-    }
-
-    if (VulkanUtils::createDescriptorSets(&renderer.deviceData, descriptorSets2,
-        &renderer.renderer2DData.quadData.descriptorSetLayout, &descriptorPool,
-        renderer.swapchainData.imageCount,uBuffers[1]) != VK_SUCCESS) {
-        
-        PONG_FATAL_ERROR("Failed to create descriptor sets!");
-    }
+    Renderer2D::queueQuad(&renderer.renderer2DData, &renderer.deviceData,
+        &renderer.swapchainData, glm::vec2(0.0, 0.0));
+    Renderer2D::queueQuad(&renderer.renderer2DData, &renderer.deviceData,
+        &renderer.swapchainData, glm::vec2(0.0, 0.0));
 
     // ------------------ COMMAND BUFFER CREATION -----------------------
 
     // With the command pool created, we can now start creating and allocating
     // command buffers. Because these commands involve allocating a framebuffer,
     // we'll need to record a command buffer for every image in the swap chain.
-    
-    VkDescriptorSet* sets[] =  {
-        descriptorSets, descriptorSets2
-    };
 
     // Make this the same size as our images. 
     VkCommandBuffer commandBuffers[renderer.swapchainData.imageCount];
@@ -202,7 +152,7 @@ int main() {
           commandBuffers, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
           renderer.renderer2DData.frameBuffers, renderer.renderer2DData.commandPool,
           &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
-          sets, objects)
+          renderer.renderer2DData.quadData.descriptorSets, renderer.renderer2DData.quadData.quadCount)
         != VK_SUCCESS) {
 
         PONG_FATAL_ERROR("Failed to create command buffers!");
@@ -244,11 +194,13 @@ int main() {
         if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[currentFrame])
             == VK_SUCCESS) {
 
+            vkResetCommandBuffer(commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
             if (VulkanUtils::createCommandBuffer(renderer.deviceData.logicalDevice,
                 &commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
                 renderer.renderer2DData.frameBuffers, &renderer.renderer2DData.commandPool,
                 &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
-                sets, objects) != VK_SUCCESS) {
+                renderer.renderer2DData.quadData.descriptorSets, renderer.renderer2DData.quadData.quadCount) != VK_SUCCESS) {
 
                 PONG_FATAL_ERROR("Failed to create command buffers!");
             }
@@ -273,10 +225,10 @@ int main() {
                 &renderer.renderer2DData.quadData.indexBuffer,
                 commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
-                &descriptorPool,
-                sets,
-                uBuffers,
-                objects
+                &renderer.renderer2DData.descriptorPool,
+                renderer.renderer2DData.quadData.descriptorSets,
+                renderer.renderer2DData.quadData.uniformBuffers,
+                renderer.renderer2DData.quadData.quadCount
             );
             
             pongData.framebufferResized = false;
@@ -298,10 +250,10 @@ int main() {
         // Now, use the image in this frame!.
         renderer.imagesInFlight[imageIndex] = renderer.inFlightFences[currentFrame];
 
-        updateUniformBuffer(&uBuffers[0][imageIndex].bufferMemory, 
+        updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[0][imageIndex].bufferMemory,
             renderer.deviceData.logicalDevice, -200.0f, 0.0f);
 
-        updateUniformBuffer(&uBuffers[1][imageIndex].bufferMemory, 
+        updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[1][imageIndex].bufferMemory,
             renderer.deviceData.logicalDevice, 200.0f, 0.0f);
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
@@ -376,10 +328,10 @@ int main() {
                 &renderer.renderer2DData.quadData.indexBuffer,
                 commandBuffers,
                 &renderer.renderer2DData.quadData.descriptorSetLayout,
-                &descriptorPool,
-                sets,
-                uBuffers,
-                objects);
+                &renderer.renderer2DData.descriptorPool,
+                renderer.renderer2DData.quadData.descriptorSets,
+                renderer.renderer2DData.quadData.uniformBuffers,
+                renderer.renderer2DData.quadData.quadCount);
 
             pongData.framebufferResized = false;
         } else if (result != VK_SUCCESS) {
@@ -403,9 +355,9 @@ int main() {
         renderer.renderer2DData.commandPool,
         renderer.renderer2DData.frameBuffers,
         commandBuffers,
-        uBuffers,
-        descriptorPool,
-        objects
+        renderer.renderer2DData.quadData.uniformBuffers,
+        renderer.renderer2DData.descriptorPool,
+        renderer.renderer2DData.quadData.quadCount
     );
 
     vkDestroyDescriptorSetLayout(renderer.deviceData.logicalDevice,

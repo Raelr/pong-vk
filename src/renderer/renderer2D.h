@@ -19,12 +19,14 @@ namespace Renderer2D {
     struct Renderer2DData {
         VulkanUtils::GraphicsPipelineData graphicsPipeline  {nullptr};
         QuadData quadData                                   {nullptr};
-        VkFramebuffer *frameBuffers                         {nullptr};
+        VkFramebuffer* frameBuffers                         {nullptr};
         VkCommandPool commandPool                           {nullptr};
+        VkDescriptorPool descriptorPool                     {nullptr};
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
-    bool drawQuad(size_t, glm::vec2);
+    bool queueQuad(Renderer2DData*, VulkanUtils::VulkanDeviceData*, VulkanUtils::SwapchainData*, glm::vec2);
+    bool drawQuads();
 }
 
 #endif //PONG_VK_RENDERER2D_H
