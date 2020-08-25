@@ -800,7 +800,12 @@ namespace Renderer {
     }
 
     // A wrapper method for quad drawing.
-    Status registerQuad2D(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale) {
+    Status registerQuad2D(Renderer* pRenderer) {
+
+        Renderer2D::queueQuad(&pRenderer->renderer2DData,&pRenderer->deviceData, &pRenderer->swapchainData);
+    }
+
+    Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {
 
         Buffers::UniformBufferObject ubo{};
 
@@ -820,6 +825,15 @@ namespace Renderer {
         // Rotate the model matrix
         ubo.mvp = proj * view * ubo.mvp;
 
-        Renderer2D::queueQuad(&pRenderer->renderer2DData,&pRenderer->deviceData, &pRenderer->swapchainData, ubo);
+        uint32_t imageIdx = pRenderer->imageIndex;
+        VkDeviceMemory memory = pRenderer->renderer2DData.quadData.uniformBuffers[objectIndex][imageIdx].bufferMemory;
+
+        // Now we bind our data to the UBO for later use
+        void* data;
+        vkMapMemory(pRenderer->deviceData.logicalDevice, memory,0, sizeof(ubo), 0, &data);
+        memcpy(data, &ubo, sizeof(ubo));
+        vkUnmapMemory(pRenderer->deviceData.logicalDevice, memory);
+
+        return Status::SUCCESS;
     }
 }

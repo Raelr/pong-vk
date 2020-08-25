@@ -1265,9 +1265,9 @@ namespace VulkanUtils {
         allocInfo.descriptorSetCount = imageCount;
         allocInfo.pSetLayouts = layouts.data();
 
-        if (vkAllocateDescriptorSets(deviceData->logicalDevice, &allocInfo, 
-            sets) != VK_SUCCESS) {
-            
+        if (vkAllocateDescriptorSets(deviceData->logicalDevice, &allocInfo,
+                                     sets) != VK_SUCCESS) {
+
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 

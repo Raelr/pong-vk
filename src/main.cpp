@@ -40,13 +40,6 @@ void handleMinimisation(GLFWwindow* window, int* width, int* height) {
     }
 }
 
-// Struct for storing application-specific data. Will be used by glfw for data
-// storage in the user pointer.
-struct AppData {
-    // Boolean for checking if the window has been resized
-    bool framebufferResized;
-};
-
 float getTime() {
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -55,34 +48,12 @@ float getTime() {
             std::chrono::seconds::period>(currentTime - startTime).count();
 }
 
-void updateUniformBuffer(VkDeviceMemory* memory, VkDevice device, float x, float y) {
-
-    Buffers::UniformBufferObject ubo{};
-    
-    ubo.mvp = glm::translate(ubo.mvp, glm::vec3(x, y, 0.0f));
-    
-    ubo.mvp = glm::rotate(ubo.mvp, getTime() * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    ubo.mvp = glm::scale(ubo.mvp, glm::vec3(200.0f, 200.0f, 1.0f));
-
-    // Set the view
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-    // Set our projection to be an orthographic view (for 3D)
-    glm::mat4 proj = glm::ortho(
-            -(static_cast<float>(WINDOW_WIDTH) / 2),
-            static_cast<float>(WINDOW_WIDTH) / 2,
-            static_cast<float>(WINDOW_HEIGHT) / 2,
-            -(static_cast<float>(WINDOW_HEIGHT) / 2), -1.0f, 1.0f);
-
-    // Rotate the model matrix
-    ubo.mvp = proj * view * ubo.mvp;
-
-    // Now we bind our data to the UBO for later use
-    void* data;
-    vkMapMemory(device, *memory, 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(device, *memory);
-}
+// Struct for storing application-specific data. Will be used by glfw for data
+// storage in the user pointer.
+struct AppData {
+    // Boolean for checking if the window has been resized
+    bool framebufferResized;
+};
 
 int main() {  
 
@@ -133,18 +104,26 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    // TODO: Find a way to prevent endless uniform + descriptor sets from being generated
-    Renderer::registerQuad2D(&renderer, {-200.0, 0.0, 0.0 },
-        {0.0,0.0, 1.0f}, getTime() * 90.0f, {200.0, 200.0, 1.0});
-    Renderer::registerQuad2D(&renderer, glm::vec3(200.0, 0.0, 0.0),
-        glm::vec3(0.0,0.0, 1.0f), getTime() * 90.0f, glm::vec3(200.0, 200.0, 1.0));
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+
+    uint32_t playerOne = 0;
+    uint32_t playerTwo = 1;
+    uint32_t playerThree = 2;
+
 
     // ------------------------- MAIN LOOP ------------------------------
 
-    size_t currentFrame = 0;
-
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        Renderer::drawQuad(&renderer, {-200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+                           getTime() * glm::radians(90.0f), {200.0f, 200.0f, 0.0f}, playerOne);
+        Renderer::drawQuad(&renderer, {200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+                           getTime() * glm::radians(-90.0f), {200.0f, 200.0f, 0.0f}, playerTwo);
+        Renderer::drawQuad(&renderer, {0.0f, 100.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+                           0.0f, {200.0f, 200.0f, 0.0f}, playerThree);
 
         // This function takes an array of fences and waits for either one or all
         // of them to be signalled. The fourth parameter specifies that we're 
@@ -152,7 +131,7 @@ int main() {
         // parameter takes a timeout period which we set really high (effectively
         // making it null)
         vkWaitForFences(renderer.deviceData.logicalDevice, 1,
-            &renderer.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+            &renderer.inFlightFences[renderer.currentFrame], VK_TRUE, UINT64_MAX);
 
         // In each frame of the main loop, we'll need to perform the following
         // operations:
@@ -160,24 +139,22 @@ int main() {
         // 2. execute the command buffer with that image as an attachment.
         // 3. Return the image to the swapchain for presentation.
 
-        uint32_t imageIndex;
-
         // First we need to acquire an image from the swapchain. For this we need
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to. 
         VkResult result = vkAcquireNextImageKHR(renderer.deviceData.logicalDevice,
-            renderer.swapchainData.swapchain, UINT64_MAX, renderer.imageAvailableSemaphores[currentFrame],
-            VK_NULL_HANDLE, &imageIndex);
+            renderer.swapchainData.swapchain, UINT64_MAX, renderer.imageAvailableSemaphores[renderer.currentFrame],
+            VK_NULL_HANDLE, &renderer.imageIndex);
 
-        if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[currentFrame])
+        if (vkGetFenceStatus(renderer.deviceData.logicalDevice, renderer.inFlightFences[renderer.currentFrame])
             == VK_SUCCESS) {
 
-            vkResetCommandBuffer(renderer.commandBuffers[imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+            vkResetCommandBuffer(renderer.commandBuffers[renderer.imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
             if (VulkanUtils::createCommandBuffer(renderer.deviceData.logicalDevice,
-                &renderer.commandBuffers[imageIndex], imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
+                &renderer.commandBuffers[renderer.imageIndex], renderer.imageIndex, &renderer.renderer2DData.graphicsPipeline, &renderer.swapchainData,
                 renderer.renderer2DData.frameBuffers, &renderer.renderer2DData.commandPool,
                 &renderer.renderer2DData.quadData.vertexBuffer, &renderer.renderer2DData.quadData.indexBuffer,
                 renderer.renderer2DData.quadData.descriptorSets, renderer.renderer2DData.quadData.quadCount) != VK_SUCCESS) {
@@ -220,28 +197,22 @@ int main() {
         
         // Check if a previous frame is using this image. I.e: we're waiting on 
         // it's fence to be signalled. 
-        if (renderer.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+        if (renderer.imagesInFlight[renderer.imageIndex] != VK_NULL_HANDLE) {
             // Wait for the fence to signal that it's available for usage. This 
             // will now ensure that there are no more than 2 frames in use, and 
             // that these frames are not accidentally using the same image!
-            vkWaitForFences(renderer.deviceData.logicalDevice, 1, &renderer.imagesInFlight[imageIndex],
+            vkWaitForFences(renderer.deviceData.logicalDevice, 1, &renderer.imagesInFlight[renderer.imageIndex],
                 VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
-        renderer.imagesInFlight[imageIndex] = renderer.inFlightFences[currentFrame];
-
-        // TODO: Find a way to replace these update functions
-        updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[0][imageIndex].bufferMemory,
-            renderer.deviceData.logicalDevice, -200.0f, 0.0f);
-        updateUniformBuffer(&renderer.renderer2DData.quadData.uniformBuffers[1][imageIndex].bufferMemory,
-              renderer.deviceData.logicalDevice, 200.0f, 0.0f);
+        renderer.imagesInFlight[renderer.imageIndex] = renderer.inFlightFences[renderer.currentFrame];
 
         // Once we have that, we now need to submit the image to the queue:
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         
         // We need to specify which semaphores to wait on before executing the frame.
-        VkSemaphore waitSemaphores[] = { renderer.imageAvailableSemaphores[currentFrame] };
+        VkSemaphore waitSemaphores[] = { renderer.imageAvailableSemaphores[renderer.currentFrame] };
         // We also need to specify which stages of the pipeline need to be done so we can move
         // on.
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -253,18 +224,18 @@ int main() {
         // Now we need to specify which command buffers to submit to. In our
         // case we need to submit to the buffer which corresponds to our image.
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &renderer.commandBuffers[imageIndex];
+        submitInfo.pCommandBuffers = &renderer.commandBuffers[renderer.imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution. 
-        VkSemaphore signalSemaphores[] = {renderer.renderFinishedSemaphores[currentFrame]};
+        VkSemaphore signalSemaphores[] = {renderer.renderFinishedSemaphores[renderer.currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // We need to reset the fence to an unsignalled state before moving on.
-        vkResetFences(renderer.deviceData.logicalDevice, 1, &renderer.inFlightFences[currentFrame]);
+        vkResetFences(renderer.deviceData.logicalDevice, 1, &renderer.inFlightFences[renderer.currentFrame]);
        
         // Finally, we submit the buffer to the graphics queue 
-        if (vkQueueSubmit(renderer.deviceData.graphicsQueue, 1, &submitInfo, renderer.inFlightFences[currentFrame])
+        if (vkQueueSubmit(renderer.deviceData.graphicsQueue, 1, &submitInfo, renderer.inFlightFences[renderer.currentFrame])
             != VK_SUCCESS) {
             PONG_FATAL_ERROR("Failed to submit draw command buffer!");
         }
@@ -283,7 +254,7 @@ int main() {
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapchains;
         // Get the index of the image we're using:
-        presentInfo.pImageIndices = &imageIndex;
+        presentInfo.pImageIndices = &renderer.imageIndex;
         // Allows you to get an array of VK_RESULTs which tell you if presentation
         // of every swapchain was successful. 
         presentInfo.pResults = nullptr; // optional
@@ -320,7 +291,8 @@ int main() {
         }
         
         // This should clamp the value of currentFrame between 0 and 1.
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        renderer.currentFrame = (renderer.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+        renderer.renderer2DData.quadData.lastQuadCount = renderer.renderer2DData.quadData.quadCount;
     }
     
     // --------------------------- CLEANUP ------------------------------

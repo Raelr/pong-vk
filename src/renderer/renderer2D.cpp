@@ -131,14 +131,13 @@ namespace Renderer2D {
     }
 
     bool queueQuad(Renderer2DData* pRenderer2D, VulkanUtils::VulkanDeviceData* pDeviceData,
-        VulkanUtils::SwapchainData* pSwapchain, Buffers::UniformBufferObject ubo) {
+        VulkanUtils::SwapchainData* pSwapchain) {
 
         Buffers::BufferData* uniformBuffers =
             static_cast<Buffers::BufferData*>(malloc(pSwapchain->imageCount * sizeof(Buffers::BufferData)));
 
         // Create our uniform buffers (one per image)
         if (VulkanUtils::createUniformBuffers(pDeviceData, uniformBuffers, pSwapchain->imageCount) != VK_SUCCESS) {
-
             ERROR("Failed to create uniform buffers!");
             return false;
         }
@@ -156,12 +155,6 @@ namespace Renderer2D {
             ERROR("Failed to create descriptor sets!");
             return false;
         }
-
-        // Bind the UBO
-        void* data;
-        vkMapMemory(pDeviceData->logicalDevice, uniformBuffers->bufferMemory, 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(pDeviceData->logicalDevice, uniformBuffers->bufferMemory);
 
         pRenderer2D->quadData.uniformBuffers[pRenderer2D->quadData.quadCount] = uniformBuffers;
         pRenderer2D->quadData.descriptorSets[pRenderer2D->quadData.quadCount] = descriptorSets;

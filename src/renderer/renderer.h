@@ -38,6 +38,7 @@ namespace Renderer {
         VkFence* inFlightFences                     {nullptr};
         VkFence* imagesInFlight                     {nullptr};
         uint32_t currentFrame                       {0};
+        uint32_t imageIndex                         {0};
         VkCommandBuffer* commandBuffers             {nullptr};
     };
 
@@ -69,7 +70,8 @@ namespace Renderer {
     [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
 
     // Drawing
-    Status registerQuad2D(Renderer*, glm::vec3, glm::vec3, float, glm::vec3);
+    Status registerQuad2D(Renderer*);
+    Status drawQuad(Renderer*, glm::vec3, glm::vec3, float, glm::vec3, uint32_t);
 }
 
 #endif //PONG_VK_RENDERER_H
