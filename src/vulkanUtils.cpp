@@ -1064,14 +1064,11 @@ namespace VulkanUtils {
         // Destroy the Swapchain
         vkDestroySwapchainKHR(device, pSwapchain->swapchain, nullptr);
 
-        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
-            vkDestroyBuffer(device, uniformBuffers[0][i].buffer, nullptr);
-            vkFreeMemory(device, uniformBuffers[0][i].bufferMemory, nullptr);
-        }
-
-        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
-            vkDestroyBuffer(device, uniformBuffers[1][i].buffer, nullptr);
-            vkFreeMemory(device, uniformBuffers[1][i].bufferMemory, nullptr);
+        for (size_t i = 0; i < objectCount; i++) {
+            for (size_t j = 0; j < pSwapchain->imageCount; j++) {
+                vkDestroyBuffer(device, uniformBuffers[i][j].buffer, nullptr);
+                vkFreeMemory(device, uniformBuffers[i][j].bufferMemory, nullptr);
+            }
         }
 
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);

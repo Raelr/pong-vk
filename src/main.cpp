@@ -112,18 +112,17 @@ int main() {
     uint32_t playerTwo = 1;
     uint32_t playerThree = 2;
 
-
     // ------------------------- MAIN LOOP ------------------------------
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
         Renderer::drawQuad(&renderer, {-200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-                           getTime() * glm::radians(90.0f), {200.0f, 200.0f, 0.0f}, playerOne);
+                           getTime() * glm::radians(-90.0f), {200.0f, 200.0f, 0.0f}, playerOne);
         Renderer::drawQuad(&renderer, {200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
                            getTime() * glm::radians(-90.0f), {200.0f, 200.0f, 0.0f}, playerTwo);
         Renderer::drawQuad(&renderer, {0.0f, 100.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-                           0.0f, {200.0f, 200.0f, 0.0f}, playerThree);
+                           getTime() * glm::radians(90.0f), {200.0f, 200.0f, 0.0f}, playerThree);
 
         // This function takes an array of fences and waits for either one or all
         // of them to be signalled. The fourth parameter specifies that we're 
