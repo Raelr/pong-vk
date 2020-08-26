@@ -729,7 +729,7 @@ namespace Renderer {
         if (vkGetFenceStatus(pRenderer->deviceData.logicalDevice, pRenderer->inFlightFences[pRenderer->currentFrame])
             == VK_SUCCESS) {
 
-            //vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+            vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
             if (VulkanUtils::createCommandBuffer(
@@ -875,6 +875,7 @@ namespace Renderer {
                 pRenderer->renderer2DData.quadData.quadCount);
 
             *resized = false;
+            return Status::SKIPPED_FRAME;
         } else if (result != VK_SUCCESS) {
             ERROR("Failed to present swapchain image!");
             return Status::FAILURE;
@@ -882,7 +883,6 @@ namespace Renderer {
 
         // This should clamp the value of currentFrame between 0 and 1.
         pRenderer->currentFrame = (pRenderer->currentFrame + 1) % pRenderer->maxFramesInFlight;
-        pRenderer->renderer2DData.quadData.lastQuadCount = pRenderer->renderer2DData.quadData.quadCount;
 
         // WORK OUT WHAT TO DO WITH UNIFORM BUFFERS
 
@@ -908,7 +908,12 @@ namespace Renderer {
     // A wrapper method for quad drawing.
     Status registerQuad2D(Renderer* pRenderer) {
 
-        Renderer2D::queueQuad(&pRenderer->renderer2DData,&pRenderer->deviceData, &pRenderer->swapchainData);
+        Status success = (Renderer2D::queueQuad(
+                &pRenderer->renderer2DData,
+                &pRenderer->deviceData,
+                &pRenderer->swapchainData)) ? Status::SUCCESS : Status::INITIALIZATION_FAILURE;
+
+        return success;
     }
 
     Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {

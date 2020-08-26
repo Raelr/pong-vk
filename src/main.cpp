@@ -1,23 +1,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include "logger.h"
-#include <set>
 #include <cstdint>
 #include "vulkanUtils.h"
 #include "renderer/renderer.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
-
-// Const variables to determine initial window height ad 
-const int WINDOW_HEIGHT = 600;
-const int WINDOW_WIDTH = 800;
-
-// Specifying how many frames we allow to re-use for the next frame.
-const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 // Only enable validation layers when the program is run in DEBUG mode.
 #ifdef DEBUG
@@ -25,20 +16,6 @@ const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 #else
     const bool enableValidationLayers = false;
 #endif
-
-// Handles a case where the window is minimised
-void handleMinimisation(GLFWwindow* window, int* width, int* height) {
-
-    glfwGetFramebufferSize(window, width, height);
-    
-    // If the window is minimized we simply pause rendering until it
-    // comes back!
-    
-    while (*width == 0 && *height == 0) {
-        glfwGetFramebufferSize(window, width, height);
-        glfwWaitEvents();
-    }
-}
 
 float getTime() {
     static auto startTime = std::chrono::high_resolution_clock::now();
@@ -72,7 +49,7 @@ int main() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     // Actually make the window
-    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Pong", 
+    GLFWwindow* window = glfwCreateWindow(800, 600, "Pong",
         nullptr, nullptr);
 
     glfwSetWindowUserPointer(window, &pongData);
@@ -123,7 +100,10 @@ int main() {
         Renderer::drawQuad(&renderer, {0.0f, 100.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
             getTime() * glm::radians(90.0f), {200.0f, 200.0f, 0.0f}, playerThree);
 
-        Renderer::drawFrame(&renderer, &pongData.framebufferResized, window);
+        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window) == Renderer::Status::FAILURE) {
+            ERROR("Error drawing frame - exitting main loop!");
+        }
+
     }
     
     // --------------------------- CLEANUP ------------------------------
