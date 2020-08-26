@@ -702,10 +702,7 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status drawFrame(Renderer* pRenderer, bool* resized, GLFWwindow* window,
-
-        VkCommandBuffer* commandBuffers, VkDescriptorPool* descriptorPool, VkDescriptorSet** sets,
-        Buffers::BufferData** uBuffers) {
+    Status drawFrame(Renderer* pRenderer, bool* resized, GLFWwindow* window) {
 
         // This function takes an array of fences and waits for either one or all
         // of them to be signalled. The fourth parameter specifies that we're
@@ -721,17 +718,37 @@ namespace Renderer {
         // 2. execute the command buffer with that image as an attachment.
         // 3. Return the image to the swapchain for presentation.
 
-        uint32_t imageIndex;
-
         // First we need to acquire an image from the swapchain. For this we need
         // our logical device and swapchain. The third parameter is a timeout period
         // which we disable using the max of a 64-bit integer. Next we provide our
         // semaphore, and finally a variable to output the image index to.
         VkResult result = vkAcquireNextImageKHR(pRenderer->deviceData.logicalDevice,
             pRenderer->swapchainData.swapchain, UINT64_MAX, pRenderer->imageAvailableSemaphores[pRenderer->currentFrame],
-            VK_NULL_HANDLE, &imageIndex);
-        // If our swapchain is out of date (no longer valid, then we re-create
-        // it)
+            VK_NULL_HANDLE, &pRenderer->imageIndex);
+
+        if (vkGetFenceStatus(pRenderer->deviceData.logicalDevice, pRenderer->inFlightFences[pRenderer->currentFrame])
+            == VK_SUCCESS) {
+
+            //vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
+            // TODO: Change this to just accept a renderer.
+            if (VulkanUtils::createCommandBuffer(
+                    pRenderer->deviceData.logicalDevice,
+                    &pRenderer->commandBuffers[pRenderer->imageIndex],
+                    pRenderer->imageIndex,
+                    &pRenderer->renderer2DData.graphicsPipeline,
+                    &pRenderer->swapchainData,
+                    pRenderer->renderer2DData.frameBuffers,
+                    &pRenderer->renderer2DData.commandPool,
+                    &pRenderer->renderer2DData.quadData.vertexBuffer,
+                    &pRenderer->renderer2DData.quadData.indexBuffer,
+                    pRenderer->renderer2DData.quadData.descriptorSets,
+                    pRenderer->renderer2DData.quadData.quadCount) != VK_SUCCESS) {
+
+                ERROR("Failed to create command buffers!");
+                return Status::FAILURE;
+            }
+        }
 
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
@@ -743,20 +760,19 @@ namespace Renderer {
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
             VulkanUtils::recreateSwapchain(
-                    &pRenderer->deviceData,
-                    &pRenderer->swapchainData,
-                    &pRenderer->renderer2DData.graphicsPipeline,
-                    pRenderer->renderer2DData.commandPool,
-                    pRenderer->renderer2DData.frameBuffers,
-                    &pRenderer->renderer2DData.quadData.vertexBuffer,
-                    &pRenderer->renderer2DData.quadData.indexBuffer,
-                    commandBuffers,
-                    &pRenderer->renderer2DData.quadData.descriptorSetLayout,
-                    descriptorPool,
-                    sets,
-                    uBuffers,
-                    pRenderer->renderer2DData.quadData.quadCount
-            );
+                &pRenderer->deviceData,
+                &pRenderer->swapchainData,
+                &pRenderer->renderer2DData.graphicsPipeline,
+                pRenderer->renderer2DData.commandPool,
+                pRenderer->renderer2DData.frameBuffers,
+                &pRenderer->renderer2DData.quadData.vertexBuffer,
+                &pRenderer->renderer2DData.quadData.indexBuffer,
+                pRenderer->commandBuffers,
+                &pRenderer->renderer2DData.quadData.descriptorSetLayout,
+                &pRenderer->renderer2DData.descriptorPool,
+                pRenderer->renderer2DData.quadData.descriptorSets,
+                pRenderer->renderer2DData.quadData.uniformBuffers,
+                pRenderer->renderer2DData.quadData.quadCount);
 
             *resized = false;
             // Go to the next iteration of the loop
@@ -768,15 +784,105 @@ namespace Renderer {
 
         // Check if a previous frame is using this image. I.e: we're waiting on
         // it's fence to be signalled.
-        if (pRenderer->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+        if (pRenderer->imagesInFlight[pRenderer->imageIndex] != VK_NULL_HANDLE) {
             // Wait for the fence to signal that it's available for usage. This
             // will now ensure that there are no more than 2 frames in use, and
             // that these frames are not accidentally using the same image!
             vkWaitForFences(pRenderer->deviceData.logicalDevice, 1,
-                &pRenderer->imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+                &pRenderer->imagesInFlight[pRenderer->imageIndex], VK_TRUE, UINT64_MAX);
         }
         // Now, use the image in this frame!.
-        pRenderer->imagesInFlight[imageIndex] = pRenderer->inFlightFences[pRenderer->currentFrame];
+        pRenderer->imagesInFlight[pRenderer->imageIndex] = pRenderer->inFlightFences[pRenderer->currentFrame];
+
+        // Once we have that, we now need to submit the image to the queue:
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        // We need to specify which semaphores to wait on before executing the frame.
+        VkSemaphore waitSemaphores[] = { pRenderer->imageAvailableSemaphores[pRenderer->currentFrame] };
+        // We also need to specify which stages of the pipeline need to be done so we can move
+        // on.
+        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        // A count of all semaphores.
+        submitInfo.waitSemaphoreCount = 1;
+        // Finaly, input the semaphores and stages.
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+        // Now we need to specify which command buffers to submit to. In our
+        // case we need to submit to the buffer which corresponds to our image.
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &pRenderer->commandBuffers[pRenderer->imageIndex];
+        // Now we specify which semaphores we need to signal once our command buffers
+        // have finished execution.
+        VkSemaphore signalSemaphores[] = {pRenderer->renderFinishedSemaphores[pRenderer->currentFrame]};
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        // We need to reset the fence to an unsignalled state before moving on.
+        vkResetFences(pRenderer->deviceData.logicalDevice, 1, &pRenderer->inFlightFences[pRenderer->currentFrame]);
+
+        // Finally, we submit the buffer to the graphics queue
+        if (vkQueueSubmit(pRenderer->deviceData.graphicsQueue, 1, &submitInfo, pRenderer->inFlightFences[pRenderer->currentFrame])
+            != VK_SUCCESS) {
+            ERROR("Failed to submit draw command buffer!");
+            return Status::FAILURE;
+        }
+
+        // The final step to drawing a frame is resubmitting the the result back
+        // to the swapchain. This is done by configuring our swapchain presentation.
+
+        // Start with a PresentInfo struct:
+        VkPresentInfoKHR presentInfo{};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        // First we specify how many semaphores we need to wait on.
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = signalSemaphores;
+        // Next we need to specify which swapchains we're using:
+        VkSwapchainKHR swapchains[] = { pRenderer->swapchainData.swapchain };
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = swapchains;
+        // Get the index of the image we're using:
+        presentInfo.pImageIndices = &pRenderer->imageIndex;
+        // Allows you to get an array of VK_RESULTs which tell you if presentation
+        // of every swapchain was successful.
+        presentInfo.pResults = nullptr; // optional
+
+        // Now we submit a request to present an image to the swapchain.
+        result = vkQueuePresentKHR(pRenderer->deviceData.presentQueue, &presentInfo);
+
+        // Again, we make sure that we're using the best possible swapchain.
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR
+            || *resized) {
+
+            onWindowMinimised(window, &pRenderer->deviceData.framebufferWidth,
+                               &pRenderer->deviceData.framebufferHeight);
+
+            // Re-create the swap chain in its entirety if the pipeline is no
+            // longer valid or is out of date.
+            VulkanUtils::recreateSwapchain(
+                &pRenderer->deviceData,
+                &pRenderer->swapchainData,
+                &pRenderer->renderer2DData.graphicsPipeline,
+                pRenderer->renderer2DData.commandPool,
+                pRenderer->renderer2DData.frameBuffers,
+                &pRenderer->renderer2DData.quadData.vertexBuffer,
+                &pRenderer->renderer2DData.quadData.indexBuffer,
+                pRenderer->commandBuffers,
+                &pRenderer->renderer2DData.quadData.descriptorSetLayout,
+                &pRenderer->renderer2DData.descriptorPool,
+                pRenderer->renderer2DData.quadData.descriptorSets,
+                pRenderer->renderer2DData.quadData.uniformBuffers,
+                pRenderer->renderer2DData.quadData.quadCount);
+
+            *resized = false;
+        } else if (result != VK_SUCCESS) {
+            ERROR("Failed to present swapchain image!");
+            return Status::FAILURE;
+        }
+
+        // This should clamp the value of currentFrame between 0 and 1.
+        pRenderer->currentFrame = (pRenderer->currentFrame + 1) % pRenderer->maxFramesInFlight;
+        pRenderer->renderer2DData.quadData.lastQuadCount = pRenderer->renderer2DData.quadData.quadCount;
 
         // WORK OUT WHAT TO DO WITH UNIFORM BUFFERS
 
