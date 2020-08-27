@@ -26,6 +26,7 @@ namespace Renderer2D {
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
     bool queueQuad(Renderer2DData*, VulkanUtils::VulkanDeviceData*, VulkanUtils::SwapchainData*);
+    void cleanupRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*);
 }
 
 #endif //PONG_VK_RENDERER2D_H

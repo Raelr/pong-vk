@@ -162,4 +162,24 @@ namespace Renderer2D {
 
         return true;
     }
+
+    void cleanupRenderer2D(VulkanUtils::VulkanDeviceData* deviceData, Renderer2DData* pRenderer) {
+
+        vkDestroyDescriptorSetLayout(deviceData->logicalDevice,
+                                     pRenderer->quadData.descriptorSetLayout,nullptr);
+
+        // Cleans up the memory buffer
+        vkDestroyBuffer(deviceData->logicalDevice,
+                        pRenderer->quadData.vertexBuffer.bufferData.buffer, nullptr);
+
+        // Frees the allocated vertex buffer memory
+        vkFreeMemory(deviceData->logicalDevice,
+                     pRenderer->quadData.vertexBuffer.bufferData.bufferMemory, nullptr);
+
+        vkDestroyBuffer(deviceData->logicalDevice,
+                        pRenderer->quadData.indexBuffer.bufferData.buffer, nullptr);
+
+        vkFreeMemory(deviceData->logicalDevice,
+                     pRenderer->quadData.indexBuffer.bufferData.bufferMemory, nullptr);
+    }
 }

@@ -584,6 +584,24 @@ namespace Renderer {
 
     Status cleanupRenderer(Renderer* pRenderer, bool enableValidationLayers) {
 
+        // Since our image drawing is asynchronous, we need to make sure that
+        // our resources aren't in use when trying to clean them up:
+        vkDeviceWaitIdle(pRenderer->deviceData.logicalDevice);
+
+        VulkanUtils::cleanupSwapchain(
+            pRenderer->deviceData.logicalDevice,
+            &pRenderer->swapchainData,
+            &pRenderer->renderer2DData.graphicsPipeline,
+            pRenderer->renderer2DData.commandPool,
+            pRenderer->renderer2DData.frameBuffers,
+            pRenderer->commandBuffers,
+            pRenderer->renderer2DData.quadData.uniformBuffers,
+            pRenderer->renderer2DData.descriptorPool,
+            pRenderer->renderer2DData.quadData.quadCount
+        );
+
+        Renderer2D::cleanupRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData);
+
         free(pRenderer->extensions);
         free(pRenderer->renderer2DData.frameBuffers);
 

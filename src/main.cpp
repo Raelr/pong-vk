@@ -103,43 +103,9 @@ int main() {
         if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window) == Renderer::Status::FAILURE) {
             ERROR("Error drawing frame - exitting main loop!");
         }
-
     }
     
     // --------------------------- CLEANUP ------------------------------
-
-    // Since our image drawing is asynchronous, we need to make sure that
-    // our resources aren't in use when trying to clean them up:
-    vkDeviceWaitIdle(renderer.deviceData.logicalDevice);
-
-    VulkanUtils::cleanupSwapchain(
-        renderer.deviceData.logicalDevice,
-        &renderer.swapchainData,
-        &renderer.renderer2DData.graphicsPipeline,
-        renderer.renderer2DData.commandPool,
-        renderer.renderer2DData.frameBuffers,
-        renderer.commandBuffers,
-        renderer.renderer2DData.quadData.uniformBuffers,
-        renderer.renderer2DData.descriptorPool,
-        renderer.renderer2DData.quadData.quadCount
-    );
-
-    vkDestroyDescriptorSetLayout(renderer.deviceData.logicalDevice,
-         renderer.renderer2DData.quadData.descriptorSetLayout,nullptr);
-
-    // Cleans up the memory buffer 
-    vkDestroyBuffer(renderer.deviceData.logicalDevice,
-        renderer.renderer2DData.quadData.vertexBuffer.bufferData.buffer, nullptr);
-
-    // Frees the allocated vertex buffer memory 
-    vkFreeMemory(renderer.deviceData.logicalDevice,
-        renderer.renderer2DData.quadData.vertexBuffer.bufferData.bufferMemory, nullptr);
-
-    vkDestroyBuffer(renderer.deviceData.logicalDevice,
-        renderer.renderer2DData.quadData.indexBuffer.bufferData.buffer, nullptr);
-
-    vkFreeMemory(renderer.deviceData.logicalDevice,
-        renderer.renderer2DData.quadData.indexBuffer.bufferData.bufferMemory, nullptr);
 
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
     
