@@ -89,11 +89,7 @@ namespace Renderer {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    Status initialiseRenderer(
-        Renderer* renderer,
-        bool enableValidationLayers,
-        GLFWwindow* window
-    ) {
+    Status initialiseRenderer(Renderer* renderer, bool enableValidationLayers, GLFWwindow* window) {
 
         // ========================== VALIDATION LAYER CHECKING ==============================
 

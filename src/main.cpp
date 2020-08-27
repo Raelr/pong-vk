@@ -2,10 +2,8 @@
 #include <glm/glm.hpp>
 #include <chrono>
 #include <GLFW/glfw3.h>
-#include <cstdlib>
 #include "logger.h"
 #include <cstdint>
-#include "vulkanUtils.h"
 #include "renderer/renderer.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
@@ -29,7 +27,7 @@ float getTime() {
 // storage in the user pointer.
 struct AppData {
     // Boolean for checking if the window has been resized
-    bool framebufferResized;
+    bool framebufferResized = false;
 };
 
 int main() {  
@@ -39,7 +37,6 @@ int main() {
     
     // Initialise app data struct
     AppData pongData{};
-    pongData.framebufferResized = false;
 
     // Initialise GLFW
     glfwInit();
@@ -80,6 +77,8 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
+    // ------------------------ SCENE SETUP -----------------------------
+
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
@@ -102,6 +101,7 @@ int main() {
 
         if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window) == Renderer::Status::FAILURE) {
             ERROR("Error drawing frame - exitting main loop!");
+            break;
         }
     }
     
