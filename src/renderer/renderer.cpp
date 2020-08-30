@@ -652,14 +652,14 @@ namespace Renderer {
         // As such, Vulkan requires us to synchronise our swap chain events, namely
         // through the use of semaphores and fences. In both cases, our program will
         // be forced to stop execution until a certain resource is made available
-        // to it (when the semaphore moves from 'signalled' to 'unsignalled').
+        // to it (when the semaphore moves from 'signalled' to 'un-signalled').
 
         // The main difference between semaphores and fences is that fences can be
         // accessed by our program through a number of function calls. Semaphores,
-        // on the other hand, cannot. Semaphores are primarily used to synchornise
+        // on the other hand, cannot. Semaphores are primarily used to synchronise
         // operations within or across command queues.
 
-        // For now, we'll be using sempahores to get a triangle rendering!
+        // For now, we'll be using semaphores to get a triangle rendering!
 
         // Create two semaphores - one which signals when an image is ready to be
         // used, another for when the render pass has finished.

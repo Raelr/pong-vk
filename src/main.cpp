@@ -30,11 +30,20 @@ struct AppData {
     bool framebufferResized = false;
 };
 
+struct PlayerData {
+    glm::vec3 position = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };
+    glm::vec3 scale = { 0.0f, 0.0f, 0.0f };
+    float rotationAngle = 0.f;
+    uint32_t playerIndex = 0;
+};
+
 int main() {  
 
     // -------------------- INITIALISE WINDOW --------------------------
+
     initLogger();
-    
+
     // Initialise app data struct
     AppData pongData{};
 
@@ -64,7 +73,7 @@ int main() {
 
     // ========================= RENDERER ================================
 
-    // ==================== INITIALISE RENDERER ==========================
+    // ------------------- INITIALISE RENDERER ---------------------------
 
     Renderer::Renderer renderer;
 
@@ -83,26 +92,72 @@ int main() {
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
 
-    uint32_t playerOne = 0;
-    uint32_t playerTwo = 1;
-    uint32_t playerThree = 2;
+    PlayerData playerOne = {
+        {-200.0f,-125.0f,1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, -90.0f, 0
+    };
+    PlayerData playerTwo = {
+        {200.0f, -125.0f, 1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, -90.0f, 1
+    };
+    PlayerData playerThree = {
+        {0.0f, 100.0f, 1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, 90.0f, 2
+    };
 
-    // ------------------------- MAIN LOOP ------------------------------
+    PlayerData players[64];
+    uint32_t currentPlayers = 3;
+
+    players[0] = playerOne;
+    players[1] = playerTwo;
+    players[2] = playerThree;
+
+    playerTwo.playerIndex = 1;
+    playerThree.playerIndex = 2;
+
+    float oldTime = 0;
+    float currentTime = 0;
+    float deltaTime = 0;
+    float elapsed = 0.0f;
+
+
+    // -------------------------- MAIN LOOP ------------------------------
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        Renderer::drawQuad(&renderer, {-200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-            getTime() * glm::radians(-90.0f), {200.0f, 200.0f, 0.0f}, playerOne);
-        Renderer::drawQuad(&renderer, {200.0f, -125.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-            getTime() * glm::radians(-90.0f), {200.0f, 200.0f, 0.0f}, playerTwo);
-        Renderer::drawQuad(&renderer, {0.0f, 100.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-            getTime() * glm::radians(90.0f), {200.0f, 200.0f, 0.0f}, playerThree);
+        currentTime = getTime();
+        deltaTime = currentTime - oldTime;
+        elapsed += deltaTime;
 
-        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window) == Renderer::Status::FAILURE) {
-            ERROR("Error drawing frame - exitting main loop!");
+//        if (elapsed >= 2.0f) {
+//            Renderer::registerQuad2D(&renderer);
+//            PlayerData player = {
+//                {0.0f,0.0f,1.0f},
+//                {0.0f,0.0f,1.0f},
+//                {200.0f,200.0f, 0.0f}, -90.0f, currentPlayers
+//            };
+//            players[currentPlayers] = player;
+//            currentPlayers++;
+//            elapsed = 0.0f;
+//        }
+
+        for (int i = 0; i < currentPlayers; i++) {
+            PlayerData player = players[i];
+            Renderer::drawQuad(&renderer, player.position, player.rotation,
+                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
+        }
+
+        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
+            == Renderer::Status::FAILURE) {
+            ERROR("Error drawing frame - exiting main loop!");
             break;
         }
+
+        oldTime = currentTime;
     }
     
     // --------------------------- CLEANUP ------------------------------
