@@ -7,7 +7,7 @@
 namespace Renderer2D {
 
     struct QuadData {
-        VkDescriptorSetLayout descriptorSetLayout       {nullptr};
+        VkDescriptorSetLayout descriptorSetLayout       {VK_NULL_HANDLE};
         size_t quadCount                                {0};
         VkDescriptorSet* descriptorSets[64]             {nullptr};
         Buffers::BufferData* uniformBuffers[64]         {nullptr};
@@ -17,11 +17,11 @@ namespace Renderer2D {
     };
 
     struct Renderer2DData {
-        VulkanUtils::GraphicsPipelineData graphicsPipeline  {nullptr};
-        QuadData quadData                                   {nullptr};
-        VkFramebuffer* frameBuffers                         {nullptr};
-        VkCommandPool commandPool                           {nullptr};
-        VkDescriptorPool descriptorPool                     {nullptr};
+        VulkanUtils::GraphicsPipelineData graphicsPipeline  { VK_NULL_HANDLE };
+        QuadData quadData                                   { VK_NULL_HANDLE };
+        VkFramebuffer* frameBuffers                         { VK_NULL_HANDLE };
+        VkCommandPool commandPool                           { VK_NULL_HANDLE };
+        VkDescriptorPool descriptorPool                     { VK_NULL_HANDLE };
     };
 
     bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);

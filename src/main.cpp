@@ -71,9 +71,9 @@ int main() {
 
     INFO("Created GLFW window");
 
-    // ========================= RENDERER ================================
+    // ============================ RENDERER =================================
 
-    // ------------------- INITIALISE RENDERER ---------------------------
+    // ----------------------- INITIALISE RENDERER ---------------------------
 
     Renderer::Renderer renderer;
 
@@ -92,37 +92,29 @@ int main() {
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
 
-    PlayerData playerOne = {
+    PlayerData players[64];
+    uint32_t currentPlayers = 3;
+
+    players[0] = {
         {-200.0f,-125.0f,1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, -90.0f, 0
     };
-    PlayerData playerTwo = {
+    players[1] = {
         {200.0f, -125.0f, 1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, -90.0f, 1
     };
-    PlayerData playerThree = {
+    players[2] = {
         {0.0f, 100.0f, 1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, 90.0f, 2
     };
 
-    PlayerData players[64];
-    uint32_t currentPlayers = 3;
-
-    players[0] = playerOne;
-    players[1] = playerTwo;
-    players[2] = playerThree;
-
-    playerTwo.playerIndex = 1;
-    playerThree.playerIndex = 2;
-
     float oldTime = 0;
     float currentTime = 0;
     float deltaTime = 0;
     float elapsed = 0.0f;
-
 
     // -------------------------- MAIN LOOP ------------------------------
 
@@ -133,20 +125,8 @@ int main() {
         deltaTime = currentTime - oldTime;
         elapsed += deltaTime;
 
-//        if (elapsed >= 2.0f) {
-//            Renderer::registerQuad2D(&renderer);
-//            PlayerData player = {
-//                {0.0f,0.0f,1.0f},
-//                {0.0f,0.0f,1.0f},
-//                {200.0f,200.0f, 0.0f}, -90.0f, currentPlayers
-//            };
-//            players[currentPlayers] = player;
-//            currentPlayers++;
-//            elapsed = 0.0f;
-//        }
-
         for (int i = 0; i < currentPlayers; i++) {
-            PlayerData player = players[i];
+            PlayerData& player = players[i];
             Renderer::drawQuad(&renderer, player.position, player.rotation,
                 getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
         }

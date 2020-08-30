@@ -27,10 +27,10 @@ namespace Renderer {
         uint32_t deviceExtensionCount               {0};
         // Vulkan structs:
         VkInstance instance                         {nullptr};
-        VkDebugUtilsMessengerEXT debugMessenger     {nullptr};
+        VkDebugUtilsMessengerEXT debugMessenger     { VK_NULL_HANDLE };
         VulkanUtils::VulkanDeviceData deviceData    {nullptr};
-        VulkanUtils::SwapchainData swapchainData    {nullptr};
-        Renderer2D::Renderer2DData renderer2DData   {nullptr};
+        VulkanUtils::SwapchainData swapchainData    { VK_NULL_HANDLE };
+        Renderer2D::Renderer2DData renderer2DData   { VK_NULL_HANDLE };
         // Sync objects
         uint32_t maxFramesInFlight                  {2};
         VkSemaphore* imageAvailableSemaphores       {nullptr};
