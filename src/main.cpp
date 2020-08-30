@@ -91,30 +91,44 @@ int main() {
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
     Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
 
     PlayerData players[64];
-    uint32_t currentPlayers = 3;
+    uint32_t currentPlayers = 5;
 
     players[0] = {
-        {-200.0f,-125.0f,1.0f},
+        {-250.0f,-150.0f,1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, -90.0f, 0
     };
     players[1] = {
-        {200.0f, -125.0f, 1.0f},
+        {250.0f, -150.0f, 1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, -90.0f, 1
     };
     players[2] = {
-        {0.0f, 100.0f, 1.0f},
+        {-250.0f, 150.0f, 1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, 90.0f, 2
     };
+    players[3] = {
+        {250.0f, 150.0f, 1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, 90.0f, 3
+    };
+    players[4] = {
+        {0.0f, 0.0f, 1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, 90.0f, 4
+    };
 
-    float oldTime = 0;
-    float currentTime = 0;
-    float deltaTime = 0;
+    float oldTime = 0.0f;
+    float currentTime = 0.0f;
+    float deltaTime = 0.0f;
     float elapsed = 0.0f;
+
+    float frames = 0.0f;
 
     // -------------------------- MAIN LOOP ------------------------------
 
@@ -124,6 +138,13 @@ int main() {
         currentTime = getTime();
         deltaTime = currentTime - oldTime;
         elapsed += deltaTime;
+
+        // Basic FPS counter
+        if (elapsed > 1.0f) {
+            INFO("FRAMES: " + std::to_string(frames));
+            frames = 0;
+            elapsed = 0;
+        }
 
         for (int i = 0; i < currentPlayers; i++) {
             PlayerData& player = players[i];
@@ -138,6 +159,7 @@ int main() {
         }
 
         oldTime = currentTime;
+        frames++;
     }
     
     // --------------------------- CLEANUP ------------------------------

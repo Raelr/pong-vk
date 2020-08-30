@@ -1005,7 +1005,6 @@ namespace VulkanUtils {
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
 
-
             if (createDescriptorSets(deviceData, descriptorSets[i], descriptorSetLayout,
                  descriptorPool, pSwapchain->imageCount, uniformBuffers[i])
                 != VK_SUCCESS) {
