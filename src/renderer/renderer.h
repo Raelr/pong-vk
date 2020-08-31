@@ -3,7 +3,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include "../vulkanUtils.h"
+#include "vulkan/vulkanUtils.h"
 #include "renderer2D.h"
 
 namespace Renderer {

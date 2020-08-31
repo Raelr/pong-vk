@@ -1,0 +1,8 @@
+#ifndef PONG_VK_VALIDATIONLAYERS_H
+#define PONG_VK_VALIDATIONLAYERS_H
+
+#include <vulkan/vulkan.h>
+
+
+
+#endif //PONG_VK_VALIDATIONLAYERS_H

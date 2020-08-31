@@ -3,6 +3,7 @@
 #include <cstring>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "vulkan/initialisers.h"
 
 // A debug function callback - where the message data actually goes when triggered by the
 // validation layer.
@@ -268,15 +269,10 @@ namespace Renderer {
     Status initialiseVulkanInstance(Renderer* renderer, bool enableValidationLayers) {
 
         // ============================== INSTANCE CREATION =====================================
-
         // Define the configuration details of the vulkan application.
-        VkApplicationInfo appInfo {};
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Pong";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_2;
+        VkApplicationInfo appInfo = createVulkanApplicationInfo("Pong", "No Engine",
+            VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
+            VK_API_VERSION_1_2);
 
         // Configuration parameters for Vulkan instance creation.
         VkInstanceCreateInfo createInfo {};

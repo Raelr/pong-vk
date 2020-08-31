@@ -1,7 +1,7 @@
 #ifndef PONG_VK_RENDERER2D_H
 #define PONG_VK_RENDERER2D_H
 
-#include "../vulkanUtils.h"
+#include "vulkan/vulkanUtils.h"
 #include <glm/glm.hpp>
 
 namespace Renderer2D {
