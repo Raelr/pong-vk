@@ -1,7 +1,7 @@
 #include "initialisers.h"
 
 namespace Renderer {
-    VkApplicationInfo createVulkanApplicationInfo(const char* pApplicationName, const char* pEngineName,
+    VkApplicationInfo initialiseVulkanApplicationInfo(const char* pApplicationName, const char* pEngineName,
         uint32_t applicationVersion, uint32_t engineVersion, uint32_t apiVersion) {
 
         // Define the configuration details of the vulkan application.

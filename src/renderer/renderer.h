@@ -5,17 +5,9 @@
 #include <GLFW/glfw3.h>
 #include "vulkan/vulkanUtils.h"
 #include "renderer2D.h"
+#include "core.h"
 
 namespace Renderer {
-
-    // A simple Enum for judging the success/failure of a function (kinda like VkResult)
-    // TODO: Move this to a core header file
-    enum Status {
-        FAILURE = 0,
-        INITIALIZATION_FAILURE = 1,
-        SUCCESS = 2,
-        SKIPPED_FRAME = 3
-    };
 
     struct Renderer {
         // Default parameters for our validation layer and extensions
@@ -46,7 +38,6 @@ namespace Renderer {
     Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
     Status initialiseVulkanInstance(Renderer*, bool);
     Status checkVulkanExtensions(Renderer*, bool);
-    Status checkValidationLayerSupport(uint32_t, VkLayerProperties*, const char**, uint32_t);
     bool checkGlfwViability(const char**, uint32_t, VkExtensionProperties*, uint32_t);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);

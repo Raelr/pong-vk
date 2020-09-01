@@ -5,8 +5,7 @@
 
 namespace Renderer {
 
-    VkApplicationInfo createVulkanApplicationInfo(const char*, const char*, uint32_t, uint32_t, uint32_t);
-
+    VkApplicationInfo initialiseVulkanApplicationInfo(const char*, const char*, uint32_t, uint32_t, uint32_t);
 }
 
 

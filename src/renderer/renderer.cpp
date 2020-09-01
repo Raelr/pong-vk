@@ -1,10 +1,10 @@
 #include "renderer.h"
-#include "../logger.h"
 #include <cstring>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "vulkan/initialisers.h"
 #include "vulkan/validationLayers.h"
+#include "vulkan/vulkanDeviceData.h"
 
 namespace Renderer {
 
@@ -192,11 +192,11 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status initialiseVulkanInstance(Renderer* renderer, bool enableValidationLayers) {
+    Status initialiseVulkanInstance(Renderer* pRenderer, bool enableValidationLayers) {
 
         // ============================== INSTANCE CREATION =====================================
         // Define the configuration details of the vulkan application.
-        VkApplicationInfo appInfo = createVulkanApplicationInfo("Pong", "No Engine",
+        VkApplicationInfo appInfo = initialiseVulkanApplicationInfo("Pong", "No Engine",
             VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
             VK_API_VERSION_1_2);
 
@@ -206,8 +206,8 @@ namespace Renderer {
         createInfo.pApplicationInfo = &appInfo;
 
         // Set the extensions in the configuration struct.
-        createInfo.enabledExtensionCount = renderer->extensionCount;
-        createInfo.ppEnabledExtensionNames = renderer->extensions;
+        createInfo.enabledExtensionCount = pRenderer->extensionCount;
+        createInfo.ppEnabledExtensionNames = pRenderer->extensions;
 
         // If we want to see DEBUG messages from instance creation, we need to manually create a new
         // debug messenger that can be used in the function.
@@ -215,10 +215,10 @@ namespace Renderer {
 
         // Only enable the layer names in Vulkan if we're using validation layers
         if (enableValidationLayers) {
-            createInfo.ppEnabledLayerNames = renderer->validationLayers;
+            createInfo.ppEnabledLayerNames = pRenderer->validationLayers;
             // populate the messenger with our callback data.
             populateDebugMessengerCreateInfo(debugInfo);
-            createInfo.enabledLayerCount = renderer->validationLayerCount;
+            createInfo.enabledLayerCount = pRenderer->validationLayerCount;
             // pNext is an extension field. This is where pointers to callbacks and
             // messengers can be stored.
             createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
@@ -227,38 +227,9 @@ namespace Renderer {
             createInfo.pNext = nullptr;
         }
 
-        if (vkCreateInstance(&createInfo, nullptr, &renderer->instance) != VK_SUCCESS) {
+        if (vkCreateInstance(&createInfo, nullptr, &pRenderer->instance) != VK_SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
-
-        return Status::SUCCESS;
-    }
-
-    Status checkValidationLayerSupport(
-        uint32_t layerCount,
-        VkLayerProperties* layerProperties,
-        const char** pValidationLayers,
-        uint32_t pValidationLayersCount
-    ) {
-        // Get the layer names themselves USING the count variable.
-        vkEnumerateInstanceLayerProperties(&layerCount, layerProperties);
-        uint8_t foundCount = 0;
-
-        // Search to see whether the validation layers requested are supported by Vulkan.
-        for (size_t i = 0; i < pValidationLayersCount; i++) {
-            for (size_t j = 0; j < layerCount; j++) {
-                if (strcmp(pValidationLayers[i], layerProperties[j].layerName) == 0) {
-                    foundCount++;
-                }
-            }
-        }
-
-        // Throw an error and end the program if the validation layers aren't found.
-        if (foundCount != pValidationLayersCount) {
-            return Status::FAILURE;
-        }
-
-        INFO("Requested Validation layers exist!");
 
         return Status::SUCCESS;
     }
