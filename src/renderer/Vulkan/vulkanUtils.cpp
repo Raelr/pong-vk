@@ -5,13 +5,13 @@
 namespace VulkanUtils {
 
     // Returns swapchain information supported by Vulkan.
-    SwapchainSupportDetails querySwapchainSupport(
+    SwapchainSupportDetailsTemp querySwapchainSupport(
         VkPhysicalDevice device, 
         VkSurfaceKHR surface
     ) {
 
         // instantiate a struct to store swapchain details.
-        SwapchainSupportDetails details;
+        SwapchainSupportDetailsTemp details;
 
         // Now follow a familiar pattern and query all the support details 
         // from Vulkan...
@@ -51,7 +51,7 @@ namespace VulkanUtils {
         return details;
     }
 
-    void cleanupSwapchainSupportDetails(SwapchainSupportDetails* details) {
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetailsTemp* details) {
 
         free(details->formats);
         free(details->presentModes);
@@ -59,13 +59,13 @@ namespace VulkanUtils {
     
     // Returns information about the queue families available by our physical
     // device
-    QueueFamilyIndices findQueueFamilies(
+    QueueFamilyIndicesTemp findQueueFamilies(
         VkPhysicalDevice device, 
         VkSurfaceKHR surface
     ) {
         // A struct for storing the index of the queue family that the 
         // device will be using
-         QueueFamilyIndices indices;
+         QueueFamilyIndicesTemp indices;
     
          // Again, get the queue families that the device uses.
          uint32_t queueFamilyCount = 0;
@@ -103,12 +103,12 @@ namespace VulkanUtils {
     
     // Handles the creation and storage of swapchain data. 
     VkResult createSwapchain(
-        SwapchainData* data,
-        VulkanDeviceData* deviceData 
+        SwapchainDataTemp* data,
+        VulkanDeviceDataTemp* deviceData
     ) {
 
         // Start by getting the supported formats for the swapchain
-        SwapchainSupportDetails supportDetails = 
+        SwapchainSupportDetailsTemp supportDetails =
             querySwapchainSupport(deviceData->physicalDevice, 
             deviceData->surface);
 
@@ -289,7 +289,7 @@ namespace VulkanUtils {
     // A VkImageView object is required to use any Images in Vulkan.
     // A view describes how to access an image and which part of an image
     // should be accessed.
-    VkResult createImageViews(VkDevice device, SwapchainData* data) {
+    VkResult createImageViews(VkDevice device, SwapchainDataTemp* data) {
 
         VkImageView* imageViews = new VkImageView[data->imageCount];
 
@@ -491,7 +491,7 @@ namespace VulkanUtils {
     VkResult createGraphicsPipeline(
         VkDevice device, 
         GraphicsPipelineData* data,
-        const SwapchainData* swapchain,
+        const SwapchainDataTemp* swapchain,
         VkDescriptorSetLayout* descriptorSetLayout
     ) {
         
@@ -718,7 +718,7 @@ namespace VulkanUtils {
 
     // Frame buffer creation method
     VkResult createFramebuffer(VkDevice device, VkFramebuffer* pFramebuffers,
-            SwapchainData* swapchain, GraphicsPipelineData* graphicsPipeline) {
+            SwapchainDataTemp* swapchain, GraphicsPipelineData* graphicsPipeline) {
     
         for (size_t i = 0; i < swapchain->imageCount; i++) {
 
@@ -756,7 +756,7 @@ namespace VulkanUtils {
 
     // Command buffer creation method
     VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
-        GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain, 
+        GraphicsPipelineData* pGraphicsPipeline, SwapchainDataTemp* pSwapchain,
         VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
         Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer, 
         VkDescriptorSet** descriptorSets, size_t objectCount) {
@@ -856,7 +856,7 @@ namespace VulkanUtils {
 
     // Command buffer creation method
     VkResult createCommandBuffer(VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
-                                  GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
+                                  GraphicsPipelineData* pGraphicsPipeline, SwapchainDataTemp* pSwapchain,
                                   VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
                                   Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
                                   VkDescriptorSet** descriptorSets, size_t objectCount) {
@@ -946,8 +946,8 @@ namespace VulkanUtils {
     }
 
     VkResult recreateSwapchain(
-        VulkanDeviceData* deviceData,
-        SwapchainData* pSwapchain,
+        VulkanDeviceDataTemp* deviceData,
+        SwapchainDataTemp* pSwapchain,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -1028,7 +1028,7 @@ namespace VulkanUtils {
     // Simple method for cleaning up all items relating to our swapchain
     void cleanupSwapchain(
         VkDevice device,
-        SwapchainData* pSwapchain,
+        SwapchainDataTemp* pSwapchain,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -1100,7 +1100,7 @@ namespace VulkanUtils {
     }
 
     // Handles the creation of the triangle vertex buffer 
-    VkResult createVertexBuffer(VulkanDeviceData* deviceData, 
+    VkResult createVertexBuffer(VulkanDeviceDataTemp* deviceData,
         Buffers::VertexBuffer* vertexBuffer, VkCommandPool commandPool) {
 
         // Specify the required memory to store this buffer
@@ -1165,7 +1165,7 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
-    VkResult createIndexBuffer(VulkanDeviceData* deviceData, 
+    VkResult createIndexBuffer(VulkanDeviceDataTemp* deviceData,
         Buffers::IndexBuffer* indexBuffer, VkCommandPool commandPool) {
 
         // We need to now get our memory for each index that our
@@ -1226,7 +1226,7 @@ namespace VulkanUtils {
 
     }
 
-    VkResult createUniformBuffers(VulkanDeviceData* deviceData, 
+    VkResult createUniformBuffers(VulkanDeviceDataTemp* deviceData,
         Buffers::BufferData* uBuffers, uint32_t imageCount) {
 
         VkDeviceSize bufferSize = sizeof(Buffers::UniformBufferObject);
@@ -1248,7 +1248,7 @@ namespace VulkanUtils {
         return VK_SUCCESS;
     }
 
-    VkResult createDescriptorSets(VulkanDeviceData* deviceData, 
+    VkResult createDescriptorSets(VulkanDeviceDataTemp* deviceData,
         VkDescriptorSet* sets, VkDescriptorSetLayout* layout, 
         VkDescriptorPool* pool, uint32_t imageCount, 
         Buffers::BufferData* uBuffers) {

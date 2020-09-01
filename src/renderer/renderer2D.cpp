@@ -1,5 +1,4 @@
 #include "renderer2D.h"
-#include "../logger.h"
 
 namespace Renderer2D {
 
@@ -15,8 +14,8 @@ namespace Renderer2D {
         0, 1, 2, 2, 3, 0
     };
 
-    bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData* deviceData,
-        Renderer2DData* renderer2D, VulkanUtils::SwapchainData swapchain) {
+    bool initialiseRenderer2D(VulkanUtils::VulkanDeviceDataTemp* deviceData,
+        Renderer2DData* renderer2D, VulkanUtils::SwapchainDataTemp swapchain) {
 
         // ================================== RENDER PASS ====================================
 
@@ -130,8 +129,8 @@ namespace Renderer2D {
         return true;
     }
 
-    bool queueQuad(Renderer2DData* pRenderer2D, VulkanUtils::VulkanDeviceData* pDeviceData,
-        VulkanUtils::SwapchainData* pSwapchain) {
+    bool queueQuad(Renderer2DData* pRenderer2D, VulkanUtils::VulkanDeviceDataTemp* pDeviceData,
+        VulkanUtils::SwapchainDataTemp* pSwapchain) {
 
         Buffers::BufferData* uniformBuffers =
             static_cast<Buffers::BufferData*>(malloc(pSwapchain->imageCount * sizeof(Buffers::BufferData)));
@@ -163,7 +162,7 @@ namespace Renderer2D {
         return true;
     }
 
-    void cleanupRenderer2D(VulkanUtils::VulkanDeviceData* deviceData, Renderer2DData* pRenderer) {
+    void cleanupRenderer2D(VulkanUtils::VulkanDeviceDataTemp* deviceData, Renderer2DData* pRenderer) {
 
         vkDestroyDescriptorSetLayout(deviceData->logicalDevice,
                                      pRenderer->quadData.descriptorSetLayout,nullptr);

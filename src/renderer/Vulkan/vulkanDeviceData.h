@@ -14,6 +14,14 @@ namespace Renderer {
     };
 
     struct VulkanDeviceData {
+        // Validation layers and extensions
+        const char** validationLayers               {nullptr};
+        uint32_t validationLayerCount               {0};
+        const char** extensions                     {nullptr};
+        uint32_t extensionCount                     {0};
+        const char** deviceExtensions               {nullptr};
+        uint32_t deviceExtensionCount               {0};
+        // Device-specific data
         VkPhysicalDevice physicalDevice;
         VkDevice logicalDevice;
         VkSurfaceKHR surface;
@@ -25,6 +33,10 @@ namespace Renderer {
     };
 
     Status checkValidationLayerSupport(uint32_t, VkLayerProperties*, const char**, uint32_t);
+    Status checkVulkanExtensions(VulkanDeviceData*, bool);
+    bool checkGlfwViability(const char** glfwExtensions, uint32_t glfwExtensionCount,
+        VkExtensionProperties* vkExtensions, uint32_t vkExtensionCount);
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device,VkSurfaceKHR surface);
 }
 
 

@@ -29,8 +29,8 @@ namespace Renderer {
 
         if (enableValidationLayers) {
 
-            if (checkValidationLayerSupport(layerCount,layerProperties, renderer->validationLayers,
-                renderer->validationLayerCount) != Status::SUCCESS) {
+            if (checkValidationLayerSupport(layerCount,layerProperties, renderer->deviceData.validationLayers,
+                renderer->deviceData.validationLayerCount) != Status::SUCCESS) {
                 return Status::FAILURE;
             }
         }
@@ -38,7 +38,7 @@ namespace Renderer {
         // ======================= VULKAN INSTANCE CREATION ==================================
 
         renderer->debugMessenger = VK_NULL_HANDLE;
-        if (checkVulkanExtensions(renderer, enableValidationLayers) == Status::FAILURE) {
+        if (checkVulkanExtensions(&renderer->deviceData, enableValidationLayers) == Status::FAILURE) {
             ERROR("No GLFW extensions available!");
             return Status::FAILURE;
         }
@@ -91,7 +91,7 @@ namespace Renderer {
                                &renderer->deviceData.framebufferHeight);
 
         // Create the swapchain (should initialise both the swapchain and image views)
-        if (VulkanUtils::createSwapchain(&renderer->swapchainData, &renderer->deviceData) != VK_SUCCESS) {
+        if (createSwapchain(&renderer->swapchainData, &renderer->deviceData) != VK_SUCCESS) {
             ERROR("Failed to create swapchain!");
             return Status::FAILURE;
         }
@@ -146,52 +146,6 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status checkVulkanExtensions(Renderer* renderer, bool enableValidationLayers) {
-
-        uint32_t vulkanExtensionCount = 0;
-
-        // This instance of the method will return the number of supported extensions.
-        vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, nullptr);
-
-        VkExtensionProperties vkExtensions[vulkanExtensionCount];
-
-        // This instance of the method will return the exact extensions supported
-        vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions);
-
-        // Print out and display all extensions.
-        INFO("Checking Extensions: ");
-
-        for (size_t i = 0; i < vulkanExtensionCount; i++) {
-            char* extension = vkExtensions[i].extensionName;
-            INFO(extension);
-        }
-
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        if (!checkGlfwViability(glfwExtensions, glfwExtensionCount, vkExtensions, vulkanExtensionCount)) {
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        uint32_t extensionCount = (enableValidationLayers) ? glfwExtensionCount += 1 : glfwExtensionCount;
-
-        const char** extensions = static_cast<const char **>(malloc(extensionCount * sizeof(const char *)));
-
-        if (enableValidationLayers) {
-            extensions[extensionCount-1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-        }
-
-        for (size_t i = 0; i < extensionCount-1; i++) {
-            extensions[i] = glfwExtensions[i];
-            INFO(extensions[i]);
-        }
-
-        renderer->extensions = extensions;
-        renderer->extensionCount = extensionCount;
-
-        return Status::SUCCESS;
-    }
-
     Status initialiseVulkanInstance(Renderer* pRenderer, bool enableValidationLayers) {
 
         // ============================== INSTANCE CREATION =====================================
@@ -206,8 +160,8 @@ namespace Renderer {
         createInfo.pApplicationInfo = &appInfo;
 
         // Set the extensions in the configuration struct.
-        createInfo.enabledExtensionCount = pRenderer->extensionCount;
-        createInfo.ppEnabledExtensionNames = pRenderer->extensions;
+        createInfo.enabledExtensionCount = pRenderer->deviceData.extensionCount;
+        createInfo.ppEnabledExtensionNames = pRenderer->deviceData.extensions;
 
         // If we want to see DEBUG messages from instance creation, we need to manually create a new
         // debug messenger that can be used in the function.
@@ -215,10 +169,10 @@ namespace Renderer {
 
         // Only enable the layer names in Vulkan if we're using validation layers
         if (enableValidationLayers) {
-            createInfo.ppEnabledLayerNames = pRenderer->validationLayers;
+            createInfo.ppEnabledLayerNames = pRenderer->deviceData.validationLayers;
             // populate the messenger with our callback data.
             populateDebugMessengerCreateInfo(debugInfo);
-            createInfo.enabledLayerCount = pRenderer->validationLayerCount;
+            createInfo.enabledLayerCount = pRenderer->deviceData.validationLayerCount;
             // pNext is an extension field. This is where pointers to callbacks and
             // messengers can be stored.
             createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
@@ -232,32 +186,6 @@ namespace Renderer {
         }
 
         return Status::SUCCESS;
-    }
-
-    bool checkGlfwViability(const char** glfwExtensions, uint32_t glfwExtensionCount,
-        VkExtensionProperties* vkExtensions, uint32_t vkExtensionCount) {
-
-        bool success = false;
-        size_t foundCount = 0;
-
-        // Check if the GLFW extensions match the supported extensions by Vulkan.
-        for (size_t i = 0; i < glfwExtensionCount; i++) {
-            for (size_t j = 0; j < vkExtensionCount; j++) {
-                if (strcmp(vkExtensions[j].extensionName, glfwExtensions[i]) == 0) {
-                    foundCount++;
-                }
-            }
-        }
-
-        // Check if all GLFW extensions are supported by Vulkan.
-        if (foundCount == glfwExtensionCount) {
-            INFO("GLFW extensions are supported by Vulkan!");
-            success = true;
-        } else {
-            ERROR("GLFW extensions are NOT supported by Vulkan!");
-        }
-
-        return success;
     }
 
     Status initialiseDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* debugMessenger) {
@@ -309,7 +237,7 @@ namespace Renderer {
         for (size_t i = 0; i < deviceCount; i++) {
 
             // We need a device that has the queue families that we need.
-            VulkanUtils::QueueFamilyIndices indices = VulkanUtils::findQueueFamilies(devices[i],
+            QueueFamilyIndices indices = findQueueFamilies(devices[i],
                 renderer->deviceData.surface);
 
             // Now we query all available extensions on this device
@@ -321,25 +249,25 @@ namespace Renderer {
 
             // Check if our device has all our required extensions
             size_t found = 0;
-            for (size_t j = 0; j < renderer->deviceExtensionCount; j++) {
+            for (size_t j = 0; j < renderer->deviceData.deviceExtensionCount; j++) {
                 for (size_t k = 0; k < extensionCount; k++) {
-                    if (strcmp(renderer->deviceExtensions[j], availableExtensions[k].extensionName) == 0) {
+                    if (strcmp(renderer->deviceData.deviceExtensions[j], availableExtensions[k].extensionName) == 0) {
                         found++;
                     }
                 }
             }
 
-            bool extensionsSupported = (found == renderer->deviceExtensionCount);
+            bool extensionsSupported = (found == renderer->deviceData.deviceExtensionCount);
             bool swapchainAdequate = false;
 
             if (extensionsSupported) {
                 // Get the swap-chain details
-                VulkanUtils::SwapchainSupportDetails supportDetails =
-                    VulkanUtils::querySwapchainSupport(devices[i], renderer->deviceData.surface);
+                SwapchainSupportDetails supportDetails = querySwapchainSupport(devices[i], renderer->deviceData.surface);
                 // Make sure that we have at least one supported format and one supported presentation mode.
                 swapchainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
 
-                VulkanUtils::cleanupSwapchainSupportDetails(&supportDetails);
+                free(supportDetails.formats);
+                free(supportDetails.presentModes);
             }
 
             bool is_supported = (
@@ -364,7 +292,7 @@ namespace Renderer {
     Status createLogicalDevice(Renderer* pRenderer) {
 
         // First, we need to query which queue families our physical device supports.
-        pRenderer->deviceData.indices = VulkanUtils::findQueueFamilies(pRenderer->deviceData.physicalDevice,
+        pRenderer->deviceData.indices = findQueueFamilies(pRenderer->deviceData.physicalDevice,
             pRenderer->deviceData.surface);
 
         // It's possible that multiple queues are actually the same (such as graphics and present
@@ -406,8 +334,8 @@ namespace Renderer {
         logicalDeviceInfo.pQueueCreateInfos = createInfos;
         logicalDeviceInfo.queueCreateInfoCount = static_cast<uint32_t>(createSize);
         logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
-        logicalDeviceInfo.enabledExtensionCount = pRenderer->deviceExtensionCount;
-        logicalDeviceInfo.ppEnabledExtensionNames = pRenderer->deviceExtensions;
+        logicalDeviceInfo.enabledExtensionCount = pRenderer->deviceData.deviceExtensionCount;
+        logicalDeviceInfo.ppEnabledExtensionNames = pRenderer->deviceData.deviceExtensions;
 
         // Now we create the logical device using the data we've accumulated thus far.
         if (vkCreateDevice(pRenderer->deviceData.physicalDevice, &logicalDeviceInfo,nullptr,
@@ -432,8 +360,8 @@ namespace Renderer {
 
     void loadDefaultValidationLayers(Renderer* renderer) {
 
-        renderer->validationLayers = validationLayers;
-        renderer->validationLayerCount = 1;
+        renderer->deviceData.validationLayers = validationLayers;
+        renderer->deviceData.validationLayerCount = 1;
     }
 
     [[maybe_unused]] Status loadCustomValidationLayers(Renderer* renderer,
@@ -441,8 +369,8 @@ namespace Renderer {
 
         Status status = Status::FAILURE;
         if (pValidationLayers != nullptr && pValidationLayersCount != 0) {
-            renderer->validationLayers = pValidationLayers;
-            renderer->validationLayerCount = pValidationLayersCount;
+            renderer->deviceData.validationLayers = pValidationLayers;
+            renderer->deviceData.validationLayerCount = pValidationLayersCount;
             status = Status::SUCCESS;
         } else {
             ERROR("Unable to load in validation layers! Invalid validation layers have been provided");
@@ -453,8 +381,8 @@ namespace Renderer {
 
     void loadDefaultDeviceExtensions(Renderer* renderer) {
 
-        renderer->deviceExtensions = deviceExtensions;
-        renderer->deviceExtensionCount = 1;
+        renderer->deviceData.deviceExtensions = deviceExtensions;
+        renderer->deviceData.deviceExtensionCount = 1;
     }
 
     [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer* renderer, const char** extensions,
@@ -463,8 +391,8 @@ namespace Renderer {
         Status status = Status::FAILURE;
 
         if (extensions != nullptr && extensionCount > 0) {
-            renderer->deviceExtensions = extensions;
-            renderer->deviceExtensionCount = extensionCount;
+            renderer->deviceData.deviceExtensions = extensions;
+            renderer->deviceData.deviceExtensionCount = extensionCount;
             status = Status::SUCCESS;
         }
 
@@ -491,7 +419,7 @@ namespace Renderer {
 
         Renderer2D::cleanupRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData);
 
-        free(pRenderer->extensions);
+        free(pRenderer->deviceData.extensions);
         free(pRenderer->renderer2DData.frameBuffers);
 
         // Clean up the semaphores we created earlier.

@@ -3,6 +3,7 @@
 
 #include "vulkan/vulkanUtils.h"
 #include <glm/glm.hpp>
+#include "vulkan/vulkanDeviceData.h"
 
 namespace Renderer2D {
 
@@ -24,9 +25,9 @@ namespace Renderer2D {
         VkDescriptorPool descriptorPool                     { VK_NULL_HANDLE };
     };
 
-    bool initialiseRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainData);
-    bool queueQuad(Renderer2DData*, VulkanUtils::VulkanDeviceData*, VulkanUtils::SwapchainData*);
-    void cleanupRenderer2D(VulkanUtils::VulkanDeviceData*, Renderer2DData*);
+    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainDataTemp);
+    bool queueQuad(Renderer2DData*, Renderer::VulkanDeviceData*, VulkanUtils::SwapchainDataTemp*);
+    void cleanupRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*);
 }
 
 #endif //PONG_VK_RENDERER2D_H

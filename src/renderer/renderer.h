@@ -6,21 +6,15 @@
 #include "vulkan/vulkanUtils.h"
 #include "renderer2D.h"
 #include "core.h"
+#include "vulkan/vulkanDeviceData.h"
 
 namespace Renderer {
 
     struct Renderer {
-        // Default parameters for our validation layer and extensions
-        const char** validationLayers               {nullptr};
-        uint32_t validationLayerCount               {0};
-        const char** extensions                     {nullptr};
-        uint32_t extensionCount                     {0};
-        const char** deviceExtensions               {nullptr};
-        uint32_t deviceExtensionCount               {0};
         // Vulkan structs:
         VkInstance instance                         {nullptr};
         VkDebugUtilsMessengerEXT debugMessenger     { VK_NULL_HANDLE };
-        VulkanUtils::VulkanDeviceData deviceData    {nullptr};
+        VulkanDeviceData deviceData    {nullptr};
         VulkanUtils::SwapchainData swapchainData    { VK_NULL_HANDLE };
         Renderer2D::Renderer2DData renderer2DData   { VK_NULL_HANDLE };
         // Sync objects
@@ -37,7 +31,6 @@ namespace Renderer {
     // Device creation functions
     Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
     Status initialiseVulkanInstance(Renderer*, bool);
-    Status checkVulkanExtensions(Renderer*, bool);
     bool checkGlfwViability(const char**, uint32_t, VkExtensionProperties*, uint32_t);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
