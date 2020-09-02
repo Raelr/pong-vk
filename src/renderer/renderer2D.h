@@ -18,15 +18,15 @@ namespace Renderer2D {
     };
 
     struct Renderer2DData {
-        VulkanUtils::GraphicsPipelineData graphicsPipeline  { VK_NULL_HANDLE };
+        Renderer::GraphicsPipelineData graphicsPipeline  { VK_NULL_HANDLE };
         QuadData quadData                                   { VK_NULL_HANDLE };
         VkFramebuffer* frameBuffers                         { VK_NULL_HANDLE };
         VkCommandPool commandPool                           { VK_NULL_HANDLE };
         VkDescriptorPool descriptorPool                     { VK_NULL_HANDLE };
     };
 
-    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, VulkanUtils::SwapchainDataTemp);
-    bool queueQuad(Renderer2DData*, Renderer::VulkanDeviceData*, VulkanUtils::SwapchainDataTemp*);
+    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData);
+    bool queueQuad(Renderer2DData*, Renderer::VulkanDeviceData*, Renderer::SwapchainData*);
     void cleanupRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*);
 }
 

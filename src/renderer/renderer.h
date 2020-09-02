@@ -7,6 +7,7 @@
 #include "renderer2D.h"
 #include "core.h"
 #include "vulkan/vulkanDeviceData.h"
+#include "vulkan/swapchainData.h"
 
 namespace Renderer {
 
@@ -15,7 +16,7 @@ namespace Renderer {
         VkInstance instance                         {nullptr};
         VkDebugUtilsMessengerEXT debugMessenger     { VK_NULL_HANDLE };
         VulkanDeviceData deviceData    {nullptr};
-        VulkanUtils::SwapchainData swapchainData    { VK_NULL_HANDLE };
+        SwapchainData swapchainData    { VK_NULL_HANDLE };
         Renderer2D::Renderer2DData renderer2DData   { VK_NULL_HANDLE };
         // Sync objects
         uint32_t maxFramesInFlight                  {2};

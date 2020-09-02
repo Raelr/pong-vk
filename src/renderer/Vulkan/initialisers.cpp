@@ -49,14 +49,12 @@ namespace Renderer {
                 chosenFormat = supportDetails.formats[i];
                 INFO("Found SRGB channel for rendering format");
                 break;
-                // TODO: Might be good to have a fallback for when we fail to
-                // find the desired color space.
+                // TODO: Might be good to have a fallback for when we fail to find the desired color space.
             }
         }
 
         // We set the mode to vsync as a start.
         VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-
 
         // Ideally, we want to use triple buffering as it results in less screen
         // tear and less performance issues than normal vsync. The present

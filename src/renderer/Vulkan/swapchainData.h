@@ -29,8 +29,4 @@ namespace Renderer {
 
 };
 
-
-
-
-
 #endif //PONG_VK_SWAPCHAINDATA_H

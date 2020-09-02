@@ -120,7 +120,7 @@ namespace Renderer {
         // It should be noted that command buffers are automatically cleaned up when
         // the commandpool is destroyed. As such they require no explicit cleanup.
 
-        if (VulkanUtils::createCommandBuffers(
+        if (createCommandBuffers(
                 renderer->deviceData.logicalDevice,
                 renderer->commandBuffers,
                 &renderer->renderer2DData.graphicsPipeline,
@@ -405,7 +405,7 @@ namespace Renderer {
         // our resources aren't in use when trying to clean them up:
         vkDeviceWaitIdle(pRenderer->deviceData.logicalDevice);
 
-        VulkanUtils::cleanupSwapchain(
+        cleanupSwapchain(
             pRenderer->deviceData.logicalDevice,
             &pRenderer->swapchainData,
             &pRenderer->renderer2DData.graphicsPipeline,
@@ -567,7 +567,7 @@ namespace Renderer {
             vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
-            if (VulkanUtils::createCommandBuffer(
+            if (createCommandBuffer(
                     pRenderer->deviceData.logicalDevice,
                     &pRenderer->commandBuffers[pRenderer->imageIndex],
                     pRenderer->imageIndex,
@@ -594,7 +594,7 @@ namespace Renderer {
 
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
-            VulkanUtils::recreateSwapchain(
+            recreateSwapchain(
                 &pRenderer->deviceData,
                 &pRenderer->swapchainData,
                 &pRenderer->renderer2DData.graphicsPipeline,
@@ -694,7 +694,7 @@ namespace Renderer {
 
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
-            VulkanUtils::recreateSwapchain(
+            recreateSwapchain(
                 &pRenderer->deviceData,
                 &pRenderer->swapchainData,
                 &pRenderer->renderer2DData.graphicsPipeline,

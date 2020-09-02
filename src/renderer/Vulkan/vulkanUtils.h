@@ -6,32 +6,10 @@
 #include <optional>
 #include "../utils.h"
 #include "buffers.h"
+#include "vulkanDeviceData.h"
+#include "swapchainData.h"
 
-namespace VulkanUtils {
-
-    // Struct for holding all swapchain relevant data.
-    struct SwapchainDataTemp {
-        VkSwapchainKHR swapchain;
-        uint32_t imageCount;
-        VkFormat swapchainFormat;
-        VkExtent2D swapchainExtent;
-        VkImageView* pImageViews;
-        VkImage* pImages;
-    };
-    // Struct storing details relating to swapchain extensions and
-    // support.
-    struct SwapchainSupportDetailsTemp {
-        VkSurfaceCapabilitiesKHR capabilities;
-        VkSurfaceFormatKHR* formats;
-        uint32_t formatCount;
-        VkPresentModeKHR* presentModes;
-        uint32_t presentModesCount;
-    };
-    // Struct storing all queue families
-    struct QueueFamilyIndicesTemp {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
-    };
+namespace Renderer {
 
     struct GraphicsPipelineData {
         VkRenderPass renderPass;
@@ -39,33 +17,22 @@ namespace VulkanUtils {
         VkPipelineLayout pipelineLayout;
     };
 
-    struct VulkanDeviceDataTemp {
-        VkPhysicalDevice physicalDevice;
-        VkDevice logicalDevice;
-        VkSurfaceKHR surface;
-        QueueFamilyIndicesTemp indices;
-        int framebufferWidth;
-        int framebufferHeight;
-        VkQueue graphicsQueue;
-        VkQueue presentQueue;
-    };
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetails*);
 
-    void cleanupSwapchainSupportDetails(SwapchainSupportDetailsTemp*);
-
-    SwapchainSupportDetailsTemp querySwapchainSupport(VkPhysicalDevice device,
+    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
         VkSurfaceKHR surface);
 
     VkResult createSwapchain (
-        SwapchainDataTemp* data,
-        VulkanDeviceDataTemp* deviceData
+        SwapchainData* data,
+        VulkanDeviceData* deviceData
     );
 
-    QueueFamilyIndicesTemp findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
         surface);
     
-    void destroySwapchainImageData(SwapchainDataTemp);
+    void destroySwapchainImageData(SwapchainData);
 
-    VkResult createImageViews(VkDevice, SwapchainDataTemp*);
+    VkResult createImageViews(VkDevice, SwapchainData*);
 
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 
@@ -84,7 +51,7 @@ namespace VulkanUtils {
     VkResult createGraphicsPipeline(
         VkDevice, 
         GraphicsPipelineData*, 
-        const SwapchainDataTemp*,
+        const SwapchainData*,
         VkDescriptorSetLayout* descriptorSetLayout
     );
 
@@ -96,7 +63,7 @@ namespace VulkanUtils {
     VkResult createFramebuffer(
         VkDevice device, 
         VkFramebuffer* pFramebuffers,
-        SwapchainDataTemp* swapchain,
+        SwapchainData* swapchain,
         GraphicsPipelineData* graphicsPipeline
     );
 
@@ -104,7 +71,7 @@ namespace VulkanUtils {
         VkDevice device,
         VkCommandBuffer* buffers,
         GraphicsPipelineData* pGraphicsPipeline,
-        SwapchainDataTemp* pSwapchain,
+        SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers,
         VkCommandPool commandPool,
         Buffers::VertexBuffer*,
@@ -118,7 +85,7 @@ namespace VulkanUtils {
             VkCommandBuffer* buffers,
             size_t bufferIndex,
             GraphicsPipelineData* pGraphicsPipeline,
-            SwapchainDataTemp* pSwapchain,
+            SwapchainData* pSwapchain,
             VkFramebuffer* pFramebuffers,
             VkCommandPool* commandPool,
             Buffers::VertexBuffer*,
@@ -128,8 +95,8 @@ namespace VulkanUtils {
     );
 
     VkResult recreateSwapchain(
-        VulkanDeviceDataTemp* deviceData,
-        SwapchainDataTemp* pSwapchain,
+        VulkanDeviceData* deviceData,
+        SwapchainData* pSwapchain,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -145,7 +112,7 @@ namespace VulkanUtils {
 
     void cleanupSwapchain(
         VkDevice device,
-        SwapchainDataTemp* pSwapchain,
+        SwapchainData* pSwapchain,
         GraphicsPipelineData* pGraphicsPipeline,
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
@@ -156,25 +123,25 @@ namespace VulkanUtils {
     );
 
     VkResult createVertexBuffer(
-        VulkanDeviceDataTemp* deviceData,
+        VulkanDeviceData* deviceData,
         Buffers::VertexBuffer*,
         VkCommandPool commandPool
     );
 
     VkResult createIndexBuffer(
-        VulkanDeviceDataTemp* deviceData,
+        VulkanDeviceData* deviceData,
         Buffers::IndexBuffer* indexBuffer, 
         VkCommandPool commandPool
     );
 
     VkResult createUniformBuffers(
-        VulkanDeviceDataTemp* deviceData,
+        VulkanDeviceData* deviceData,
         Buffers::BufferData* uBuffers,
         uint32_t imageCount
     );
 
     VkResult createDescriptorSets(
-        VulkanDeviceDataTemp* deviceData,
+        VulkanDeviceData* deviceData,
         VkDescriptorSet* sets,
         VkDescriptorSetLayout* layout,
         VkDescriptorPool* pool,

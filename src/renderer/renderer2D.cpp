@@ -14,12 +14,12 @@ namespace Renderer2D {
         0, 1, 2, 2, 3, 0
     };
 
-    bool initialiseRenderer2D(VulkanUtils::VulkanDeviceDataTemp* deviceData,
-        Renderer2DData* renderer2D, VulkanUtils::SwapchainDataTemp swapchain) {
+    bool initialiseRenderer2D(Renderer::VulkanDeviceData* deviceData,
+        Renderer2DData* renderer2D, Renderer::SwapchainData swapchain) {
 
         // ================================== RENDER PASS ====================================
 
-        if (VulkanUtils::createRenderPass(deviceData->logicalDevice, swapchain.swapchainFormat,
+        if (Renderer::createRenderPass(deviceData->logicalDevice, swapchain.swapchainFormat,
             &renderer2D->graphicsPipeline) != VK_SUCCESS) {
             ERROR("Failed to create render pass!");
             return false;
@@ -27,7 +27,7 @@ namespace Renderer2D {
 
         // ============================== DESCRIPTOR SET LAYOUT ==============================
 
-        if (VulkanUtils::createDescriptorSetLayout(deviceData->logicalDevice,
+        if (Renderer::createDescriptorSetLayout(deviceData->logicalDevice,
             &renderer2D->quadData.descriptorSetLayout) != VK_SUCCESS) {
             ERROR("Failed to create descriptor set layout!");
             return false;
@@ -41,7 +41,7 @@ namespace Renderer2D {
         // that the pipeline can be very well optimised (but will also require
         // a complete rewrite if you need anything different).
 
-        if (VulkanUtils::createGraphicsPipeline(deviceData->logicalDevice, &renderer2D->graphicsPipeline,
+        if (Renderer::createGraphicsPipeline(deviceData->logicalDevice, &renderer2D->graphicsPipeline,
             &swapchain, &renderer2D->quadData.descriptorSetLayout) != VK_SUCCESS) {
             ERROR("Failed to create graphics pipeline!");
             return false;
@@ -60,7 +60,7 @@ namespace Renderer2D {
 
         renderer2D->frameBuffers = static_cast<VkFramebuffer*>(malloc(swapchain.imageCount * sizeof(VkFramebuffer)));
 
-        if (VulkanUtils::createFramebuffer(deviceData->logicalDevice, renderer2D->frameBuffers,
+        if (Renderer::createFramebuffer(deviceData->logicalDevice, renderer2D->frameBuffers,
             &swapchain, &renderer2D->graphicsPipeline) != VK_SUCCESS) {
             ERROR("Failed to create framebuffers!");
             return false;
@@ -101,14 +101,14 @@ namespace Renderer2D {
         renderer2D->quadData.indexBuffer.indexCount = 6;
 
         // Create the vertex buffer and allocate the memory for it
-        if (VulkanUtils::createVertexBuffer(deviceData, &renderer2D->quadData.vertexBuffer,
+        if (Renderer::createVertexBuffer(deviceData, &renderer2D->quadData.vertexBuffer,
             renderer2D->commandPool) != VK_SUCCESS) {
             ERROR("Failed to create vertex buffer.");
             return false;
         }
 
         // Create a uniform buffer for storing vertex data.
-        if (VulkanUtils::createIndexBuffer(deviceData, &renderer2D->quadData.indexBuffer,
+        if (Renderer::createIndexBuffer(deviceData, &renderer2D->quadData.indexBuffer,
             renderer2D->commandPool) != VK_SUCCESS) {
             ERROR("Failed to create index buffer.");
             return false;
@@ -117,7 +117,7 @@ namespace Renderer2D {
         VkDescriptorSet* descriptorSet = static_cast<VkDescriptorSet*>(malloc(swapchain.imageCount * sizeof(VkDescriptorSet)));
         renderer2D->quadData.descriptorSets[0] = descriptorSet;
 
-        if (VulkanUtils::createDescriptorPool(
+        if (Renderer::createDescriptorPool(
                 deviceData->logicalDevice,
                 swapchain.imageCount, &renderer2D->descriptorPool,
                 renderer2D->quadData.maxQuads) != VK_SUCCESS) {
@@ -129,14 +129,14 @@ namespace Renderer2D {
         return true;
     }
 
-    bool queueQuad(Renderer2DData* pRenderer2D, VulkanUtils::VulkanDeviceDataTemp* pDeviceData,
-        VulkanUtils::SwapchainDataTemp* pSwapchain) {
+    bool queueQuad(Renderer2DData* pRenderer2D, Renderer::VulkanDeviceData* pDeviceData,
+                   Renderer::SwapchainData* pSwapchain) {
 
         Buffers::BufferData* uniformBuffers =
             static_cast<Buffers::BufferData*>(malloc(pSwapchain->imageCount * sizeof(Buffers::BufferData)));
 
         // Create our uniform buffers (one per image)
-        if (VulkanUtils::createUniformBuffers(pDeviceData, uniformBuffers, pSwapchain->imageCount) != VK_SUCCESS) {
+        if (Renderer::createUniformBuffers(pDeviceData, uniformBuffers, pSwapchain->imageCount) != VK_SUCCESS) {
             ERROR("Failed to create uniform buffers!");
             return false;
         }
@@ -144,7 +144,7 @@ namespace Renderer2D {
         VkDescriptorSet* descriptorSets =
             static_cast<VkDescriptorSet*>(malloc(pSwapchain->imageCount * sizeof(VkDescriptorSet)));
 
-        if (VulkanUtils::createDescriptorSets(pDeviceData,
+        if (Renderer::createDescriptorSets(pDeviceData,
             descriptorSets,
             &pRenderer2D->quadData.descriptorSetLayout,
             &pRenderer2D->descriptorPool,
@@ -162,7 +162,7 @@ namespace Renderer2D {
         return true;
     }
 
-    void cleanupRenderer2D(VulkanUtils::VulkanDeviceDataTemp* deviceData, Renderer2DData* pRenderer) {
+    void cleanupRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* pRenderer) {
 
         vkDestroyDescriptorSetLayout(deviceData->logicalDevice,
                                      pRenderer->quadData.descriptorSetLayout,nullptr);
