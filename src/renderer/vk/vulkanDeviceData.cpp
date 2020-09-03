@@ -1,6 +1,7 @@
 #include "vulkanDeviceData.h"
 #include <GLFW/glfw3.h>
 #include "validationLayers.h"
+#include "swapchainData.h"
 
 namespace Renderer {
 
@@ -174,5 +175,151 @@ namespace Renderer {
 
         // Vulkan cleanup
         vkDestroyInstance(pDeviceData->instance, nullptr);
+    }
+
+    Status createGLFWWindowSurface(VkInstance instance, GLFWwindow* pWindow, VkSurfaceKHR* pSurface) {
+        if (glfwCreateWindowSurface(instance, pWindow, nullptr, pSurface) != VK_SUCCESS) {
+            ERROR("Failed to create window surface!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        return Status::SUCCESS;
+    }
+
+    Status createPhysicalDevice(VulkanDeviceData* pDeviceData) {
+        // Begin by querying which devices are supported by Vulkan on this machine.
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(pDeviceData->instance, &deviceCount, nullptr);
+
+        if (deviceCount == 0) {
+            ERROR("Failed to find GPUs that support Vulkan!");
+            return Status::FAILURE;
+        }
+
+        // Now we query which specific devices we have
+        VkPhysicalDevice devices[deviceCount];
+        vkEnumeratePhysicalDevices(pDeviceData->instance, &deviceCount, devices);
+
+        Status status = Status::FAILURE;
+
+        // Now search for the GPU we want.
+        for (size_t i = 0; i < deviceCount; i++) {
+
+            // We need a device that has the queue families that we need.
+            QueueFamilyIndices indices = findQueueFamilies(devices[i], pDeviceData->surface);
+
+            // Now we query all available extensions on this device
+            uint32_t extensionCount = 0;
+            vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, nullptr);
+
+            VkExtensionProperties availableExtensions[extensionCount];
+            vkEnumerateDeviceExtensionProperties(devices[i], nullptr, &extensionCount, availableExtensions);
+
+            // Check if our device has all our required extensions
+            size_t found = 0;
+            for (size_t j = 0; j < pDeviceData->deviceExtensionCount; j++) {
+                for (size_t k = 0; k < extensionCount; k++) {
+                    if (strcmp(pDeviceData->deviceExtensions[j], availableExtensions[k].extensionName) == 0) {
+                        found++;
+                    }
+                }
+            }
+
+            bool extensionsSupported = (found == pDeviceData->deviceExtensionCount);
+            bool swapchainAdequate = false;
+
+            if (extensionsSupported) {
+                // Get the swap-chain details
+                SwapchainSupportDetails supportDetails = querySwapchainSupport(devices[i], pDeviceData->surface);
+                // Make sure that we have at least one supported format and one supported presentation mode.
+                swapchainAdequate = supportDetails.formatCount > 0 && supportDetails.presentModesCount > 0;
+
+                cleanupSwapchainSupportDetails(&supportDetails);
+            }
+
+            bool is_supported = (
+                indices.graphicsFamily.has_value()
+                && indices.presentFamily.has_value())
+                // If all available extensions were 'ticked off' the set then we know we have all
+                // required extensions.
+                && extensionsSupported
+                && swapchainAdequate;
+
+            // If the device has all our required extensions and has a valid swap-chain and has our
+            // required queue families, then we can use that device for rendering!
+            if (is_supported) {
+                pDeviceData->physicalDevice = devices[i];
+                status = Status::SUCCESS;
+                break;
+            }
+        }
+
+        return status;
+    }
+
+    Status createLogicalDevice(VulkanDeviceData* pDeviceData) {
+        // First, we need to query which queue families our physical device supports.
+        pDeviceData->indices = findQueueFamilies(pDeviceData->physicalDevice, pDeviceData->surface);
+
+        // It's possible that multiple queues are actually the same (such as graphics and present
+        // queues). We therefore check if the two that we're looking for are the same.
+        size_t createSize = (pDeviceData->indices.graphicsFamily.value()
+                             == pDeviceData->indices.presentFamily.value()) ? 1 : 2;
+
+        // Now we need an array for storing the queues that we want to create in future.
+        VkDeviceQueueCreateInfo createInfos[createSize];
+        uint32_t uniqueFamilies[createSize];
+
+        uniqueFamilies[0] = pDeviceData->indices.graphicsFamily.value();
+
+        // If we have multiple graphics families then add those into the array
+        if (createSize == 2) {
+            uniqueFamilies[1] = pDeviceData->indices.presentFamily.value();
+        }
+
+        // Each queue is given a priority - we'll set these ones to their maximum value
+        float priority = 1.0f;
+
+        // Now create a queue creation struct for each unique family that we have
+        for (size_t i = 0; i < createSize; i++) {
+            VkDeviceQueueCreateInfo queueCreateInfo{};
+            queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            queueCreateInfo.queueFamilyIndex = uniqueFamilies[i];
+            queueCreateInfo.queueCount = 1;
+            queueCreateInfo.pQueuePriorities = &priority;
+            createInfos[i] = queueCreateInfo;
+        }
+
+        // Leave this empty for now - can add things later when we need.
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        // Now we need to actually configure the logical device (note that it uses the queue info
+        // and the device features we defined earlier).
+        VkDeviceCreateInfo logicalDeviceInfo{};
+        logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        logicalDeviceInfo.pQueueCreateInfos = createInfos;
+        logicalDeviceInfo.queueCreateInfoCount = static_cast<uint32_t>(createSize);
+        logicalDeviceInfo.pEnabledFeatures = &deviceFeatures;
+        logicalDeviceInfo.enabledExtensionCount = pDeviceData->deviceExtensionCount;
+        logicalDeviceInfo.ppEnabledExtensionNames = pDeviceData->deviceExtensions;
+
+        // Now we create the logical device using the data we've accumulated thus far.
+        if (vkCreateDevice(pDeviceData->physicalDevice, &logicalDeviceInfo,nullptr,
+                           &pDeviceData->logicalDevice) != VK_SUCCESS) {
+            ERROR("Failed to create logical device!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        // Now we just need to create the queue which will be used for our commands.
+
+        // Create the queue using the struct and logical device we created earlier.
+        vkGetDeviceQueue(pDeviceData->logicalDevice, pDeviceData->indices.graphicsFamily.value(), 0,
+                         &pDeviceData->graphicsQueue);
+        // Create the presentation queue using the struct.
+        vkGetDeviceQueue(pDeviceData->logicalDevice,
+                         pDeviceData->indices.presentFamily.value(), 0,
+                         &pDeviceData->presentQueue);
+
+        return Status::SUCCESS;
     }
 }

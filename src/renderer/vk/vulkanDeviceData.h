@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <optional>
 #include "../core.h"
+#include <GLFW/glfw3.h>
 
 namespace Renderer {
 
@@ -41,6 +42,9 @@ namespace Renderer {
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device,VkSurfaceKHR surface);
     Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     void populateDebugMessengerCI(VkDebugUtilsMessengerCreateInfoEXT&);
+    Status createGLFWWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
+    Status createPhysicalDevice(VulkanDeviceData*);
+    Status createLogicalDevice(VulkanDeviceData*);
     void cleanupVulkanDevice(VulkanDeviceData*, bool);
 }
 

@@ -29,9 +29,6 @@ namespace Renderer {
 
     // Device creation functions
     Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
-    Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
-    Status createPhysicalDevice(Renderer*);
-    Status createLogicalDevice(Renderer*);
     Status createSyncObjects(Renderer*, uint32_t = 2);
     Status drawFrame(Renderer*, bool*, GLFWwindow*);
 

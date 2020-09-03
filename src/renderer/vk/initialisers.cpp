@@ -285,4 +285,8 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
 
         return Status::SUCCESS;
     }
+
+    Status createVulkanDeviceData(VulkanDeviceData* pDeviceData, bool enableValidationLayers) {
+
+    }
 }

@@ -12,6 +12,7 @@ namespace Renderer {
     VkResult createSwapchain(SwapchainData*, VulkanDeviceData*);
     VkResult createImageViews(VkDevice, SwapchainData*);
     Status initialiseVulkanInstance(VulkanDeviceData*, bool, const char*, const char*);
+    Status createVulkanDeviceData(VulkanDeviceData*, bool);
 }
 
 #endif //PONG_VK_INITIALISERS_H
