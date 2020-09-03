@@ -3,7 +3,6 @@
 namespace Buffers {
 	
 	// ---------------------------- BUFFER ----------------------------------
-
 	VkResult createBuffer(
 		VkPhysicalDevice physicalDevice,
 		VkDevice logicalDevice,
@@ -200,5 +199,50 @@ namespace Buffers {
 		attributeDescriptions[1].offset = offsetof(Vertex, color);
 
 		return attributeDescriptions;
+	}
+
+	// Sample Dynamic UBO helper functions for testing
+
+    void* alignedAlloc(size_t size, size_t alignment)
+    {
+        void *data = nullptr;
+        #if defined(_MSC_VER) || defined(__MINGW32__)
+            data = _aligned_malloc(size, alignment);
+        #else
+        int res = posix_memalign(&data, alignment, size);
+        if (res != 0)
+            data = nullptr;
+        #endif
+        return data;
+    }
+
+    void alignedFree(void* data)
+    {
+    #if	defined(_MSC_VER) || defined(__MINGW32__)
+        _aligned_free(data);
+    #else
+        free(data);
+    #endif
+    }
+
+	template <typename T>
+    void calculateBufferSize(DynamicUniformBuffer<T>* ubo, VkPhysicalDevice device, size_t objects) {
+
+	    VkPhysicalDeviceProperties properties;
+	    vkGetPhysicalDeviceProperties(device, &properties);
+
+	    size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
+
+	    size_t dynamicAlignment = sizeof(T);
+
+        if (minUboAlignment > 0) {
+            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+        }
+
+        size_t bufferSize = objects * dynamicAlignment;
+
+        ubo->bufferSize = bufferSize;
+        ubo->dynamicAlignment = dynamicAlignment;
+        ubo->data = (T*)alignedAlloc(bufferSize, dynamicAlignment);
 	}
 }

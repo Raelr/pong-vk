@@ -8,13 +8,14 @@
 namespace Renderer2D {
 
     struct QuadData {
-        VkDescriptorSetLayout descriptorSetLayout       {VK_NULL_HANDLE};
-        size_t quadCount                                {0};
-        VkDescriptorSet* descriptorSets[64]             {nullptr};
-        Buffers::BufferData* uniformBuffers[64]         {nullptr};
-        size_t maxQuads                                 {64};
-        Buffers::VertexBuffer vertexBuffer              {0};
-        Buffers::IndexBuffer indexBuffer                {nullptr};
+        VkDescriptorSetLayout descriptorSetLayout               {VK_NULL_HANDLE};
+        size_t quadCount                                        {0};
+        VkDescriptorSet* descriptorSets[64]                     {nullptr};
+        Buffers::BufferData* uniformBuffers[64]                 {nullptr};
+        size_t maxQuads                                         {64};
+        Buffers::VertexBuffer vertexBuffer                      {0};
+        Buffers::IndexBuffer indexBuffer                        {nullptr};
+        Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {nullptr};
     };
 
     struct Renderer2DData {

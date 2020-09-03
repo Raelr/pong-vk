@@ -11,10 +11,11 @@
 namespace Renderer {
 
     struct Renderer {
-        // Vulkan structs:
-
+        // Vulkan Device Data
         VulkanDeviceData deviceData                 {nullptr};
+        // Swapchain
         SwapchainData swapchainData                 { VK_NULL_HANDLE };
+        // Renderer2D
         Renderer2D::Renderer2DData renderer2DData   { VK_NULL_HANDLE };
         // Sync objects
         uint32_t maxFramesInFlight                  {2};

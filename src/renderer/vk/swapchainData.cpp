@@ -28,15 +28,13 @@ namespace Renderer {
         }
 
         uint32_t presentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                                  &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 
         // Same as above ^
         if (presentModeCount != 0) {
             VkPresentModeKHR* presentModes = static_cast<VkPresentModeKHR *>(malloc(
                     presentModeCount * sizeof(VkPresentModeKHR)));
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                                      &presentModeCount, presentModes);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, presentModes);
             details.presentModes = presentModes;
             details.presentModesCount = presentModeCount;
         }

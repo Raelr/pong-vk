@@ -48,6 +48,14 @@ namespace Buffers {
         glm::mat4 mvp {glm::mat4(1.0f)};
     };
 
+    template <typename T>
+    struct DynamicUniformBuffer {
+        BufferData bufferData;
+        size_t dynamicAlignment;
+        size_t bufferSize;
+        T* data;
+    };
+
     // ---------------------------- BUFFER METHODS ---------------------------
 
     // A method for creating a generic buffer - to be used for buffer creation
@@ -87,6 +95,9 @@ namespace Buffers {
     // Return vertex input attributes. This describes how a vertex attribute
     // can be extracted from a chunk of vertex data. 
     std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+
+    template<typename T>
+    void calculateBufferSize(DynamicUniformBuffer<T>*, VkDevice);
 }
 
 #endif // !BUFFERS_H

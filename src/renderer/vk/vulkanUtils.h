@@ -65,7 +65,7 @@ namespace Renderer {
         size_t objectCount
     );
 
-    VkResult createCommandBuffer(
+    VkResult rerecordCommandBuffer(
             VkDevice device,
             VkCommandBuffer* buffers,
             size_t bufferIndex,

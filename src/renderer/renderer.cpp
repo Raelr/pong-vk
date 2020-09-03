@@ -76,6 +76,7 @@ namespace Renderer {
             return Status::INITIALIZATION_FAILURE;
         }
 
+
         // ================================ SYNC OBJECTS ====================================
 
         createSyncObjects(renderer);
@@ -145,9 +146,6 @@ namespace Renderer {
         );
 
         Renderer2D::cleanupRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData);
-
-        free(pRenderer->deviceData.extensions);
-        free(pRenderer->renderer2DData.frameBuffers);
 
         // Clean up the semaphores we created earlier.
         for (size_t i = 0; i < pRenderer->maxFramesInFlight; i++) {
@@ -283,7 +281,7 @@ namespace Renderer {
             vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
-            if (createCommandBuffer(
+            if (rerecordCommandBuffer(
                     pRenderer->deviceData.logicalDevice,
                     &pRenderer->commandBuffers[pRenderer->imageIndex],
                     pRenderer->imageIndex,
@@ -365,7 +363,7 @@ namespace Renderer {
         submitInfo.pCommandBuffers = &pRenderer->commandBuffers[pRenderer->imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution.
-        VkSemaphore signalSemaphores[] = {pRenderer->renderFinishedSemaphores[pRenderer->currentFrame]};
+        VkSemaphore signalSemaphores[] = { pRenderer->renderFinishedSemaphores[pRenderer->currentFrame] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -435,8 +433,6 @@ namespace Renderer {
         // This should clamp the value of currentFrame between 0 and 1.
         pRenderer->currentFrame = (pRenderer->currentFrame + 1) % pRenderer->maxFramesInFlight;
 
-        // WORK OUT WHAT TO DO WITH UNIFORM BUFFERS
-
         return Status::SUCCESS;
     }
 
@@ -459,9 +455,7 @@ namespace Renderer {
     // A wrapper method for quad drawing.
     Status registerQuad2D(Renderer* pRenderer) {
 
-        Status success = (Renderer2D::queueQuad(
-                &pRenderer->renderer2DData,
-                &pRenderer->deviceData,
+        Status success = (Renderer2D::queueQuad(&pRenderer->renderer2DData, &pRenderer->deviceData,
                 &pRenderer->swapchainData)) ? Status::SUCCESS : Status::INITIALIZATION_FAILURE;
 
         return success;

@@ -163,6 +163,9 @@ namespace Renderer {
     }
 
     void cleanupVulkanDevice(VulkanDeviceData* pDeviceData, bool enableValidationLayers) {
+
+        free(pDeviceData->extensions);
+
         if (enableValidationLayers) {
             destroyDebugUtilsMessengerEXT(pDeviceData->instance, pDeviceData->debugMessenger, nullptr);
         }

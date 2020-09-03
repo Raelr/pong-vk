@@ -114,9 +114,6 @@ namespace Renderer2D {
             return false;
         }
 
-        VkDescriptorSet* descriptorSet = static_cast<VkDescriptorSet*>(malloc(swapchain.imageCount * sizeof(VkDescriptorSet)));
-        renderer2D->quadData.descriptorSets[0] = descriptorSet;
-
         if (Renderer::createDescriptorPool(
                 deviceData->logicalDevice,
                 swapchain.imageCount, &renderer2D->descriptorPool,
@@ -130,7 +127,7 @@ namespace Renderer2D {
     }
 
     bool queueQuad(Renderer2DData* pRenderer2D, Renderer::VulkanDeviceData* pDeviceData,
-                   Renderer::SwapchainData* pSwapchain) {
+        Renderer::SwapchainData* pSwapchain) {
 
         Buffers::BufferData* uniformBuffers =
             static_cast<Buffers::BufferData*>(malloc(pSwapchain->imageCount * sizeof(Buffers::BufferData)));
@@ -163,6 +160,8 @@ namespace Renderer2D {
     }
 
     void cleanupRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* pRenderer) {
+
+        free(pRenderer->frameBuffers);
 
         vkDestroyDescriptorSetLayout(deviceData->logicalDevice,
                                      pRenderer->quadData.descriptorSetLayout,nullptr);

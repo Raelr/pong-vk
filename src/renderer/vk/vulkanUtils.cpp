@@ -321,6 +321,11 @@ namespace Renderer {
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
 
+        VkPushConstantRange range = {};
+        range.stageFlags = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+        range.offset = 0;
+        range.size = sizeof(Buffers::UniformBufferObject);
+
         // With all those defined, we now need to build a pipeline layout
         // struct. A pipeline layout struct details all the uniform values 
         // within our shaders.
@@ -332,8 +337,8 @@ namespace Renderer {
                 VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutCreateInfo.setLayoutCount = 1;
         pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayout;
-        pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-        pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+        pipelineLayoutCreateInfo.pPushConstantRanges = &range;
 
         // Now create the pipeline layout using the usual method:
         if (vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, 
@@ -525,11 +530,12 @@ namespace Renderer {
     }
 
     // Command buffer creation method
-    VkResult createCommandBuffer(VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
-                                  GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
-                                  VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
-                                  Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
-                                  VkDescriptorSet** descriptorSets, size_t objectCount) {
+    VkResult rerecordCommandBuffer(
+            VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
+            GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
+            VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
+            Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
+            VkDescriptorSet** descriptorSets, size_t objectCount) {
 
         // We allocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -596,8 +602,7 @@ namespace Renderer {
 
             for (size_t j = 0; j < objectCount; j++) {
 
-                vkCmdBindDescriptorSets(*buffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                vkCmdBindDescriptorSets(*buffer,VK_PIPELINE_BIND_POINT_GRAPHICS,
                     pGraphicsPipeline->pipelineLayout, 0, 1,
                     &descriptorSets[j][bufferIndex],0, nullptr);
 
