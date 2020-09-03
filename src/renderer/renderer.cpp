@@ -16,71 +16,13 @@ namespace Renderer {
 
     Status initialiseRenderer(Renderer* renderer, bool enableValidationLayers, GLFWwindow* window) {
 
-        // ========================== VALIDATION LAYER CHECKING ==============================
-
-        uint32_t layerCount = 0;
-
-        // Get the number of layers available for vulkan.
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-        VkLayerProperties layerProperties[layerCount];
-
-        if (enableValidationLayers) {
-
-            if (checkValidationLayerSupport(layerCount,layerProperties, renderer->deviceData.validationLayers,
-                renderer->deviceData.validationLayerCount) != Status::SUCCESS) {
-                return Status::FAILURE;
-            }
-        }
-
-        // ======================= VULKAN INSTANCE CREATION ==================================
-
-        if (checkVulkanExtensions(&renderer->deviceData, enableValidationLayers) == Status::FAILURE) {
-            ERROR("No GLFW extensions available!");
+        // Initialise Vulkan device information - this should be pretty general so won't require too
+        // much configuration.
+        if (createVulkanDeviceData(&renderer->deviceData, window, enableValidationLayers)
+            != Status::SUCCESS) {
+            ERROR("Failed to create Vulkan Device. Closing Pong...");
             return Status::FAILURE;
         }
-
-        if (initialiseVulkanInstance(&renderer->deviceData, enableValidationLayers, "Pong", "no engine") == Status::FAILURE) {
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        INFO("Initialised Vulkan instance.");
-
-        if (enableValidationLayers) {
-            if (initialiseDebugUtilsMessenger(renderer->deviceData.instance, &renderer->deviceData.debugMessenger)
-                != Status::SUCCESS) {
-                ERROR("Failed to create Debug utils messenger!");
-                return Status::INITIALIZATION_FAILURE;
-            }
-        }
-
-        INFO("Created Debug Utils Messenger");
-
-        // ============================ SURFACE CREATION ====================================
-
-        if (createGLFWWindowSurface(renderer->deviceData.instance, window, &renderer->deviceData.surface)
-            != Status::SUCCESS) {
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        INFO("Retrieved Surface from GLFW.");
-
-        // ========================= PHYSICAL DEVICE CREATION ===============================
-
-        if (createPhysicalDevice(&renderer->deviceData) != Status::SUCCESS) {
-            ERROR("Failed to create physical device!");
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        INFO("Created physical device!");
-
-        // ========================== LOGICAL DEVICE CREATION ===============================
-
-        if (createLogicalDevice(&renderer->deviceData) != Status::SUCCESS) {
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        INFO("Created logical device!");
 
         // ============================= SWAPCHAIN CREATION =================================
 

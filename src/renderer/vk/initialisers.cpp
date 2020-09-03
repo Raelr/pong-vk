@@ -286,7 +286,74 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
         return Status::SUCCESS;
     }
 
-    Status createVulkanDeviceData(VulkanDeviceData* pDeviceData, bool enableValidationLayers) {
+    Status createVulkanDeviceData(VulkanDeviceData* pDeviceData, GLFWwindow* window, bool enableValidationLayers) {
 
+        // ========================== VALIDATION LAYER CHECKING ==============================
+
+        uint32_t layerCount = 0;
+
+        // Get the number of layers available for vulkan.
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+        VkLayerProperties layerProperties[layerCount];
+
+        if (enableValidationLayers) {
+
+            if (checkValidationLayerSupport(layerCount,layerProperties, pDeviceData->validationLayers,
+                pDeviceData->validationLayerCount) != Status::SUCCESS) {
+                return Status::FAILURE;
+            }
+        }
+
+        // ======================= VULKAN INSTANCE CREATION ==================================
+
+        if (checkVulkanExtensions(pDeviceData, enableValidationLayers) == Status::FAILURE) {
+            ERROR("No GLFW extensions available!");
+            return Status::FAILURE;
+        }
+
+        if (initialiseVulkanInstance(pDeviceData, enableValidationLayers, "Pong", "no engine") == Status::FAILURE) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Initialised Vulkan instance.");
+
+        if (enableValidationLayers) {
+            if (initialiseDebugUtilsMessenger(pDeviceData->instance, &pDeviceData->debugMessenger)
+                != Status::SUCCESS) {
+                ERROR("Failed to create Debug utils messenger!");
+                return Status::INITIALIZATION_FAILURE;
+            }
+        }
+
+        INFO("Created Debug Utils Messenger");
+
+        // ============================ SURFACE CREATION ====================================
+
+        if (createGLFWWindowSurface(pDeviceData->instance, window, &pDeviceData->surface)
+            != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Retrieved Surface from GLFW.");
+
+        // ========================= PHYSICAL DEVICE CREATION ===============================
+
+        if (createPhysicalDevice(pDeviceData) != Status::SUCCESS) {
+            ERROR("Failed to create physical device!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Created physical device!");
+
+        // ========================== LOGICAL DEVICE CREATION ===============================
+
+        if (createLogicalDevice(pDeviceData) != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        INFO("Created logical device!");
+
+        return Status::SUCCESS;
     }
 }

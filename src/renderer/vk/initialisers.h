@@ -1,3 +1,8 @@
+/*
+ *  This file contains all data that's closely related to general Vulkan struct creation.
+ *  The point is to act as a utility file for quick initialisers for the renderer.
+ * */
+
 #ifndef PONG_VK_INITIALISERS_H
 #define PONG_VK_INITIALISERS_H
 
@@ -12,7 +17,7 @@ namespace Renderer {
     VkResult createSwapchain(SwapchainData*, VulkanDeviceData*);
     VkResult createImageViews(VkDevice, SwapchainData*);
     Status initialiseVulkanInstance(VulkanDeviceData*, bool, const char*, const char*);
-    Status createVulkanDeviceData(VulkanDeviceData*, bool);
+    Status createVulkanDeviceData(VulkanDeviceData*, GLFWwindow*, bool);
 }
 
 #endif //PONG_VK_INITIALISERS_H
