@@ -123,6 +123,12 @@ namespace Renderer2D {
             return false;
         }
 
+        Buffers::DynamicUniformBuffer<glm::mat4> dynamicUbo;
+        Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
+
+        INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
+        INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
+
         return true;
     }
 

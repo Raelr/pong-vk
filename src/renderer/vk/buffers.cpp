@@ -225,24 +225,24 @@ namespace Buffers {
     #endif
     }
 
-	template <typename T>
-    void calculateBufferSize(DynamicUniformBuffer<T>* ubo, VkPhysicalDevice device, size_t objects) {
-
-	    VkPhysicalDeviceProperties properties;
-	    vkGetPhysicalDeviceProperties(device, &properties);
-
-	    size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
-
-	    size_t dynamicAlignment = sizeof(T);
-
-        if (minUboAlignment > 0) {
-            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-        }
-
-        size_t bufferSize = objects * dynamicAlignment;
-
-        ubo->bufferSize = bufferSize;
-        ubo->dynamicAlignment = dynamicAlignment;
-        ubo->data = (T*)alignedAlloc(bufferSize, dynamicAlignment);
-	}
+//	template <typename T>
+//    void calculateBufferSize(DynamicUniformBuffer<T>* ubo, VkPhysicalDevice device, size_t objects) {
+//
+//	    VkPhysicalDeviceProperties properties;
+//	    vkGetPhysicalDeviceProperties(device, &properties);
+//
+//	    size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
+//
+//	    size_t dynamicAlignment = sizeof(T);
+//
+//        if (minUboAlignment > 0) {
+//            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+//        }
+//
+//        size_t bufferSize = objects * dynamicAlignment;
+//
+//        ubo->bufferSize = bufferSize;
+//        ubo->dynamicAlignment = dynamicAlignment;
+//        ubo->data = (T*)alignedAlloc(bufferSize, dynamicAlignment);
+//	}
 }

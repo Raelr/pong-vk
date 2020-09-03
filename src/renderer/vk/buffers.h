@@ -96,8 +96,30 @@ namespace Buffers {
     // can be extracted from a chunk of vertex data. 
     std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
 
-    template<typename T>
-    void calculateBufferSize(DynamicUniformBuffer<T>*, VkDevice);
+    // TODO: Find a more appropriate location for these functions
+    void* alignedAlloc(size_t, size_t);
+    void alignedFree(void*);
+
+    template <typename T>
+    void calculateBufferSize(DynamicUniformBuffer<T>* ubo, VkPhysicalDevice device, size_t objects) {
+
+        VkPhysicalDeviceProperties properties;
+        vkGetPhysicalDeviceProperties(device, &properties);
+
+        size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
+
+        size_t dynamicAlignment = sizeof(T);
+
+        if (minUboAlignment > 0) {
+            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+        }
+
+        size_t bufferSize = objects * dynamicAlignment;
+
+        ubo->bufferSize = bufferSize;
+        ubo->dynamicAlignment = dynamicAlignment;
+        ubo->data = (T*)alignedAlloc(bufferSize, dynamicAlignment);
+    }
 }
 
 #endif // !BUFFERS_H
