@@ -26,7 +26,7 @@ namespace Renderer {
     };
 
     SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,VkSurfaceKHR surface);
-
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetails*);
 };
 
 #endif //PONG_VK_SWAPCHAINDATA_H

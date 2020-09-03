@@ -2,9 +2,7 @@
 #include <cstring>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include "vulkan/initialisers.h"
-#include "vulkan/validationLayers.h"
-#include "vulkan/vulkanDeviceData.h"
+#include "vk/initialisers.h"
 
 namespace Renderer {
 
@@ -13,7 +11,7 @@ namespace Renderer {
     };
 
     static const char* deviceExtensions[] = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
     Status initialiseRenderer(Renderer* renderer, bool enableValidationLayers, GLFWwindow* window) {
@@ -37,20 +35,19 @@ namespace Renderer {
 
         // ======================= VULKAN INSTANCE CREATION ==================================
 
-        renderer->debugMessenger = VK_NULL_HANDLE;
         if (checkVulkanExtensions(&renderer->deviceData, enableValidationLayers) == Status::FAILURE) {
             ERROR("No GLFW extensions available!");
             return Status::FAILURE;
         }
 
-        if (initialiseVulkanInstance(renderer, enableValidationLayers) == Status::FAILURE) {
+        if (initialiseVulkanInstance(&renderer->deviceData, enableValidationLayers, "Pong", "no engine") == Status::FAILURE) {
             return Status::INITIALIZATION_FAILURE;
         }
 
         INFO("Initialised Vulkan instance.");
 
         if (enableValidationLayers) {
-            if (initialiseDebugUtilsMessenger(renderer->instance, &renderer->debugMessenger)
+            if (initialiseDebugUtilsMessenger(renderer->deviceData.instance, &renderer->deviceData.debugMessenger)
                 != Status::SUCCESS) {
                 ERROR("Failed to create Debug utils messenger!");
                 return Status::INITIALIZATION_FAILURE;
@@ -61,7 +58,7 @@ namespace Renderer {
 
         // ============================ SURFACE CREATION ====================================
 
-        if (createWindowSurface(renderer->instance, window, &renderer->deviceData.surface)
+        if (createWindowSurface(renderer->deviceData.instance, window, &renderer->deviceData.surface)
             != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
@@ -146,64 +143,6 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status initialiseVulkanInstance(Renderer* pRenderer, bool enableValidationLayers) {
-
-        // ============================== INSTANCE CREATION =====================================
-        // Define the configuration details of the vulkan application.
-        VkApplicationInfo appInfo = initialiseVulkanApplicationInfo("Pong", "No Engine",
-            VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
-            VK_API_VERSION_1_2);
-
-        // Configuration parameters for Vulkan instance creation.
-        VkInstanceCreateInfo createInfo {};
-        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        createInfo.pApplicationInfo = &appInfo;
-
-        // Set the extensions in the configuration struct.
-        createInfo.enabledExtensionCount = pRenderer->deviceData.extensionCount;
-        createInfo.ppEnabledExtensionNames = pRenderer->deviceData.extensions;
-
-        // If we want to see DEBUG messages from instance creation, we need to manually create a new
-        // debug messenger that can be used in the function.
-        VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
-
-        // Only enable the layer names in Vulkan if we're using validation layers
-        if (enableValidationLayers) {
-            createInfo.ppEnabledLayerNames = pRenderer->deviceData.validationLayers;
-            // populate the messenger with our callback data.
-            populateDebugMessengerCreateInfo(debugInfo);
-            createInfo.enabledLayerCount = pRenderer->deviceData.validationLayerCount;
-            // pNext is an extension field. This is where pointers to callbacks and
-            // messengers can be stored.
-            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
-        } else {
-            createInfo.enabledLayerCount = 0;
-            createInfo.pNext = nullptr;
-        }
-
-        if (vkCreateInstance(&createInfo, nullptr, &pRenderer->instance) != VK_SUCCESS) {
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        return Status::SUCCESS;
-    }
-
-    Status initialiseDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* debugMessenger) {
-
-        VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
-        // Fill the struct with configuration data.
-        populateDebugMessengerCreateInfo(messengerInfo);
-
-        // Now we need to create the messenger and ensure it was successful:
-        if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, debugMessenger)
-            != VK_SUCCESS) {
-            // Throw an error and then stop execution if we weren't able to create the messenger
-            return Status::INITIALIZATION_FAILURE;
-        }
-
-        return Status::SUCCESS;
-    }
-
     Status createWindowSurface(VkInstance instance, GLFWwindow* window, VkSurfaceKHR* surface) {
         if (glfwCreateWindowSurface(instance, window, nullptr,
                                     surface) != VK_SUCCESS) {
@@ -220,7 +159,7 @@ namespace Renderer {
 
         // Begin by querying which devices are supported by Vulkan on this machine.
         uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(renderer->instance, &deviceCount, nullptr);
+        vkEnumeratePhysicalDevices(renderer->deviceData.instance, &deviceCount, nullptr);
 
         if (deviceCount == 0) {
             ERROR("Failed to find GPUs that support Vulkan!");
@@ -229,7 +168,7 @@ namespace Renderer {
 
         // Now we query which specific devices we have
         VkPhysicalDevice devices[deviceCount];
-        vkEnumeratePhysicalDevices(renderer->instance, &deviceCount, devices);
+        vkEnumeratePhysicalDevices(renderer->deviceData.instance, &deviceCount, devices);
 
         Status status = Status::FAILURE;
 
@@ -446,18 +385,7 @@ namespace Renderer {
         vkDestroyCommandPool(pRenderer->deviceData.logicalDevice, pRenderer->renderer2DData.commandPool,
     nullptr);
 
-        if (enableValidationLayers) {
-            destroyDebugUtilsMessengerEXT(pRenderer->instance, pRenderer->debugMessenger, nullptr);
-        }
-
-        // Destroy window surface
-        vkDestroySurfaceKHR(pRenderer->instance, pRenderer->deviceData.surface, nullptr);
-
-        // Destroy logical device
-        vkDestroyDevice(pRenderer->deviceData.logicalDevice, nullptr);
-
-        // Vulkan cleanup
-        vkDestroyInstance(pRenderer->instance, nullptr);
+        cleanupVulkanDevice(&pRenderer->deviceData, enableValidationLayers);
 
         return Status::SUCCESS;
     }

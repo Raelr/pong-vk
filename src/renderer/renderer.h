@@ -3,20 +3,18 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include "vulkan/vulkanUtils.h"
+#include "vk/vulkanUtils.h"
 #include "renderer2D.h"
 #include "core.h"
-#include "vulkan/vulkanDeviceData.h"
-#include "vulkan/swapchainData.h"
+#include "vk/initialisers.h"
 
 namespace Renderer {
 
     struct Renderer {
         // Vulkan structs:
-        VkInstance instance                         {nullptr};
-        VkDebugUtilsMessengerEXT debugMessenger     { VK_NULL_HANDLE };
-        VulkanDeviceData deviceData    {nullptr};
-        SwapchainData swapchainData    { VK_NULL_HANDLE };
+
+        VulkanDeviceData deviceData                 {nullptr};
+        SwapchainData swapchainData                 { VK_NULL_HANDLE };
         Renderer2D::Renderer2DData renderer2DData   { VK_NULL_HANDLE };
         // Sync objects
         uint32_t maxFramesInFlight                  {2};
@@ -31,9 +29,6 @@ namespace Renderer {
 
     // Device creation functions
     Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
-    Status initialiseVulkanInstance(Renderer*, bool);
-    bool checkGlfwViability(const char**, uint32_t, VkExtensionProperties*, uint32_t);
-    Status initialiseDebugUtilsMessenger(VkInstance, VkDebugUtilsMessengerEXT*);
     Status createWindowSurface(VkInstance, GLFWwindow*, VkSurfaceKHR*);
     Status createPhysicalDevice(Renderer*);
     Status createLogicalDevice(Renderer*);

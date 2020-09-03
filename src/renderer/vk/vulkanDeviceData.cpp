@@ -1,5 +1,6 @@
 #include "vulkanDeviceData.h"
 #include <GLFW/glfw3.h>
+#include "validationLayers.h"
 
 namespace Renderer {
 
@@ -138,5 +139,40 @@ namespace Renderer {
         delete [] queueFamilies;
 
         return indices;
+    }
+
+    Status initialiseDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* debugMessenger) {
+
+        VkDebugUtilsMessengerCreateInfoEXT messengerInfo{};
+        // Fill the struct with configuration data.
+        populateDebugMessengerCI(messengerInfo);
+
+        // Now we need to create the messenger and ensure it was successful:
+        if (createDebugUtilsMessengerEXT(instance, &messengerInfo, nullptr, debugMessenger)
+            != VK_SUCCESS) {
+            // Throw an error and then stop execution if we weren't able to create the messenger
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        return Status::SUCCESS;
+    }
+
+    void populateDebugMessengerCI(VkDebugUtilsMessengerCreateInfoEXT& messengerInfo) {
+        populateDebugMessengerCreateInfo(messengerInfo);
+    }
+
+    void cleanupVulkanDevice(VulkanDeviceData* pDeviceData, bool enableValidationLayers) {
+        if (enableValidationLayers) {
+            destroyDebugUtilsMessengerEXT(pDeviceData->instance, pDeviceData->debugMessenger, nullptr);
+        }
+
+        // Destroy window surface
+        vkDestroySurfaceKHR(pDeviceData->instance, pDeviceData->surface, nullptr);
+
+        // Destroy logical device
+        vkDestroyDevice(pDeviceData->logicalDevice, nullptr);
+
+        // Vulkan cleanup
+        vkDestroyInstance(pDeviceData->instance, nullptr);
     }
 }

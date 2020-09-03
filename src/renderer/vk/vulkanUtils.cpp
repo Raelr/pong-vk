@@ -1,15 +1,8 @@
 #include "vulkanUtils.h"
 #include "buffers.h"
-#include "swapchainData.h"
-#include "vulkanDeviceData.h"
+#include "initialisers.h"
 
 namespace Renderer {
-
-    void cleanupSwapchainSupportDetails(SwapchainSupportDetails* details) {
-
-        free(details->formats);
-        free(details->presentModes);
-    }
 
     // Method to create renderpasses for our pipelines.
     VkResult createRenderPass(

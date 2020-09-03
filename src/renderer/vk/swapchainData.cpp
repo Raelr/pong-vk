@@ -44,4 +44,9 @@ namespace Renderer {
         // Return the details we need
         return details;
     }
+
+    void cleanupSwapchainSupportDetails(SwapchainSupportDetails* details) {
+        free(details->formats);
+        free(details->presentModes);
+    }
 }

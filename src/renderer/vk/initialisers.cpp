@@ -17,6 +17,8 @@ namespace Renderer {
         return appInfo;
     }
 
+    // ------------------------- Higher Level Structs ---------------------------
+
     VkResult createSwapchain(SwapchainData* data, VulkanDeviceData* deviceData) {
         // Start by getting the supported formats for the swapchain
         SwapchainSupportDetails supportDetails =
@@ -151,8 +153,7 @@ namespace Renderer {
         swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
         // Vulkan swapchains can become irrelevant when certain details are
-        // met (such as if the
-        // screen is resized). In this case we need to specify the old
+        // met (such as if the screen is resized). In this case we need to specify the old
         // swapchain.
         swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
@@ -190,8 +191,7 @@ namespace Renderer {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        free(supportDetails.formats);
-        free(supportDetails.presentModes);
+        cleanupSwapchainSupportDetails(&supportDetails);
 
         return VK_SUCCESS;
     }
@@ -226,8 +226,7 @@ namespace Renderer {
             // In our case our images will be used as color targets with no
             // mipmapping levels
             // or layers.·
-            imageViewCreateInfo.subresourceRange.aspectMask
-                    = VK_IMAGE_ASPECT_COLOR_BIT;
+            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
             imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
             imageViewCreateInfo.subresourceRange.levelCount = 1;
             imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
@@ -235,7 +234,7 @@ namespace Renderer {
             // Create the image view and store it in the
             // swapChainImageViews array.
             if (vkCreateImageView(device, &imageViewCreateInfo, nullptr,
-                                  &imageViews[i]) != VK_SUCCESS) {
+                &imageViews[i]) != VK_SUCCESS) {
 
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
@@ -243,5 +242,47 @@ namespace Renderer {
 
         data->pImageViews = imageViews;
         return VK_SUCCESS;
+    }
+
+    Status initialiseVulkanInstance(VulkanDeviceData* pDeviceData, bool enableValidationLayers,
+        const char* appName, const char* engineName) {
+        // ============================== INSTANCE CREATION =====================================
+        // Define the configuration details of the vulkan application.
+        VkApplicationInfo appInfo = initialiseVulkanApplicationInfo(appName, engineName,
+VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
+    VK_API_VERSION_1_2);
+
+        // Configuration parameters for Vulkan instance creation.
+        VkInstanceCreateInfo createInfo {};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &appInfo;
+
+        // Set the extensions in the configuration struct.
+        createInfo.enabledExtensionCount = pDeviceData->extensionCount;
+        createInfo.ppEnabledExtensionNames = pDeviceData->extensions;
+
+        // If we want to see DEBUG messages from instance creation, we need to manually create a new
+        // debug messenger that can be used in the function.
+        VkDebugUtilsMessengerCreateInfoEXT debugInfo{};
+
+        // Only enable the layer names in Vulkan if we're using validation layers
+        if (enableValidationLayers) {
+            createInfo.ppEnabledLayerNames = pDeviceData->validationLayers;
+            // populate the messenger with our callback data.
+            populateDebugMessengerCI(debugInfo);
+            createInfo.enabledLayerCount = pDeviceData->validationLayerCount;
+            // pNext is an extension field. This is where pointers to callbacks and
+            // messengers can be stored.
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugInfo;
+        } else {
+            createInfo.enabledLayerCount = 0;
+            createInfo.pNext = nullptr;
+        }
+
+        if (vkCreateInstance(&createInfo, nullptr, &pDeviceData->instance) != VK_SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        return Status::SUCCESS;
     }
 }

@@ -16,23 +16,8 @@ namespace Renderer {
         VkPipeline graphicsPipeline;
         VkPipelineLayout pipelineLayout;
     };
-
-    void cleanupSwapchainSupportDetails(SwapchainSupportDetails*);
-
-    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device,
-        VkSurfaceKHR surface);
-
-    VkResult createSwapchain (
-        SwapchainData* data,
-        VulkanDeviceData* deviceData
-    );
-
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR
-        surface);
     
     void destroySwapchainImageData(SwapchainData);
-
-    VkResult createImageViews(VkDevice, SwapchainData*);
 
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 

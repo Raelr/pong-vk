@@ -2,6 +2,7 @@
 #define PONG_VK_VALIDATIONLAYERS_H
 
 #include "../../logger.h"
+#include "../core.h"
 #include <vulkan/vulkan.h>
 
 namespace Renderer {

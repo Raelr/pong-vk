@@ -7,10 +7,11 @@
 
 namespace Renderer {
 
+    // TODO: Change return types to Status
     VkApplicationInfo initialiseVulkanApplicationInfo(const char*, const char*, uint32_t, uint32_t, uint32_t);
     VkResult createSwapchain(SwapchainData*, VulkanDeviceData*);
     VkResult createImageViews(VkDevice, SwapchainData*);
+    Status initialiseVulkanInstance(VulkanDeviceData*, bool, const char*, const char*);
 }
-
 
 #endif //PONG_VK_INITIALISERS_H
