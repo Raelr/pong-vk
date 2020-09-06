@@ -15,7 +15,7 @@ namespace Renderer2D {
         size_t maxQuads                                         {64};
         Buffers::VertexBuffer vertexBuffer                      {0};
         Buffers::IndexBuffer indexBuffer                        {nullptr};
-        Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {nullptr};
+        Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {0};
     };
 
     struct Renderer2DData {

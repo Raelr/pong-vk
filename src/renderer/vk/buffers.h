@@ -50,7 +50,6 @@ namespace Buffers {
 
     template <typename T>
     struct DynamicUniformBuffer {
-        BufferData bufferData;
         size_t dynamicAlignment;
         size_t bufferSize;
         T* data;

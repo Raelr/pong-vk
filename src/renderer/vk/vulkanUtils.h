@@ -26,11 +26,26 @@ namespace Renderer {
         VkDescriptorSetLayout* descriptorSetLayout
     );
 
+    VkResult createDescriptorSetLayoutV2(
+            VkDevice device,
+            VkDescriptorSetLayout* descriptorSetLayout,
+            VkDescriptorSetLayoutBinding* layoutBindings,
+            uint32_t layoutBindingCount
+    );
+
     VkResult createDescriptorPool(
         VkDevice device,
         uint32_t imageCount,
         VkDescriptorPool* descriptorPool,
         size_t objectCount
+    );
+
+    VkResult createDescriptorPoolV2(
+            VkDevice,
+            uint32_t,
+            VkDescriptorPool*,
+            VkDescriptorPoolSize*,
+            uint32_t
     );
 
     VkResult createGraphicsPipeline(

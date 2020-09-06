@@ -1,4 +1,5 @@
 #include "renderer2D.h"
+#include "vk/initialisers.h"
 
 namespace Renderer2D {
 
@@ -27,8 +28,12 @@ namespace Renderer2D {
 
         // ============================== DESCRIPTOR SET LAYOUT ==============================
 
-        if (Renderer::createDescriptorSetLayout(deviceData->logicalDevice,
-            &renderer2D->quadData.descriptorSetLayout) != VK_SUCCESS) {
+        VkDescriptorSetLayoutBinding layoutBindings[] {
+            Renderer::initiialiseDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
+        };
+
+        if (Renderer::createDescriptorSetLayoutV2(deviceData->logicalDevice,
+            &renderer2D->quadData.descriptorSetLayout, layoutBindings, 1) != VK_SUCCESS) {
             ERROR("Failed to create descriptor set layout!");
             return false;
         }
@@ -114,10 +119,14 @@ namespace Renderer2D {
             return false;
         }
 
-        if (Renderer::createDescriptorPool(
+        VkDescriptorPoolSize poolSizes[] = {
+                Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, swapchain.imageCount)
+        };
+
+        if (Renderer::createDescriptorPoolV2(
                 deviceData->logicalDevice,
-                swapchain.imageCount, &renderer2D->descriptorPool,
-                renderer2D->quadData.maxQuads) != VK_SUCCESS) {
+                swapchain.imageCount, &renderer2D->descriptorPool, poolSizes,
+                1) != VK_SUCCESS) {
 
             ERROR("Failed to create descriptor pool.");
             return false;

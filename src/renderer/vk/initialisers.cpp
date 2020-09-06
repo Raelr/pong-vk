@@ -356,4 +356,29 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
 
         return Status::SUCCESS;
     }
+
+    VkDescriptorPoolSize initialisePoolSize(VkDescriptorType type, u_int32_t count) {
+
+        VkDescriptorPoolSize poolSize{};
+        poolSize.type = type;
+        poolSize.descriptorCount = count;
+        return poolSize;
+    }
+
+    VkDescriptorSetLayoutBinding initiialiseDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType type,
+        uint32_t descriptorCount, VkShaderStageFlags shaderStage) {
+
+        VkDescriptorSetLayoutBinding uboLayoutBinding{};
+        // Aligns to the binding specified in our shader.
+        uboLayoutBinding.binding = binding;
+        // Specifies the type of descriptor
+        uboLayoutBinding.descriptorType = type;
+        // How many descriptors there are (if appplicable)
+        uboLayoutBinding.descriptorCount = descriptorCount;
+        // Which stage this will be used in (the vertex stage)
+        uboLayoutBinding.stageFlags = shaderStage;
+        uboLayoutBinding.pImmutableSamplers = nullptr;
+
+        return uboLayoutBinding;
+    }
 }

@@ -119,6 +119,26 @@ namespace Renderer {
 
         return VK_SUCCESS;
     }
+
+    VkResult createDescriptorSetLayoutV2( VkDevice device,
+        VkDescriptorSetLayout* descriptorSetLayout, VkDescriptorSetLayoutBinding* layoutBindings,
+        uint32_t layoutBindingCount) {
+
+        // Now specify the struct for configuring the descriptor set.
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = layoutBindingCount;
+        layoutInfo.pBindings = layoutBindings;
+
+        // Create the descriptor set
+        if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr,
+                                        descriptorSetLayout) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return VK_SUCCESS;
+    }
     
     VkResult createDescriptorPool(
         VkDevice device,
@@ -128,14 +148,10 @@ namespace Renderer {
     ) {
 
         VkDescriptorPoolSize sizes[objectCount];
-        
-        for (int i = 0; i < objectCount; i++) {
-            
-            VkDescriptorPoolSize poolSize{};
-            poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSize.descriptorCount = imageCount * objectCount;
 
-            sizes[i] = poolSize;
+        for (int i = 0; i < objectCount; i++) {
+
+            sizes[i] = Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, imageCount * objectCount);
         }
 
         VkDescriptorPoolCreateInfo poolInfo{};
@@ -144,6 +160,28 @@ namespace Renderer {
         poolInfo.pPoolSizes = sizes;
         poolInfo.maxSets = imageCount * objectCount;
         
+        if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool)
+            != VK_SUCCESS) {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return VK_SUCCESS;
+    }
+
+    VkResult createDescriptorPoolV2(
+            VkDevice device,
+            uint32_t imageCount,
+            VkDescriptorPool* descriptorPool,
+            VkDescriptorPoolSize* poolSizes,
+            uint32_t poolCount
+    ) {
+
+        VkDescriptorPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.poolSizeCount = poolCount;
+        poolInfo.pPoolSizes = poolSizes;
+        poolInfo.maxSets = imageCount;
+
         if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool)
             != VK_SUCCESS) {
             return VK_ERROR_INITIALIZATION_FAILED;
