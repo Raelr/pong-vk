@@ -88,7 +88,7 @@ int main() {
 
     // ------------------------ SCENE SETUP -----------------------------
 
-    Renderer::registerQuad2D(&renderer);
+    //Renderer::registerQuad2D(&renderer);
 
     PlayerData players[64];
     uint32_t currentPlayers = 1;
@@ -122,17 +122,17 @@ int main() {
             elapsed = 0;
         }
 
-        for (int i = 0; i < currentPlayers; i++) {
-            PlayerData& player = players[i];
-            Renderer::drawQuad(&renderer, player.position, player.rotation,
-                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
-        }
+//        for (int i = 0; i < currentPlayers; i++) {
+//            PlayerData& player = players[i];
+//            Renderer::drawQuad(&renderer, player.position, player.rotation,
+//                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
+//        }
 
-        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
-            == Renderer::Status::FAILURE) {
-            ERROR("Error drawing frame - exiting main loop!");
-            break;
-        }
+//        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
+//            == Renderer::Status::FAILURE) {
+//            ERROR("Error drawing frame - exiting main loop!");
+//            break;
+//        }
 
         oldTime = currentTime;
         frames++;

@@ -16,10 +16,11 @@ namespace Renderer2D {
         Buffers::VertexBuffer vertexBuffer                      {0};
         Buffers::IndexBuffer indexBuffer                        {nullptr};
         Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {0};
+        VkDescriptorSet dynamicDescriptorSets[3]                {nullptr};
     };
 
     struct Renderer2DData {
-        Renderer::GraphicsPipelineData graphicsPipeline  { VK_NULL_HANDLE };
+        Renderer::GraphicsPipelineData graphicsPipeline     { VK_NULL_HANDLE };
         QuadData quadData                                   { VK_NULL_HANDLE };
         VkFramebuffer* frameBuffers                         { VK_NULL_HANDLE };
         VkCommandPool commandPool                           { VK_NULL_HANDLE };

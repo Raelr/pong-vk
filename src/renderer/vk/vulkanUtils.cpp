@@ -983,7 +983,7 @@ namespace Renderer {
         for (size_t i = 0; i < imageCount; i++) {
             
             VkDescriptorBufferInfo bufferInfo; 
-            bufferInfo.buffer = uBuffers[i].buffer;
+            bufferInfo.buffer = uBuffers->buffer;
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(Buffers::UniformBufferObject);
 
@@ -998,6 +998,49 @@ namespace Renderer {
             
             vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite, 
                 0, nullptr);
+        }
+
+        return VK_SUCCESS;
+    }
+
+    VkResult createDescriptorSetsV2(
+            VulkanDeviceData* deviceData,
+            VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
+            VkDescriptorPool* pool, uint32_t imageCount,
+            Buffers::BufferData* uBuffers, uint32_t bufferSize) {
+
+        std::vector<VkDescriptorSetLayout> layouts(imageCount, *layout);
+
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = *pool;
+        allocInfo.descriptorSetCount = imageCount;
+        allocInfo.pSetLayouts = layouts.data();
+
+        if (vkAllocateDescriptorSets(deviceData->logicalDevice, &allocInfo,
+                                     sets) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        for (size_t i = 0; i < imageCount; i++) {
+
+            VkDescriptorBufferInfo bufferInfo;
+            bufferInfo.buffer = uBuffers->buffer;
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(Buffers::UniformBufferObject);
+
+            VkWriteDescriptorSet descriptorWrite{};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = sets[i];
+            descriptorWrite.dstBinding = 0;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &bufferInfo;
+
+            vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite,
+                                   0, nullptr);
         }
 
         return VK_SUCCESS;

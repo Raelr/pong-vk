@@ -29,7 +29,7 @@ namespace Renderer2D {
         // ============================== DESCRIPTOR SET LAYOUT ==============================
 
         VkDescriptorSetLayoutBinding layoutBindings[] {
-            Renderer::initiialiseDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT)
+            Renderer::initiialiseDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT)
         };
 
         if (Renderer::createDescriptorSetLayoutV2(deviceData->logicalDevice,
@@ -137,6 +137,36 @@ namespace Renderer2D {
 
         INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
         INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
+
+        // ALLOCATE UNIFORM BUFFER
+        if (Buffers::createBuffer(
+                deviceData->physicalDevice,
+                deviceData->logicalDevice,
+                dynamicUbo.bufferSize,
+                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                dynamicUbo.buffer) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        renderer2D->quadData.dynamicData = dynamicUbo;
+
+        VkDescriptorSet* descriptorSets =
+                static_cast<VkDescriptorSet*>(malloc(swapchain.imageCount * sizeof(VkDescriptorSet)));
+
+        if (Renderer::createDescriptorSets(
+            deviceData,
+            descriptorSets,
+            &renderer2D->quadData.descriptorSetLayout,
+            &renderer2D->descriptorPool,
+            swapchain.imageCount,
+            &renderer2D->quadData.dynamicData.buffer) != VK_SUCCESS) {
+
+            ERROR("Failed to create descriptor sets!");
+            return false;
+        }
 
         return true;
     }

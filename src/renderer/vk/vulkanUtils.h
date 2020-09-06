@@ -148,6 +148,13 @@ namespace Renderer {
         uint32_t imageCount,
         Buffers::BufferData* uBuffers
     );
+
+    VkResult createDescriptorSetsV2(
+        VulkanDeviceData* deviceData,
+        VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
+        VkDescriptorPool* pool, uint32_t imageCount,
+        Buffers::BufferData* uBuffers, uint32_t bufferSize
+    );
 }
 
 #endif
