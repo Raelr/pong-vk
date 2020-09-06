@@ -12,13 +12,51 @@ So far, we've succeeded in getting multiple objects rendering to screen.
 
 <img src="https://github.com/Raelr/pong-vk/blob/master/assets/mulipleObjects.png" alt="Quads" width="400" height="300">
 
-The next step is to move render code into its own module. The plan is to explore the following features:
+We've built a simple API for rendering objects to the screen. The renderer currently allocates a new uniform buffer and descriptor set for all new objects on the screen. The API currently works as follows:
 
-* Push constants for handling transforms
-* Dynamic Uniform Buffers
-* Texture overlays
+```c++
+Renderer::Renderer renderer;
 
-With these, we should be able to create a simple renderer which can return quads and apply simple textures to them. 
+    // Let the renderer know that we want to load in default validation layers
+    Renderer::loadDefaultValidationLayers(&renderer);
+    Renderer::loadDefaultDeviceExtensions(&renderer);
+
+    if (Renderer::initialiseRenderer(&renderer, enableValidationLayers, window)
+        != Renderer::Status::SUCCESS) {
+        PONG_FATAL_ERROR("Failed to initialise renderer!");
+    }
+
+    // ------------------------ SCENE SETUP -----------------------------
+
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    Renderer::registerQuad2D(&renderer);
+    
+    [...]
+    
+    // Main Loop
+    
+    for (int i = 0; i < currentPlayers; i++) {
+        PlayerData& player = players[i];
+        Renderer::drawQuad(&renderer, player.position, player.rotation,
+            getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
+    }
+
+    if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
+        == Renderer::Status::FAILURE) {
+        ERROR("Error drawing frame - exiting main loop!");
+        break;
+    }
+    
+    [...]
+    
+    // Shutdown
+    
+    Renderer::cleanupRenderer(&renderer, enableValidationLayers);
+```
+Currently, the renderer relies on all objects being registered prior to the main loop. The next step is to implement a dynamic uniform buffer for uploading data to the GPU. This should allow us to allocate data dynamically so that scenes can be uploaded and flushed per frame. 
 
 ## Setup Notes
 
