@@ -50,6 +50,7 @@ namespace Renderer {
     // Drawing
     Status registerQuad2D(Renderer*);
     Status drawQuad(Renderer*, glm::vec3, glm::vec3, float, glm::vec3, uint32_t);
+    Status drawQuadV2(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex);
 }
 
 #endif //PONG_VK_RENDERER_H

@@ -16,7 +16,7 @@ namespace Renderer2D {
         Buffers::VertexBuffer vertexBuffer                      {0};
         Buffers::IndexBuffer indexBuffer                        {nullptr};
         Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {0};
-        VkDescriptorSet dynamicDescriptorSets[3]                {nullptr};
+        VkDescriptorSet* dynamicDescriptorSets                  {nullptr};
     };
 
     struct Renderer2DData {

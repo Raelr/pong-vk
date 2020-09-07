@@ -156,17 +156,20 @@ namespace Renderer2D {
         VkDescriptorSet* descriptorSets =
                 static_cast<VkDescriptorSet*>(malloc(swapchain.imageCount * sizeof(VkDescriptorSet)));
 
-        if (Renderer::createDescriptorSets(
+        if (Renderer::createDescriptorSetsV2(
             deviceData,
             descriptorSets,
             &renderer2D->quadData.descriptorSetLayout,
             &renderer2D->descriptorPool,
             swapchain.imageCount,
-            &renderer2D->quadData.dynamicData.buffer) != VK_SUCCESS) {
+            &renderer2D->quadData.dynamicData.buffer,
+            renderer2D->quadData.dynamicData.bufferSize) != VK_SUCCESS) {
 
             ERROR("Failed to create descriptor sets!");
             return false;
         }
+
+        renderer2D->quadData.dynamicDescriptorSets = descriptorSets;
 
         return true;
     }

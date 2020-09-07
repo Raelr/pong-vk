@@ -122,11 +122,16 @@ int main() {
             elapsed = 0;
         }
 
-//        for (int i = 0; i < currentPlayers; i++) {
-//            PlayerData& player = players[i];
-//            Renderer::drawQuad(&renderer, player.position, player.rotation,
-//                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
-//        }
+        for (int i = 0; i < currentPlayers; i++) {
+            PlayerData& player = players[i];
+            Renderer::drawQuadV2(&renderer, player.position, player.rotation,
+                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
+        }
+
+
+
+        // Refresh the renderer and start again next frame
+        renderer.renderer2DData.quadData.quadCount = 0;
 
 //        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
 //            == Renderer::Status::FAILURE) {

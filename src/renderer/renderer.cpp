@@ -492,4 +492,49 @@ namespace Renderer {
 
         return Status::SUCCESS;
     }
+
+    Status drawQuadV2(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {
+
+        uint32_t index = pRenderer->renderer2DData.quadData.quadCount;
+
+        glm::mat4* modelMat = (glm::mat4*)(((uint64_t)pRenderer->renderer2DData.quadData.dynamicData.data
+                + ( index * pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment)));
+
+        *modelMat = glm::translate(*modelMat, pos);
+        *modelMat = glm::rotate(*modelMat, degrees, rot);
+        *modelMat = glm::scale(*modelMat, scale);
+
+        // Set the view
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+        glm::mat4 proj = glm::ortho(
+                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2),
+                static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2,
+                static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2,
+                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2), -1.0f, 1.0f);
+
+        // Rotate the model matrix
+        *modelMat = proj * view * *modelMat;
+
+        uint32_t imageIdx = pRenderer->imageIndex;
+        VkDeviceMemory memory = pRenderer->renderer2DData.quadData.dynamicData.buffer.bufferMemory;
+
+        // Now we bind our data to the UBO for later use
+        void* data;
+        vkMapMemory(pRenderer->deviceData.logicalDevice, memory,0, VK_WHOLE_SIZE, 0, &data);
+        memcpy(data, pRenderer->renderer2DData.quadData.dynamicData.data, pRenderer->renderer2DData.quadData.dynamicData.bufferSize);
+
+
+        VkMappedMemoryRange mappedMemoryRange {};
+        mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        mappedMemoryRange.memory = pRenderer->renderer2DData.quadData.dynamicData.buffer.bufferMemory;
+        mappedMemoryRange.size = pRenderer->renderer2DData.quadData.dynamicData.bufferSize;
+        vkFlushMappedMemoryRanges(pRenderer->deviceData.logicalDevice, 1, &mappedMemoryRange);
+
+        vkUnmapMemory(pRenderer->deviceData.logicalDevice, memory);
+
+        pRenderer->renderer2DData.quadData.quadCount++;
+
+        return Status::SUCCESS;
+    }
 }

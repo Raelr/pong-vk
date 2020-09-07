@@ -20,6 +20,8 @@ namespace Renderer {
     Status createVulkanDeviceData(VulkanDeviceData*, GLFWwindow*, bool);
     VkDescriptorPoolSize initialisePoolSize(VkDescriptorType, u_int32_t);
     VkDescriptorSetLayoutBinding initiialiseDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, VkShaderStageFlags);
+    VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet, VkDescriptorType, uint32_t,
+        VkDescriptorBufferInfo*, uint32_t);
 }
 
 #endif //PONG_VK_INITIALISERS_H

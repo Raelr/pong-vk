@@ -381,4 +381,19 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
 
         return uboLayoutBinding;
     }
+
+    VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet set, VkDescriptorType type, uint32_t binding,
+        VkDescriptorBufferInfo* bufferInfo, uint32_t descriptorCount) {
+
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = set;
+        descriptorWrite.dstBinding = binding;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = type;
+        descriptorWrite.descriptorCount = descriptorCount;
+        descriptorWrite.pBufferInfo = bufferInfo;
+
+        return descriptorWrite;
+    }
 }

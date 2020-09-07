@@ -987,14 +987,9 @@ namespace Renderer {
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(Buffers::UniformBufferObject);
 
-            VkWriteDescriptorSet descriptorWrite{};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = sets[i];
-            descriptorWrite.dstBinding = 0; 
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
+            VkWriteDescriptorSet descriptorWrite =
+                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                                                    0, &bufferInfo, 1);
             
             vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite, 
                 0, nullptr);
@@ -1028,16 +1023,11 @@ namespace Renderer {
             VkDescriptorBufferInfo bufferInfo;
             bufferInfo.buffer = uBuffers->buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(Buffers::UniformBufferObject);
+            bufferInfo.range = bufferSize;
 
-            VkWriteDescriptorSet descriptorWrite{};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = sets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
+            VkWriteDescriptorSet descriptorWrite =
+                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+                        0, &bufferInfo, 1);
 
             vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite,
                                    0, nullptr);
