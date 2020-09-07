@@ -1,7 +1,7 @@
 #version 450
 
 // Layout the struct for handling a model-view projection
-layout (binding = 0) uniform UniformBufferObject {
+layout (binding = 1) uniform UniformBufferObject {
     mat4 mvp;
 } ubo;
 

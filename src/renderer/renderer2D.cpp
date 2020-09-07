@@ -29,7 +29,7 @@ namespace Renderer2D {
         // ============================== DESCRIPTOR SET LAYOUT ==============================
 
         VkDescriptorSetLayoutBinding layoutBindings[] {
-            Renderer::initiialiseDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT)
+            Renderer::initiialiseDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT)
         };
 
         if (Renderer::createDescriptorSetLayoutV2(deviceData->logicalDevice,

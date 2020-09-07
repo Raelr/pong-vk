@@ -1,8 +1,11 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "renderer.h"
 #include <cstring>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "vk/initialisers.h"
+#include <glm/gtx/string_cast.hpp>
+
 
 namespace Renderer {
 
@@ -59,7 +62,7 @@ namespace Renderer {
         // It should be noted that command buffers are automatically cleaned up when
         // the commandpool is destroyed. As such they require no explicit cleanup.
 
-        if (createCommandBuffers(
+        if (createCommandBuffersV2(
                 renderer->deviceData.logicalDevice,
                 renderer->commandBuffers,
                 &renderer->renderer2DData.graphicsPipeline,
@@ -68,8 +71,9 @@ namespace Renderer {
                 renderer->renderer2DData.commandPool,
                 &renderer->renderer2DData.quadData.vertexBuffer,
                 &renderer->renderer2DData.quadData.indexBuffer,
-                renderer->renderer2DData.quadData.descriptorSets,
-                renderer->renderer2DData.quadData.quadCount)
+                renderer->renderer2DData.quadData.dynamicDescriptorSets,
+                renderer->renderer2DData.quadData.quadCount,
+                renderer->renderer2DData.quadData.dynamicData.dynamicAlignment)
             != VK_SUCCESS) {
 
             ERROR("Failed to create command buffers!");
@@ -281,7 +285,7 @@ namespace Renderer {
             vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
-            if (rerecordCommandBuffer(
+            if (rerecordCommandBufferV2(
                     pRenderer->deviceData.logicalDevice,
                     &pRenderer->commandBuffers[pRenderer->imageIndex],
                     pRenderer->imageIndex,
@@ -291,8 +295,9 @@ namespace Renderer {
                     &pRenderer->renderer2DData.commandPool,
                     &pRenderer->renderer2DData.quadData.vertexBuffer,
                     &pRenderer->renderer2DData.quadData.indexBuffer,
-                    pRenderer->renderer2DData.quadData.descriptorSets,
-                    pRenderer->renderer2DData.quadData.quadCount) != VK_SUCCESS) {
+                    pRenderer->renderer2DData.quadData.dynamicDescriptorSets,
+                    pRenderer->renderer2DData.quadData.quadCount,
+                    pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment) != VK_SUCCESS) {
 
                 ERROR("Failed to create command buffers!");
                 return Status::FAILURE;
@@ -497,12 +502,11 @@ namespace Renderer {
 
         uint32_t index = pRenderer->renderer2DData.quadData.quadCount;
 
-        glm::mat4* modelMat = (glm::mat4*)(((uint64_t)pRenderer->renderer2DData.quadData.dynamicData.data
-                + ( index * pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment)));
+        glm::mat4 model = glm::mat4(1.0f);
 
-        *modelMat = glm::translate(*modelMat, pos);
-        *modelMat = glm::rotate(*modelMat, degrees, rot);
-        *modelMat = glm::scale(*modelMat, scale);
+        model = glm::translate(model, pos);
+        model = glm::rotate(model, degrees, rot);
+        model = glm::scale(model, scale);
 
         // Set the view
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -514,7 +518,8 @@ namespace Renderer {
                 -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2), -1.0f, 1.0f);
 
         // Rotate the model matrix
-        *modelMat = proj * view * *modelMat;
+        model = proj * view * model;
+        pRenderer->renderer2DData.quadData.dynamicData.data[pRenderer->renderer2DData.quadData.quadCount] = model;
 
         uint32_t imageIdx = pRenderer->imageIndex;
         VkDeviceMemory memory = pRenderer->renderer2DData.quadData.dynamicData.buffer.bufferMemory;
@@ -523,7 +528,6 @@ namespace Renderer {
         void* data;
         vkMapMemory(pRenderer->deviceData.logicalDevice, memory,0, VK_WHOLE_SIZE, 0, &data);
         memcpy(data, pRenderer->renderer2DData.quadData.dynamicData.data, pRenderer->renderer2DData.quadData.dynamicData.bufferSize);
-
 
         VkMappedMemoryRange mappedMemoryRange {};
         mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;

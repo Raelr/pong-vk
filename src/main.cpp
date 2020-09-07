@@ -111,6 +111,9 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
+        // Refresh the renderer and start again next frame
+        renderer.renderer2DData.quadData.quadCount = 0;
+
         currentTime = getTime();
         deltaTime = currentTime - oldTime;
         elapsed += deltaTime;
@@ -128,16 +131,11 @@ int main() {
                 getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
         }
 
-
-
-        // Refresh the renderer and start again next frame
-        renderer.renderer2DData.quadData.quadCount = 0;
-
-//        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
-//            == Renderer::Status::FAILURE) {
-//            ERROR("Error drawing frame - exiting main loop!");
-//            break;
-//        }
+        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
+            == Renderer::Status::FAILURE) {
+            ERROR("Error drawing frame - exiting main loop!");
+            break;
+        }
 
         oldTime = currentTime;
         frames++;
@@ -146,7 +144,7 @@ int main() {
     // --------------------------- CLEANUP ------------------------------
 
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
-    
+
     // GLFW cleanup
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -80,6 +80,20 @@ namespace Renderer {
         size_t objectCount
     );
 
+    VkResult createCommandBuffersV2(
+            VkDevice device,
+            VkCommandBuffer* buffers,
+            GraphicsPipelineData* pGraphicsPipeline,
+            SwapchainData* pSwapchain,
+            VkFramebuffer* pFramebuffers,
+            VkCommandPool commandPool,
+            Buffers::VertexBuffer*,
+            Buffers::IndexBuffer*,
+            VkDescriptorSet* descriptorSets,
+            size_t objectCount,
+            uint32_t dynamicAlignment
+    );
+
     VkResult rerecordCommandBuffer(
             VkDevice device,
             VkCommandBuffer* buffers,
@@ -92,6 +106,14 @@ namespace Renderer {
             Buffers::IndexBuffer*,
             VkDescriptorSet** descriptorSets,
             size_t objectCount
+    );
+
+    VkResult rerecordCommandBufferV2(
+        VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
+        GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
+        VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
+        Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
+        VkDescriptorSet* descriptorSets, size_t objectCount, uint32_t dynamicAlignment
     );
 
     VkResult recreateSwapchain(
