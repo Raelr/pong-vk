@@ -91,12 +91,32 @@ int main() {
     //Renderer::registerQuad2D(&renderer);
 
     PlayerData players[64];
-    uint32_t currentPlayers = 1;
+    uint32_t currentPlayers = 5;
 
     players[0] = {
         {-250.0f,-150.0f,1.0f},
         {0.0f,0.0f,1.0f},
         {200.0f,200.0f, 0.0f}, -90.0f, 0
+    };
+    players[1] = {
+            {250.0f, -150.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {200.0f,200.0f, 0.0f}, -90.0f, 1
+    };
+    players[2] = {
+            {-250.0f, 150.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {200.0f,200.0f, 0.0f}, 90.0f, 2
+    };
+    players[3] = {
+            {250.0f, 150.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {200.0f,200.0f, 0.0f}, 90.0f, 3
+    };
+    players[4] = {
+            {0.0f, 0.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {200.0f,200.0f, 0.0f}, 90.0f, 4
     };
 
     float oldTime = 0.0f;
@@ -130,6 +150,7 @@ int main() {
             Renderer::drawQuadV2(&renderer, player.position, player.rotation,
                 getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
         }
+
 
         if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
             == Renderer::Status::FAILURE) {

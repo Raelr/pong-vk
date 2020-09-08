@@ -500,7 +500,7 @@ namespace Renderer {
 
     Status drawQuadV2(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {
 
-        uint32_t index = pRenderer->renderer2DData.quadData.quadCount;
+        Buffers::DynamicUniformBuffer<glm::mat4>& dynamicUniformBuffer = pRenderer->renderer2DData.quadData.dynamicData;
 
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -519,9 +519,12 @@ namespace Renderer {
 
         // Rotate the model matrix
         model = proj * view * model;
-        pRenderer->renderer2DData.quadData.dynamicData.data[pRenderer->renderer2DData.quadData.quadCount] = model;
 
-        uint32_t imageIdx = pRenderer->imageIndex;
+        glm::mat4* modelMat = (glm::mat4*)(((uint64_t)dynamicUniformBuffer.data
+                + (pRenderer->renderer2DData.quadData.quadCount * dynamicUniformBuffer.dynamicAlignment)));
+
+        *modelMat = model;
+
         VkDeviceMemory memory = pRenderer->renderer2DData.quadData.dynamicData.buffer.bufferMemory;
 
         // Now we bind our data to the UBO for later use

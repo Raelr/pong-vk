@@ -1221,14 +1221,14 @@ namespace Renderer {
             VkDescriptorBufferInfo bufferInfo;
             bufferInfo.buffer = uBuffers->buffer;
             bufferInfo.offset = 0;
-            bufferInfo.range = bufferSize;
+            bufferInfo.range = VK_WHOLE_SIZE;
 
             VkWriteDescriptorSet descriptorWrite =
                     initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
                         1, &bufferInfo, 1);
 
             vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite,
-                                   0, nullptr);
+0, nullptr);
         }
 
         return VK_SUCCESS;
