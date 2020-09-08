@@ -27,12 +27,17 @@ Renderer::Renderer renderer;
     }
 
     // ------------------------ SCENE SETUP -----------------------------
+    
+    // Player Definition
+    
+    PlayerData players[64];
+    uint32_t currentPlayers = 1;
 
-    Renderer::registerQuad2D(&renderer);
-    Renderer::registerQuad2D(&renderer);
-    Renderer::registerQuad2D(&renderer);
-    Renderer::registerQuad2D(&renderer);
-    Renderer::registerQuad2D(&renderer);
+    players[0] = {
+        {-250.0f,-150.0f,1.0f},
+        {0.0f,0.0f,1.0f},
+        {200.0f,200.0f, 0.0f}, -90.0f, 0
+    };
     
     [...]
     
