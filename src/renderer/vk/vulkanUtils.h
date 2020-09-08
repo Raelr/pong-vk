@@ -22,11 +22,6 @@ namespace Renderer {
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 
     VkResult createDescriptorSetLayout(
-        VkDevice device,
-        VkDescriptorSetLayout* descriptorSetLayout
-    );
-
-    VkResult createDescriptorSetLayoutV2(
             VkDevice device,
             VkDescriptorSetLayout* descriptorSetLayout,
             VkDescriptorSetLayoutBinding* layoutBindings,
@@ -34,13 +29,6 @@ namespace Renderer {
     );
 
     VkResult createDescriptorPool(
-        VkDevice device,
-        uint32_t imageCount,
-        VkDescriptorPool* descriptorPool,
-        size_t objectCount
-    );
-
-    VkResult createDescriptorPoolV2(
             VkDevice,
             uint32_t,
             VkDescriptorPool*,
@@ -68,19 +56,6 @@ namespace Renderer {
     );
 
     VkResult createCommandBuffers(
-        VkDevice device,
-        VkCommandBuffer* buffers,
-        GraphicsPipelineData* pGraphicsPipeline,
-        SwapchainData* pSwapchain,
-        VkFramebuffer* pFramebuffers,
-        VkCommandPool commandPool,
-        Buffers::VertexBuffer*,
-        Buffers::IndexBuffer*,
-        VkDescriptorSet** descriptorSets,
-        size_t objectCount
-    );
-
-    VkResult createCommandBuffersV2(
             VkDevice device,
             VkCommandBuffer* buffers,
             GraphicsPipelineData* pGraphicsPipeline,
@@ -95,41 +70,11 @@ namespace Renderer {
     );
 
     VkResult rerecordCommandBuffer(
-            VkDevice device,
-            VkCommandBuffer* buffers,
-            size_t bufferIndex,
-            GraphicsPipelineData* pGraphicsPipeline,
-            SwapchainData* pSwapchain,
-            VkFramebuffer* pFramebuffers,
-            VkCommandPool* commandPool,
-            Buffers::VertexBuffer*,
-            Buffers::IndexBuffer*,
-            VkDescriptorSet** descriptorSets,
-            size_t objectCount
-    );
-
-    VkResult rerecordCommandBufferV2(
         VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
         GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
         VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
         Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
         VkDescriptorSet* descriptorSets, size_t objectCount, uint32_t dynamicAlignment
-    );
-
-    VkResult recreateSwapchain(
-        VulkanDeviceData* deviceData,
-        SwapchainData* pSwapchain,
-        GraphicsPipelineData* pGraphicsPipeline,
-        VkCommandPool commandPool,
-        VkFramebuffer* pFramebuffers,
-        Buffers::VertexBuffer* vertexBuffer,
-        Buffers::IndexBuffer* indexBuffer,
-        VkCommandBuffer* pCommandbuffers,
-        VkDescriptorSetLayout* descriptorSetLayout,
-        VkDescriptorPool* descriptorPool,
-        VkDescriptorSet** descriptorSets,
-        Buffers::BufferData* uniformBuffers,
-        size_t objectCount
     );
 
     void cleanupSwapchain(
@@ -162,15 +107,6 @@ namespace Renderer {
     );
 
     VkResult createDescriptorSets(
-        VulkanDeviceData* deviceData,
-        VkDescriptorSet* sets,
-        VkDescriptorSetLayout* layout,
-        VkDescriptorPool* pool,
-        uint32_t imageCount,
-        Buffers::BufferData* uBuffers
-    );
-
-    VkResult createDescriptorSetsV2(
         VulkanDeviceData* deviceData,
         VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
         VkDescriptorPool* pool, uint32_t imageCount,

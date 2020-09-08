@@ -147,10 +147,9 @@ int main() {
 
         for (int i = 0; i < currentPlayers; i++) {
             PlayerData& player = players[i];
-            Renderer::drawQuadV2(&renderer, player.position, player.rotation,
-                getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
+            Renderer::drawQuad(&renderer, player.position, player.rotation,
+                getTime() * glm::radians(player.rotationAngle), player.scale);
         }
-
 
         if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
             == Renderer::Status::FAILURE) {

@@ -28,8 +28,9 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData);
-    bool queueQuad(Renderer2DData*, Renderer::VulkanDeviceData*, Renderer::SwapchainData*);
     void cleanupRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*);
+    bool recreateRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* renderer2D,
+        Renderer::SwapchainData swapchain);
 }
 
 #endif //PONG_VK_RENDERER2D_H

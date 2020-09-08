@@ -62,7 +62,7 @@ namespace Renderer {
         // It should be noted that command buffers are automatically cleaned up when
         // the commandpool is destroyed. As such they require no explicit cleanup.
 
-        if (createCommandBuffersV2(
+        if (createCommandBuffers(
                 renderer->deviceData.logicalDevice,
                 renderer->commandBuffers,
                 &renderer->renderer2DData.graphicsPipeline,
@@ -284,7 +284,7 @@ namespace Renderer {
             vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
             // TODO: Change this to just accept a renderer.
-            if (rerecordCommandBufferV2(
+            if (rerecordCommandBuffer(
                     pRenderer->deviceData.logicalDevice,
                     &pRenderer->commandBuffers[pRenderer->imageIndex],
                     pRenderer->imageIndex,
@@ -312,20 +312,7 @@ namespace Renderer {
 
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
-            recreateSwapchain(
-                &pRenderer->deviceData,
-                &pRenderer->swapchainData,
-                &pRenderer->renderer2DData.graphicsPipeline,
-                pRenderer->renderer2DData.commandPool,
-                pRenderer->renderer2DData.frameBuffers,
-                &pRenderer->renderer2DData.quadData.vertexBuffer,
-                &pRenderer->renderer2DData.quadData.indexBuffer,
-                pRenderer->commandBuffers,
-                &pRenderer->renderer2DData.quadData.descriptorSetLayout,
-                &pRenderer->renderer2DData.descriptorPool,
-                pRenderer->renderer2DData.quadData.descriptorSets,
-                &pRenderer->renderer2DData.quadData.dynamicData.buffer,
-                pRenderer->renderer2DData.quadData.quadCount);
+            recreateSwapchain(pRenderer);
 
             *resized = false;
             // Go to the next iteration of the loop
@@ -412,20 +399,7 @@ namespace Renderer {
 
             // Re-create the swap chain in its entirety if the pipeline is no
             // longer valid or is out of date.
-            recreateSwapchain(
-                &pRenderer->deviceData,
-                &pRenderer->swapchainData,
-                &pRenderer->renderer2DData.graphicsPipeline,
-                pRenderer->renderer2DData.commandPool,
-                pRenderer->renderer2DData.frameBuffers,
-                &pRenderer->renderer2DData.quadData.vertexBuffer,
-                &pRenderer->renderer2DData.quadData.indexBuffer,
-                pRenderer->commandBuffers,
-                &pRenderer->renderer2DData.quadData.descriptorSetLayout,
-                &pRenderer->renderer2DData.descriptorPool,
-                pRenderer->renderer2DData.quadData.descriptorSets,
-                &pRenderer->renderer2DData.quadData.dynamicData.buffer,
-                pRenderer->renderer2DData.quadData.quadCount);
+            recreateSwapchain(pRenderer);
 
             *resized = false;
             return Status::SKIPPED_FRAME;
@@ -456,48 +430,7 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    // A wrapper method for quad drawing.
-    Status registerQuad2D(Renderer* pRenderer) {
-
-        Status success = (Renderer2D::queueQuad(&pRenderer->renderer2DData, &pRenderer->deviceData,
-                &pRenderer->swapchainData)) ? Status::SUCCESS : Status::INITIALIZATION_FAILURE;
-
-        return success;
-    }
-
-    Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {
-
-        Buffers::UniformBufferObject ubo{};
-
-        ubo.mvp = glm::translate(ubo.mvp, pos);
-        ubo.mvp = glm::rotate(ubo.mvp, degrees, rot);
-        ubo.mvp = glm::scale(ubo.mvp, scale);
-
-        // Set the view
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-
-        glm::mat4 proj = glm::ortho(
-                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2),
-                static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2,
-                static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2,
-                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2), -1.0f, 1.0f);
-
-        // Rotate the model matrix
-        ubo.mvp = proj * view * ubo.mvp;
-
-        uint32_t imageIdx = pRenderer->imageIndex;
-        VkDeviceMemory memory = pRenderer->renderer2DData.quadData.uniformBuffers[objectIndex][imageIdx].bufferMemory;
-
-        // Now we bind our data to the UBO for later use
-        void* data;
-        vkMapMemory(pRenderer->deviceData.logicalDevice, memory,0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(pRenderer->deviceData.logicalDevice, memory);
-
-        return Status::SUCCESS;
-    }
-
-    Status drawQuadV2(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, uint32_t objectIndex) {
+    Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale) {
 
         Buffers::DynamicUniformBuffer<glm::mat4>& dynamicUniformBuffer = pRenderer->renderer2DData.quadData.dynamicData;
 
@@ -542,5 +475,49 @@ namespace Renderer {
         pRenderer->renderer2DData.quadData.quadCount++;
 
         return Status::SUCCESS;
+    }
+
+    VkResult recreateSwapchain(Renderer* pRenderer) {
+
+        vkDeviceWaitIdle(pRenderer->deviceData.logicalDevice);
+
+        cleanupSwapchain(
+            pRenderer->deviceData.logicalDevice, &pRenderer->swapchainData,
+            &pRenderer->renderer2DData.graphicsPipeline,
+            pRenderer->renderer2DData.commandPool, pRenderer->renderer2DData.frameBuffers,
+            pRenderer->commandBuffers, &pRenderer->renderer2DData.quadData.dynamicData.buffer,
+            pRenderer->renderer2DData.descriptorPool
+        );
+
+        // Re-populate the swapchain
+        if (createSwapchain(&pRenderer->swapchainData, &pRenderer->deviceData) != VK_SUCCESS) {
+
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        if (!Renderer2D::recreateRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData, pRenderer->swapchainData)) {
+            ERROR("Failed to re-create swap chain on resize!");
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        if (createCommandBuffers(
+                pRenderer->deviceData.logicalDevice,
+                pRenderer->commandBuffers,
+                &pRenderer->renderer2DData.graphicsPipeline,
+                &pRenderer->swapchainData,
+                pRenderer->renderer2DData.frameBuffers,
+                pRenderer->renderer2DData.commandPool,
+                &pRenderer->renderer2DData.quadData.vertexBuffer,
+                &pRenderer->renderer2DData.quadData.indexBuffer,
+                pRenderer->renderer2DData.quadData.dynamicDescriptorSets,
+                pRenderer->renderer2DData.quadData.quadCount,
+                pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment)
+            != VK_SUCCESS) {
+
+            ERROR("Failed to create command buffers!");
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return VK_SUCCESS;
     }
 }

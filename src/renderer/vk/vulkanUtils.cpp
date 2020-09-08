@@ -91,36 +91,6 @@ namespace Renderer {
     }
 
     VkResult createDescriptorSetLayout( VkDevice device,
-        VkDescriptorSetLayout* descriptorSetLayout) {
-        
-        VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        // Aligns to the binding specified in our shader.
-        uboLayoutBinding.binding = 0;
-        // Specifies the type of descriptor
-        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        // How many descriptors there are (if appplicable)
-        uboLayoutBinding.descriptorCount = 1;
-        // Which stage this will be used in (the vertex stage)
-        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        uboLayoutBinding.pImmutableSamplers = nullptr;
-
-        // Now specify the struct for configuring the descriptor set.
-        VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutInfo.bindingCount = 1;
-        layoutInfo.pBindings = &uboLayoutBinding;
-
-        // Create the descriptor set
-        if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, 
-            descriptorSetLayout) != VK_SUCCESS) {
-            
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        return VK_SUCCESS;
-    }
-
-    VkResult createDescriptorSetLayoutV2( VkDevice device,
         VkDescriptorSetLayout* descriptorSetLayout, VkDescriptorSetLayoutBinding* layoutBindings,
         uint32_t layoutBindingCount) {
 
@@ -139,36 +109,8 @@ namespace Renderer {
 
         return VK_SUCCESS;
     }
-    
+
     VkResult createDescriptorPool(
-        VkDevice device,
-        uint32_t imageCount,
-        VkDescriptorPool* descriptorPool,
-        size_t objectCount
-    ) {
-
-        VkDescriptorPoolSize sizes[objectCount];
-
-        for (int i = 0; i < objectCount; i++) {
-
-            sizes[i] = Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, imageCount * objectCount);
-        }
-
-        VkDescriptorPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = objectCount;
-        poolInfo.pPoolSizes = sizes;
-        poolInfo.maxSets = imageCount * objectCount;
-        
-        if (vkCreateDescriptorPool(device, &poolInfo, nullptr, descriptorPool)
-            != VK_SUCCESS) {
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        return VK_SUCCESS;
-    }
-
-    VkResult createDescriptorPoolV2(
             VkDevice device,
             uint32_t imageCount,
             VkDescriptorPool* descriptorPool,
@@ -468,107 +410,7 @@ namespace Renderer {
     }
 
     // Command buffer creation method
-    VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers, 
-        GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
-        VkFramebuffer* pFramebuffers, VkCommandPool commandPool, 
-        Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer, 
-        VkDescriptorSet** descriptorSets, size_t objectCount) {
-        
-        // We alocate command buffers by using a CommandBufferAllocationInfo struct.
-        // // This struct specifies a command pool, as well as the number of buffers to
-        // allocate.·
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = commandPool;
-        // Specifies that these buffers can be submitted to a queue for 
-        // execution, but can't be called by other command buffers.
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = pSwapchain->imageCount;
-  
-        // Now we can start allocating our command buffers!
-        if (vkAllocateCommandBuffers(device, &allocInfo, buffers) 
-                != VK_SUCCESS) {
-           
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        // Now we need to start recording the command buffer. Recording a 
-        // command buffer entails taking the draw commands and recording the 
-        // same set of commands into them.
-
-        for (size_t i = 0; i < pSwapchain->imageCount; i++) {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO; 
-  
-           if (vkBeginCommandBuffer(buffers[i], &beginInfo) != VK_SUCCESS) {
-               return VK_ERROR_INITIALIZATION_FAILED;
-           }
-   
-           // Now we can start setting up our render pass. Render passes are 
-           // configured using a RenderPassBeginInfo struct:
-  
-           VkRenderPassBeginInfo renderPassInfo{};
-           renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-           // Pass in our renderPass
-           renderPassInfo.renderPass = pGraphicsPipeline->renderPass;
-           // Get the specific renderpass.
-           renderPassInfo.framebuffer = pFramebuffers[i];
-           // These parameters define the size of the render area. Pixels 
-           // outside the specified regions will have undefined values. For 
-           // best performance, the render extent should match the size of the 
-           // attachments.
-           renderPassInfo.renderArea.offset = {0,0};
-           renderPassInfo.renderArea.extent = pSwapchain->swapchainExtent;
-           // Now we can define a clear color. This color is used as a load 
-           // operation for the color attachment. In our case we're setting it 
-           // to black.
-           VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
-           renderPassInfo.clearValueCount = 1;
-           renderPassInfo.pClearValues = &clearColor;
- 
-           // Specify that render pass commands will be embedded in the primary 
-           // command buffer. No secondary command buffers wll be executed.
-           vkCmdBeginRenderPass(buffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-  
-           // Once the render pass has started, we can now attach the graphics pipeline. The second·
-           // parameter of this function call specifies whether this pipeline object is a graphics·
-           // or compute pipeline.
-           vkCmdBindPipeline(buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
-            
-           // Specify a list of vertex buffers that need to be recorded by the command buffer
-           VkBuffer vertexBuffers[] = { vertexBuffer->bufferData.buffer };
-           VkDeviceSize offsets[] = {0};
-
-           // Bind the vertex buffers to the command buffer being recorded.
-           vkCmdBindVertexBuffers(buffers[i], 0, 1, vertexBuffers, offsets);
-           
-           vkCmdBindIndexBuffer(buffers[i], indexBuffer->bufferData.buffer, 0, 
-                VK_INDEX_TYPE_UINT16);
-            
-           for (size_t j = 0; j < objectCount; j++) {
-
-                vkCmdBindDescriptorSets(buffers[i],
-                VK_PIPELINE_BIND_POINT_GRAPHICS, 
-                pGraphicsPipeline->pipelineLayout, 0, 1, &descriptorSets[j][i],
-                0, nullptr);
-
-                // Now we can tell Vulkan to draw our triangle. This function has the parameters:
-                vkCmdDrawIndexed(buffers[i], indexBuffer->indexCount, 1, 0, 0, 0);
-           } 
-           // Now we can end the render pass:
-           vkCmdEndRenderPass(buffers[i]);
-  
-           //  Now we can end the command buffer recording
-           if (vkEndCommandBuffer(buffers[i]) != VK_SUCCESS) {
-               return VK_ERROR_INITIALIZATION_FAILED;
-           }
-        }
-
-        return VK_SUCCESS;
-    }
-
-    // Command buffer creation method
-    VkResult createCommandBuffersV2(VkDevice device, VkCommandBuffer* buffers,
+    VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers,
                                   GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
                                   VkFramebuffer* pFramebuffers, VkCommandPool commandPool,
                                   Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
@@ -669,101 +511,8 @@ namespace Renderer {
         return VK_SUCCESS;
     }
 
-
-
     // Command buffer creation method
     VkResult rerecordCommandBuffer(
-            VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
-            GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
-            VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
-            Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
-            VkDescriptorSet** descriptorSets, size_t objectCount) {
-
-        // We allocate command buffers by using a CommandBufferAllocationInfo struct.
-        // // This struct specifies a command pool, as well as the number of buffers to
-        // allocate.·
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = *commandPool;
-        // Specifies that these buffers can be submitted to a queue for
-        // execution, but can't be called by other command buffers.
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = pSwapchain->imageCount;
-
-        // Now we need to start recording the command buffer. Recording a
-        // command buffer entails taking the draw commands and recording the
-        // same set of commands into them.
-
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-            if (vkBeginCommandBuffer(*buffer, &beginInfo) != VK_SUCCESS) {
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
-
-            // Now we can start setting up our render pass. Render passes are
-            // configured using a RenderPassBeginInfo struct:
-
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            // Pass in our renderPass
-            renderPassInfo.renderPass = pGraphicsPipeline->renderPass;
-            // Get the specific renderpass.
-            renderPassInfo.framebuffer = pFramebuffers[bufferIndex];
-            // These parameters define the size of the render area. Pixels
-            // outside the specified regions will have undefined values. For
-            // best performance, the render extent should match the size of the
-            // attachments.
-            renderPassInfo.renderArea.offset = {0,0};
-            renderPassInfo.renderArea.extent = pSwapchain->swapchainExtent;
-            // Now we can define a clear color. This color is used as a load
-            // operation for the color attachment. In our case we're setting it
-            // to black.
-            VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
-            renderPassInfo.clearValueCount = 1;
-            renderPassInfo.pClearValues = &clearColor;
-
-            // Specify that render pass commands will be embedded in the primary
-            // command buffer. No secondary command buffers wll be executed.
-            vkCmdBeginRenderPass(*buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-            // Once the render pass has started, we can now attach the graphics pipeline. The second·
-            // parameter of this function call specifies whether this pipeline object is a graphics·
-            // or compute pipeline.
-            vkCmdBindPipeline(*buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pGraphicsPipeline->graphicsPipeline);
-
-            // Specify a list of vertex buffers that need to be recorded by the command buffer
-            VkBuffer vertexBuffers[] = { vertexBuffer->bufferData.buffer };
-            VkDeviceSize offsets[] = {0};
-
-            // Bind the vertex buffers to the command buffer being recorded.
-            vkCmdBindVertexBuffers(*buffer, 0, 1, vertexBuffers, offsets);
-
-            vkCmdBindIndexBuffer(*buffer, indexBuffer->bufferData.buffer, 0,
-                                 VK_INDEX_TYPE_UINT16);
-
-            for (size_t j = 0; j < objectCount; j++) {
-
-                vkCmdBindDescriptorSets(*buffer,VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pGraphicsPipeline->pipelineLayout, 0, 1,
-                    &descriptorSets[j][bufferIndex],0, nullptr);
-
-                // Now we can tell Vulkan to draw our triangle. This function has the parameters:
-                vkCmdDrawIndexed(*buffer, indexBuffer->indexCount, 1, 0, 0, 0);
-            }
-            // Now we can end the render pass:
-            vkCmdEndRenderPass(*buffer);
-
-            //  Now we can end the command buffer recording
-            if (vkEndCommandBuffer(*buffer) != VK_SUCCESS) {
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
-
-        return VK_SUCCESS;
-    }
-
-    // Command buffer creation method
-    VkResult rerecordCommandBufferV2(
             VkDevice device, VkCommandBuffer* buffer, size_t bufferIndex,
             GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
             VkFramebuffer* pFramebuffers, VkCommandPool* commandPool,
@@ -856,86 +605,6 @@ namespace Renderer {
         return VK_SUCCESS;
     }
 
-    VkResult recreateSwapchain(
-        VulkanDeviceData* deviceData,
-        SwapchainData* pSwapchain,
-        GraphicsPipelineData* pGraphicsPipeline,
-        VkCommandPool commandPool,
-        VkFramebuffer* pFramebuffers,
-        Buffers::VertexBuffer* vertexBuffer,
-        Buffers::IndexBuffer* indexBuffer,
-        VkCommandBuffer* pCommandbuffers,
-        VkDescriptorSetLayout* descriptorSetLayout,
-        VkDescriptorPool* descriptorPool,
-        VkDescriptorSet** descriptorSets,
-        Buffers::BufferData* uniformBuffers,
-        size_t objectCount
-    ) {
-
-        vkDeviceWaitIdle(deviceData->logicalDevice);
-
-        cleanupSwapchain(deviceData->logicalDevice, pSwapchain, pGraphicsPipeline, 
-            commandPool, pFramebuffers, pCommandbuffers, uniformBuffers, 
-            *descriptorPool);
-        
-        // Re-populate the swapchain
-        if (createSwapchain(pSwapchain, deviceData) != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-        // Re-create our render pass
-        if (createRenderPass(deviceData->logicalDevice, pSwapchain->swapchainFormat,
-            pGraphicsPipeline) != VK_SUCCESS) {
-            
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-        // Re-create our graphics pipeline
-        if (createGraphicsPipeline(deviceData->logicalDevice, pGraphicsPipeline,
-            pSwapchain, descriptorSetLayout) != VK_SUCCESS) {
-         
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-        // Re-create our framebuffers
-        if (createFramebuffer(deviceData->logicalDevice, pFramebuffers,
-            pSwapchain, pGraphicsPipeline) != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        if (createDescriptorPool(deviceData->logicalDevice, pSwapchain->imageCount, 
-            descriptorPool, objectCount) != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        for (size_t i = 0; i < objectCount; i++) {
-
-            if (createUniformBuffers(deviceData, uniformBuffers,
-                pSwapchain->imageCount) != VK_SUCCESS) {
-
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
-
-            if (createDescriptorSets(deviceData, descriptorSets[i], descriptorSetLayout,
-                 descriptorPool, pSwapchain->imageCount, uniformBuffers)
-                != VK_SUCCESS) {
-
-                return VK_ERROR_INITIALIZATION_FAILED;
-            }
-        }
-
-        // Re-create command buffers
-        if (createCommandBuffers(deviceData->logicalDevice, pCommandbuffers,
-            pGraphicsPipeline, pSwapchain, pFramebuffers, commandPool, 
-            vertexBuffer, indexBuffer, descriptorSets, objectCount) 
-            != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        return VK_SUCCESS;
-    }
-    
     // Simple method for cleaning up all items relating to our swapchain
     void cleanupSwapchain(
         VkDevice device,
@@ -1154,44 +823,7 @@ namespace Renderer {
         return VK_SUCCESS;
     }
 
-    VkResult createDescriptorSets(VulkanDeviceData* deviceData,
-        VkDescriptorSet* sets, VkDescriptorSetLayout* layout, 
-        VkDescriptorPool* pool, uint32_t imageCount, 
-        Buffers::BufferData* uBuffers) {
-
-        std::vector<VkDescriptorSetLayout> layouts(imageCount, *layout);
-
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = *pool;
-        allocInfo.descriptorSetCount = imageCount;
-        allocInfo.pSetLayouts = layouts.data();
-
-        if (vkAllocateDescriptorSets(deviceData->logicalDevice, &allocInfo,
-                                     sets) != VK_SUCCESS) {
-
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
-        for (size_t i = 0; i < imageCount; i++) {
-            
-            VkDescriptorBufferInfo bufferInfo; 
-            bufferInfo.buffer = uBuffers->buffer;
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(Buffers::UniformBufferObject);
-
-            VkWriteDescriptorSet descriptorWrite =
-                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                                                    0, &bufferInfo, 1);
-            
-            vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite, 
-                0, nullptr);
-        }
-
-        return VK_SUCCESS;
-    }
-
-    VkResult createDescriptorSetsV2(
+    VkResult createDescriptorSets(
             VulkanDeviceData* deviceData,
             VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
             VkDescriptorPool* pool, uint32_t imageCount,
