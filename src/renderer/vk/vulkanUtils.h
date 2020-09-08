@@ -128,7 +128,7 @@ namespace Renderer {
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
         VkDescriptorSet** descriptorSets,
-        Buffers::BufferData** uniformBuffers,
+        Buffers::BufferData* uniformBuffers,
         size_t objectCount
     );
 
@@ -139,9 +139,8 @@ namespace Renderer {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers,
-        Buffers::BufferData** uniformBuffers,
-        VkDescriptorPool& descriptorPool,
-        size_t objectCount
+        Buffers::BufferData* uniformBuffers,
+        VkDescriptorPool& descriptorPool
     );
 
     VkResult createVertexBuffer(

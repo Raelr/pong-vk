@@ -868,7 +868,7 @@ namespace Renderer {
         VkDescriptorSetLayout* descriptorSetLayout,
         VkDescriptorPool* descriptorPool,
         VkDescriptorSet** descriptorSets,
-        Buffers::BufferData** uniformBuffers,
+        Buffers::BufferData* uniformBuffers,
         size_t objectCount
     ) {
 
@@ -876,7 +876,7 @@ namespace Renderer {
 
         cleanupSwapchain(deviceData->logicalDevice, pSwapchain, pGraphicsPipeline, 
             commandPool, pFramebuffers, pCommandbuffers, uniformBuffers, 
-            *descriptorPool, objectCount);
+            *descriptorPool);
         
         // Re-populate the swapchain
         if (createSwapchain(pSwapchain, deviceData) != VK_SUCCESS) {
@@ -910,14 +910,14 @@ namespace Renderer {
 
         for (size_t i = 0; i < objectCount; i++) {
 
-            if (createUniformBuffers(deviceData, uniformBuffers[i],
+            if (createUniformBuffers(deviceData, uniformBuffers,
                 pSwapchain->imageCount) != VK_SUCCESS) {
 
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
 
             if (createDescriptorSets(deviceData, descriptorSets[i], descriptorSetLayout,
-                 descriptorPool, pSwapchain->imageCount, uniformBuffers[i])
+                 descriptorPool, pSwapchain->imageCount, uniformBuffers)
                 != VK_SUCCESS) {
 
                 return VK_ERROR_INITIALIZATION_FAILED;
@@ -944,9 +944,8 @@ namespace Renderer {
         VkCommandPool commandPool,
         VkFramebuffer* pFramebuffers,
         VkCommandBuffer* pCommandbuffers,
-        Buffers::BufferData** uniformBuffers,
-        VkDescriptorPool& descriptorPool,
-        size_t objectCount) {
+        Buffers::BufferData* uniformBuffers,
+        VkDescriptorPool& descriptorPool) {
 
         for (size_t i = 0; i < pSwapchain->imageCount; i++) {
             vkDestroyFramebuffer(device, pFramebuffers[i], nullptr);
@@ -974,12 +973,8 @@ namespace Renderer {
         // Destroy the Swapchain
         vkDestroySwapchainKHR(device, pSwapchain->swapchain, nullptr);
 
-        for (size_t i = 0; i < objectCount; i++) {
-            for (size_t j = 0; j < pSwapchain->imageCount; j++) {
-                vkDestroyBuffer(device, uniformBuffers[i][j].buffer, nullptr);
-                vkFreeMemory(device, uniformBuffers[i][j].bufferMemory, nullptr);
-            }
-        }
+        vkDestroyBuffer(device, uniformBuffers->buffer, nullptr);
+        vkFreeMemory(device, uniformBuffers->bufferMemory, nullptr);
 
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     }

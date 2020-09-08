@@ -144,9 +144,8 @@ namespace Renderer {
             pRenderer->renderer2DData.commandPool,
             pRenderer->renderer2DData.frameBuffers,
             pRenderer->commandBuffers,
-            pRenderer->renderer2DData.quadData.uniformBuffers,
-            pRenderer->renderer2DData.descriptorPool,
-            pRenderer->renderer2DData.quadData.quadCount
+            &pRenderer->renderer2DData.quadData.dynamicData.buffer,
+            pRenderer->renderer2DData.descriptorPool
         );
 
         Renderer2D::cleanupRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData);
@@ -325,7 +324,7 @@ namespace Renderer {
                 &pRenderer->renderer2DData.quadData.descriptorSetLayout,
                 &pRenderer->renderer2DData.descriptorPool,
                 pRenderer->renderer2DData.quadData.descriptorSets,
-                pRenderer->renderer2DData.quadData.uniformBuffers,
+                &pRenderer->renderer2DData.quadData.dynamicData.buffer,
                 pRenderer->renderer2DData.quadData.quadCount);
 
             *resized = false;
@@ -425,7 +424,7 @@ namespace Renderer {
                 &pRenderer->renderer2DData.quadData.descriptorSetLayout,
                 &pRenderer->renderer2DData.descriptorPool,
                 pRenderer->renderer2DData.quadData.descriptorSets,
-                pRenderer->renderer2DData.quadData.uniformBuffers,
+                &pRenderer->renderer2DData.quadData.dynamicData.buffer,
                 pRenderer->renderer2DData.quadData.quadCount);
 
             *resized = false;
