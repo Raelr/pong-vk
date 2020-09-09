@@ -10,9 +10,7 @@ namespace Renderer2D {
     struct QuadData {
         VkDescriptorSetLayout descriptorSetLayout               {VK_NULL_HANDLE};
         size_t quadCount                                        {0};
-        VkDescriptorSet* descriptorSets[64]                     {nullptr};
-        Buffers::BufferData* uniformBuffers[64]                 {nullptr};
-        size_t maxQuads                                         {64};
+        size_t maxQuads                                         {256};
         Buffers::VertexBuffer vertexBuffer                      {0};
         Buffers::IndexBuffer indexBuffer                        {nullptr};
         Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {0};
@@ -25,6 +23,7 @@ namespace Renderer2D {
         VkFramebuffer* frameBuffers                         { VK_NULL_HANDLE };
         VkCommandPool commandPool                           { VK_NULL_HANDLE };
         VkDescriptorPool descriptorPool                     { VK_NULL_HANDLE };
+        VkCommandBuffer* commandBuffers                     {nullptr};
     };
 
     bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData);

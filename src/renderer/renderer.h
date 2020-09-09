@@ -25,7 +25,6 @@ namespace Renderer {
         VkFence* imagesInFlight                     {nullptr};
         uint32_t currentFrame                       {0};
         uint32_t imageIndex                         {0};
-        VkCommandBuffer* commandBuffers             {nullptr};
     };
 
     // Device creation functions

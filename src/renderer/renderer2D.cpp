@@ -171,12 +171,43 @@ namespace Renderer2D {
 
         renderer2D->quadData.dynamicDescriptorSets = descriptorSets;
 
+        // =============================== COMMAND BUFFERS ==================================
+
+        renderer2D->commandBuffers = static_cast<VkCommandBuffer *>(malloc(
+                swapchain.imageCount * sizeof(VkCommandBuffer)));
+
+        // With the command pool created, we can now start creating and allocating
+        // command buffers. Because these commands involve allocating a framebuffer,
+        // we'll need to record a command buffer for every image in the swap chain.
+
+        // It should be noted that command buffers are automatically cleaned up when
+        // the commandpool is destroyed. As such they require no explicit cleanup.
+
+        if (createCommandBuffers(
+                deviceData->logicalDevice,
+                renderer2D->commandBuffers,
+                &renderer2D->graphicsPipeline,
+                &swapchain,
+                renderer2D->frameBuffers,
+                renderer2D->commandPool,
+                &renderer2D->quadData.vertexBuffer,
+                &renderer2D->quadData.indexBuffer,
+                renderer2D->quadData.dynamicDescriptorSets,
+                renderer2D->quadData.quadCount,
+                renderer2D->quadData.dynamicData.dynamicAlignment)
+            != VK_SUCCESS) {
+
+            ERROR("Failed to create command buffers!");
+            return false;
+        }
+
         return true;
     }
 
     void cleanupRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* pRenderer) {
 
         free(pRenderer->frameBuffers);
+        free(pRenderer->quadData.dynamicDescriptorSets);
 
         vkDestroyDescriptorSetLayout(deviceData->logicalDevice,
                                      pRenderer->quadData.descriptorSetLayout,nullptr);
@@ -196,6 +227,7 @@ namespace Renderer2D {
                      pRenderer->quadData.indexBuffer.bufferData.bufferMemory, nullptr);
 
         Buffers::alignedFree(pRenderer->quadData.dynamicData.data);
+        free(pRenderer->commandBuffers);
     }
 
     bool recreateRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* renderer2D,
@@ -206,18 +238,6 @@ namespace Renderer2D {
         if (Renderer::createRenderPass(deviceData->logicalDevice, swapchain.swapchainFormat,
                                        &renderer2D->graphicsPipeline) != VK_SUCCESS) {
             ERROR("Failed to create render pass!");
-            return false;
-        }
-
-        // ============================== DESCRIPTOR SET LAYOUT ==============================
-
-        VkDescriptorSetLayoutBinding layoutBindings[] {
-                Renderer::initiialiseDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT)
-        };
-
-        if (Renderer::createDescriptorSetLayout(deviceData->logicalDevice,
-                                                  &renderer2D->quadData.descriptorSetLayout, layoutBindings, 1) != VK_SUCCESS) {
-            ERROR("Failed to create descriptor set layout!");
             return false;
         }
 

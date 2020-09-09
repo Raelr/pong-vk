@@ -50,36 +50,6 @@ namespace Renderer {
 
         INFO("Initialised renderer2D!");
 
-        // =============================== COMMAND BUFFERS ==================================
-
-        renderer->commandBuffers = static_cast<VkCommandBuffer *>(malloc(
-                renderer->swapchainData.imageCount * sizeof(VkCommandBuffer)));
-
-        // With the command pool created, we can now start creating and allocating
-        // command buffers. Because these commands involve allocating a framebuffer,
-        // we'll need to record a command buffer for every image in the swap chain.
-
-        // It should be noted that command buffers are automatically cleaned up when
-        // the commandpool is destroyed. As such they require no explicit cleanup.
-
-        if (createCommandBuffers(
-                renderer->deviceData.logicalDevice,
-                renderer->commandBuffers,
-                &renderer->renderer2DData.graphicsPipeline,
-                &renderer->swapchainData,
-                renderer->renderer2DData.frameBuffers,
-                renderer->renderer2DData.commandPool,
-                &renderer->renderer2DData.quadData.vertexBuffer,
-                &renderer->renderer2DData.quadData.indexBuffer,
-                renderer->renderer2DData.quadData.dynamicDescriptorSets,
-                renderer->renderer2DData.quadData.quadCount,
-                renderer->renderer2DData.quadData.dynamicData.dynamicAlignment)
-            != VK_SUCCESS) {
-
-            ERROR("Failed to create command buffers!");
-            return Status::INITIALIZATION_FAILURE;
-        }
-
 
         // ================================ SYNC OBJECTS ====================================
 
@@ -143,7 +113,7 @@ namespace Renderer {
             &pRenderer->renderer2DData.graphicsPipeline,
             pRenderer->renderer2DData.commandPool,
             pRenderer->renderer2DData.frameBuffers,
-            pRenderer->commandBuffers,
+            pRenderer->renderer2DData.commandBuffers,
             &pRenderer->renderer2DData.quadData.dynamicData.buffer,
             pRenderer->renderer2DData.descriptorPool
         );
@@ -163,13 +133,6 @@ namespace Renderer {
         free(pRenderer->imageAvailableSemaphores);
         free(pRenderer->inFlightFences);
         free(pRenderer->renderFinishedSemaphores);
-        free(pRenderer->commandBuffers);
-
-        // Free memory associated with descriptor sets and uniform buffers
-        for (size_t i = 0; i < pRenderer->renderer2DData.quadData.quadCount; i++) {
-            free(pRenderer->renderer2DData.quadData.descriptorSets[i]);
-            free(pRenderer->renderer2DData.quadData.uniformBuffers[i]);
-        }
 
         vkDestroyCommandPool(pRenderer->deviceData.logicalDevice, pRenderer->renderer2DData.commandPool,
     nullptr);
@@ -281,12 +244,12 @@ namespace Renderer {
         if (vkGetFenceStatus(pRenderer->deviceData.logicalDevice, pRenderer->inFlightFences[pRenderer->currentFrame])
             == VK_SUCCESS) {
 
-            vkResetCommandBuffer(pRenderer->commandBuffers[pRenderer->imageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+            vkResetCommandBuffer(pRenderer->renderer2DData.commandBuffers[pRenderer->imageIndex],
+            VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
-            // TODO: Change this to just accept a renderer.
             if (rerecordCommandBuffer(
                     pRenderer->deviceData.logicalDevice,
-                    &pRenderer->commandBuffers[pRenderer->imageIndex],
+                    &pRenderer->renderer2DData.commandBuffers[pRenderer->imageIndex],
                     pRenderer->imageIndex,
                     &pRenderer->renderer2DData.graphicsPipeline,
                     &pRenderer->swapchainData,
@@ -298,7 +261,7 @@ namespace Renderer {
                     pRenderer->renderer2DData.quadData.quadCount,
                     pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment) != VK_SUCCESS) {
 
-                ERROR("Failed to create command buffers!");
+                ERROR("Failed to re-record command buffer!");
                 return Status::FAILURE;
             }
         }
@@ -351,7 +314,7 @@ namespace Renderer {
         // Now we need to specify which command buffers to submit to. In our
         // case we need to submit to the buffer which corresponds to our image.
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &pRenderer->commandBuffers[pRenderer->imageIndex];
+        submitInfo.pCommandBuffers = &pRenderer->renderer2DData.commandBuffers[pRenderer->imageIndex];
         // Now we specify which semaphores we need to signal once our command buffers
         // have finished execution.
         VkSemaphore signalSemaphores[] = { pRenderer->renderFinishedSemaphores[pRenderer->currentFrame] };
@@ -485,7 +448,7 @@ namespace Renderer {
             pRenderer->deviceData.logicalDevice, &pRenderer->swapchainData,
             &pRenderer->renderer2DData.graphicsPipeline,
             pRenderer->renderer2DData.commandPool, pRenderer->renderer2DData.frameBuffers,
-            pRenderer->commandBuffers, &pRenderer->renderer2DData.quadData.dynamicData.buffer,
+            pRenderer->renderer2DData.commandBuffers, &pRenderer->renderer2DData.quadData.dynamicData.buffer,
             pRenderer->renderer2DData.descriptorPool
         );
 
@@ -502,7 +465,7 @@ namespace Renderer {
 
         if (createCommandBuffers(
                 pRenderer->deviceData.logicalDevice,
-                pRenderer->commandBuffers,
+                pRenderer->renderer2DData.commandBuffers,
                 &pRenderer->renderer2DData.graphicsPipeline,
                 &pRenderer->swapchainData,
                 pRenderer->renderer2DData.frameBuffers,
