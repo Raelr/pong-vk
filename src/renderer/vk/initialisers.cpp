@@ -396,4 +396,17 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
 
         return descriptorWrite;
     }
+
+    VkPipelineShaderStageCreateInfo initialisePipelineShaderStageCreateInfo(
+        VkShaderStageFlagBits shaderStage, VkShaderModule shaderModule, const char* pName) {
+
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType
+                = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = shaderStage;
+        vertShaderStageInfo.module = shaderModule;
+        vertShaderStageInfo.pName = "main";
+
+        return vertShaderStageInfo;
+    }
 }

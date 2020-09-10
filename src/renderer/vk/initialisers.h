@@ -19,9 +19,12 @@ namespace Renderer {
     Status initialiseVulkanInstance(VulkanDeviceData*, bool, const char*, const char*);
     Status createVulkanDeviceData(VulkanDeviceData*, GLFWwindow*, bool);
     VkDescriptorPoolSize initialisePoolSize(VkDescriptorType, u_int32_t);
-    VkDescriptorSetLayoutBinding initiialiseDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, VkShaderStageFlags);
+    VkDescriptorSetLayoutBinding initiialiseDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t,
+        VkShaderStageFlags);
     VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet, VkDescriptorType, uint32_t,
         VkDescriptorBufferInfo*, uint32_t);
+    VkPipelineShaderStageCreateInfo initialisePipelineShaderStageCreateInfo(
+        VkShaderStageFlagBits shaderStage, VkShaderModule shaderModule, const char* pName);
 }
 
 #endif //PONG_VK_INITIALISERS_H

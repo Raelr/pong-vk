@@ -153,32 +153,15 @@ namespace Renderer {
         VkShaderModule vertShaderModule = createShaderModule(vert, device);
         VkShaderModule fragShaderModule = createShaderModule(frag, device);
 
-        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-        vertShaderStageInfo.sType 
-                = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        // This variable tells Vulkan to insert this into the vertex shader 
-        // stage
-        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        // Specify the shader module to be used.
-        vertShaderStageInfo.module = vertShaderModule;
-        // Specify the entrypoint to the shader (i.e: the main function)
-        vertShaderStageInfo.pName = "main";
-        // Frag shader create info:
-        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-        fragShaderStageInfo.sType 
-                = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        // This variable tells Vulkan to insert this into the fragment 
-        // shader stage
-        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        // Specify the shader module to be used.
-        fragShaderStageInfo.module = fragShaderModule;
-        // Specify the entrypoint to the shader (i.e: the main function)
-        fragShaderStageInfo.pName = "main";
         // Store the stage information in an array for now - will be used 
         // later.
         VkPipelineShaderStageCreateInfo shaderStages[] = {
-            vertShaderStageInfo,
-            fragShaderStageInfo
+            // Vertex shader
+            initialisePipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule,
+        "main"),
+            // Fragment Shader
+            initialisePipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule,
+        "main")
         };
 
         // Now that we've loaded in the shaders we can start creating defining
@@ -190,19 +173,16 @@ namespace Renderer {
 
         // Defines how vertex data will be formatted in the shader.
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-        vertexInputInfo.sType = 
-                VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 1;
         // Describes details for loading vertex data.
         vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-        vertexInputInfo.vertexAttributeDescriptionCount = 
-            static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         // Next, define the input assembly, or the kind of geometry drawn.
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-        inputAssembly.sType = 
-                VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         // Specifies that we'll draw a triangle from every 3 vertices
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
@@ -410,11 +390,12 @@ namespace Renderer {
     }
 
     // Command buffer creation method
-    VkResult createCommandBuffers(VkDevice device, VkCommandBuffer* buffers,
-                                  GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
-                                  VkFramebuffer* pFramebuffers, VkCommandPool commandPool,
-                                  Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
-                                  VkDescriptorSet* descriptorSets, size_t objectCount, uint32_t dynamicAlignment) {
+    VkResult createCommandBuffers(
+            VkDevice device, VkCommandBuffer* buffers,
+            GraphicsPipelineData* pGraphicsPipeline, SwapchainData* pSwapchain,
+            VkFramebuffer* pFramebuffers, VkCommandPool commandPool,
+            Buffers::VertexBuffer* vertexBuffer, Buffers::IndexBuffer* indexBuffer,
+            VkDescriptorSet* descriptorSets, size_t objectCount, uint32_t dynamicAlignment) {
 
         // We alocate command buffers by using a CommandBufferAllocationInfo struct.
         // // This struct specifies a command pool, as well as the number of buffers to
@@ -661,14 +642,12 @@ namespace Renderer {
         // bytes, so
         // we need to cast this to a 32-bit unsigned integer to make this 
         // work.
-        createInfo.pCode = 
-                reinterpret_cast<const uint32_t*>(buffer.p_byteCode);
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(buffer.p_byteCode);
         // Create the shader
         VkShaderModule shader;
-        if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) 
-                != VK_SUCCESS)        {
+        if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS)        {
             // TODO: Find a better method to propagate errors.
-            ERROR("Unsable to create shader module!\n");
+            ERROR("Unable to create shader module!\n");
         }
         // Return the shader
         return shader;
@@ -851,8 +830,7 @@ namespace Renderer {
             bufferInfo.range = VK_WHOLE_SIZE;
 
             VkWriteDescriptorSet descriptorWrite =
-                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-                        1, &bufferInfo, 1);
+                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &bufferInfo, 1);
 
             vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite,
 0, nullptr);

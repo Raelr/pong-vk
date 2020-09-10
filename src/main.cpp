@@ -63,8 +63,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
         int height) {
 
-        auto data =
-            reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
+        auto data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
 
         data->framebufferResized = true;
     });
@@ -119,12 +118,7 @@ int main() {
             {200.0f,200.0f, 0.0f}, 90.0f, 4
     };
 
-    float oldTime = 0.0f;
-    float currentTime = 0.0f;
-    float deltaTime = 0.0f;
-    float elapsed = 0.0f;
-
-    float frames = 0.0f;
+    float oldTime, currentTime, deltaTime, elapsed, frames = 0.0f;
 
     // -------------------------- MAIN LOOP ------------------------------
 
