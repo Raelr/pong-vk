@@ -12,10 +12,22 @@ void initLogger();
 
 // Core logging macros
 
-#define TRACE(...) Logger::s_CoreLogger->trace    (__VA_ARGS__)
-#define INFO(...)  Logger::s_CoreLogger->info     (__VA_ARGS__)
-#define WARN(...)  Logger::s_CoreLogger->warn     (__VA_ARGS__)
-#define ERROR(...) Logger::s_CoreLogger->error    (__VA_ARGS__)
-#define FATAL(...) Logger::s_CoreLogger->fatal    (__VA_ARGS__)
+#ifdef DEBUG
+
+    #define TRACE(...) Logger::s_CoreLogger->trace    (__VA_ARGS__)
+    #define INFO(...)  Logger::s_CoreLogger->info     (__VA_ARGS__)
+    #define WARN(...)  Logger::s_CoreLogger->warn     (__VA_ARGS__)
+    #define ERROR(...) Logger::s_CoreLogger->error    (__VA_ARGS__)
+    #define FATAL(...) Logger::s_CoreLogger->fatal    (__VA_ARGS__)
+
+#elif defined(RELEASE)
+
+    #define TRACE(...)
+    #define INFO(...)
+    #define WARN(...)
+    #define ERROR(...)
+    #define FATAL(...)
 
 #endif
+
+#endif // LOGGER_H

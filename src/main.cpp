@@ -62,9 +62,7 @@ int main() {
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
         int height) {
-
         auto data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
-
         data->framebufferResized = true;
     });
 
@@ -134,7 +132,7 @@ int main() {
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
-            INFO("FRAMES: " + std::to_string(frames));
+            INFO("FRAMES: {0}", frames);
             frames = 0;
             elapsed = 0;
         }

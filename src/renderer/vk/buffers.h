@@ -53,7 +53,7 @@ namespace Buffers {
         size_t dynamicAlignment     {0};
         size_t bufferSize           {0};
         T* data                     {nullptr};
-        BufferData buffer           {nullptr};
+        BufferData buffer           {VK_NULL_HANDLE};
     };
 
     // ---------------------------- BUFFER METHODS ---------------------------

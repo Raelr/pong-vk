@@ -61,7 +61,7 @@ namespace Renderer {
             return Status::INITIALIZATION_FAILURE;
         }
 
-        uint32_t extensionCount = (enableValidationLayers) ? glfwExtensionCount += 1 : glfwExtensionCount;
+        uint32_t extensionCount = (enableValidationLayers) ? glfwExtensionCount + 1 : glfwExtensionCount;
 
         const char** extensions = static_cast<const char **>(malloc(extensionCount * sizeof(const char *)));
 
@@ -69,7 +69,9 @@ namespace Renderer {
             extensions[extensionCount-1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
         }
 
-        for (size_t i = 0; i < extensionCount-1; i++) {
+        uint32_t range = (enableValidationLayers) ? extensionCount - 1 : extensionCount;
+
+        for (size_t i = 0; i < range; i++) {
             extensions[i] = glfwExtensions[i];
             INFO(extensions[i]);
         }

@@ -249,8 +249,7 @@ namespace Renderer {
         // ============================== INSTANCE CREATION =====================================
         // Define the configuration details of the vulkan application.
         VkApplicationInfo appInfo = initialiseVulkanApplicationInfo(appName, engineName,
-VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
-    VK_API_VERSION_1_2);
+            VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_2);
 
         // Configuration parameters for Vulkan instance creation.
         VkInstanceCreateInfo createInfo {};
@@ -357,7 +356,7 @@ VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 0, 0),
         return Status::SUCCESS;
     }
 
-    VkDescriptorPoolSize initialisePoolSize(VkDescriptorType type, u_int32_t count) {
+    VkDescriptorPoolSize initialisePoolSize(VkDescriptorType type, uint32_t count) {
 
         VkDescriptorPoolSize poolSize{};
         poolSize.type = type;
