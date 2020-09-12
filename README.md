@@ -61,11 +61,27 @@ Renderer::Renderer renderer;
     
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
 ```
-Currently, the renderer relies on all objects being registered prior to the main loop. The next step is to implement a dynamic uniform buffer for uploading data to the GPU. This should allow us to allocate data dynamically so that scenes can be uploaded and flushed per frame. 
+The renderer has now been adjusted to use a singe Dynamic uniform buffer for each quad! We are now able to create new quads during runtime!
+
+### Next Steps:
+
+With this step complete, we can now focus on:
+
+1. Adding texture support to the engine.
+2. Cleaning up the renderer/renderer2D modules to make them more coherent. 
+    1. Add a scene system for grouping objects
+    2. Perhaps add text rendering support...?
+3. Adding a small entity management system for safe addition and removal of objects.
+4. Adding some sort of performance counter (such as FPS)
+5. Gameplay
+    1. Basic collision detection.
+    2. Bounce of the ball
+    3. Player Movement
+    4. Menus and win states.
 
 ## Setup Notes
 
-**NOTE:** This prject contains submodules. Please remember to clone the project with --recursive-submodules prepended. I.e:
+**NOTE:** This project contains submodules. Please remember to clone the project with `--recursive-submodules` prepended. I.e:
 
 ```
 $ git clone --recurse-submodules https://github.com/Raelr/pong-vk.git
