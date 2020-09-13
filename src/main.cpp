@@ -1,10 +1,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glm/glm.hpp>
 #include <chrono>
-#include <GLFW/glfw3.h>
 #include "logger.h"
 #include <cstdint>
 #include "renderer/renderer.h"
+#include "window/window.h"
 
 #define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
 
@@ -23,13 +23,6 @@ float getTime() {
             std::chrono::seconds::period>(currentTime - startTime).count();
 }
 
-// Struct for storing application-specific data. Will be used by glfw for data
-// storage in the user pointer.
-struct AppData {
-    // Boolean for checking if the window has been resized
-    bool framebufferResized = false;
-};
-
 struct PlayerData {
     glm::vec3 position = { 0.0f, 0.0f, 0.0f };
     glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };
@@ -44,27 +37,8 @@ int main() {
 
     initLogger();
 
-    // Initialise app data struct
-    AppData pongData{};
-
-    // Initialise GLFW
-    glfwInit();
-
-    // Set flags for the window (set it to not use GLFW API and 
-    // set it to not resize)
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-    // Actually make the window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Pong",
-        nullptr, nullptr);
-
-    glfwSetWindowUserPointer(window, &pongData);
-
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, 
-        int height) {
-        auto data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
-        data->framebufferResized = true;
-    });
+    // Initialise the window struct
+    auto window = PongWindow::initialiseWindow(PongWindow::NativeWindowType::GLFW, 800, 600, "Pong");
 
     INFO("Created GLFW window");
 
@@ -78,8 +52,8 @@ int main() {
     Renderer::loadDefaultValidationLayers(&renderer);
     Renderer::loadDefaultDeviceExtensions(&renderer);
 
-    if (Renderer::initialiseRenderer(&renderer, enableValidationLayers, window)
-        != Renderer::Status::SUCCESS) {
+    if (Renderer::initialiseRenderer(&renderer, enableValidationLayers, window->nativeWindow, 
+        Renderer::WindowType::GLFW) != Renderer::Status::SUCCESS) {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
@@ -120,8 +94,8 @@ int main() {
 
     // -------------------------- MAIN LOOP ------------------------------
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    while (PongWindow::isWindowRunning(window)) {
+        PongWindow::onWindowUpdate();
 
         // Refresh the renderer and start again next frame
         renderer.renderer2DData.quadData.quadCount = 0;
@@ -139,14 +113,27 @@ int main() {
 
         for (int i = 0; i < currentPlayers; i++) {
             PlayerData& player = players[i];
-            Renderer::drawQuad(&renderer, player.position, player.rotation,
-                getTime() * glm::radians(player.rotationAngle), player.scale);
+            Renderer::drawQuad(
+                &renderer,                                      // Renderer
+                player.position,                                // Position
+                player.rotation,                                // Rotation
+                getTime() * glm::radians(player.rotationAngle), // angle (radians)
+                player.scale);                                  // Scale
         }
 
-        if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
-            == Renderer::Status::FAILURE) {
+        Renderer::Status renderStatus = Renderer::drawFrame(&renderer, &window->windowData.isResized);
+
+        if (renderStatus == Renderer::Status::FAILURE) {
             ERROR("Error drawing frame - exiting main loop!");
             break;
+        }
+        else if (renderStatus == Renderer::Status::SKIPPED_FRAME) {
+            
+            PongWindow::onWindowMinimised(window->nativeWindow, window->type, 
+                &renderer.deviceData.framebufferWidth, &renderer.deviceData.framebufferHeight);
+            Renderer::recreateSwapchain(&renderer);
+
+            window->windowData.isResized = false;
         }
 
         oldTime = currentTime;
@@ -158,7 +145,7 @@ int main() {
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
 
     // GLFW cleanup
-    glfwDestroyWindow(window);
+    PongWindow::destroyWindow(window);
     glfwTerminate();
 
     return EXIT_SUCCESS; 

@@ -1,11 +1,9 @@
-#define GLM_ENABLE_EXPERIMENTAL
 #include "renderer.h"
 #include <cstring>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "vk/initialisers.h"
 #include <glm/gtx/string_cast.hpp>
-
 
 namespace Renderer {
 
@@ -17,20 +15,24 @@ namespace Renderer {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    Status initialiseRenderer(Renderer* renderer, bool enableValidationLayers, GLFWwindow* window) {
+    Status initialiseRenderer(Renderer* renderer, bool enableValidationLayers, void* nativeWindow, WindowType type) {
 
-        // Initialise Vulkan device information - this should be pretty general so won't require too
-        // much configuration.
-        if (createVulkanDeviceData(&renderer->deviceData, window, enableValidationLayers)
-            != Status::SUCCESS) {
-            ERROR("Failed to create Vulkan Device. Closing Pong...");
-            return Status::FAILURE;
+        if (type == WindowType::GLFW) {
+            auto window = static_cast<GLFWwindow*>(nativeWindow);
+
+            // Initialise Vulkan device information - this should be pretty general so won't require too
+            // much configuration.
+            if (createVulkanDeviceData(&renderer->deviceData, window, enableValidationLayers)
+                != Status::SUCCESS) {
+                ERROR("Failed to create Vulkan Device. Closing Pong...");
+                return Status::FAILURE;
+            }
+
+            glfwGetFramebufferSize(window, &renderer->deviceData.framebufferWidth,
+                &renderer->deviceData.framebufferHeight);
         }
 
         // ============================= SWAPCHAIN CREATION =================================
-
-        glfwGetFramebufferSize(window, &renderer->deviceData.framebufferWidth,
-                               &renderer->deviceData.framebufferHeight);
 
         // Create the swapchain (should initialise both the swapchain and image views)
         if (createSwapchain(&renderer->swapchainData, &renderer->deviceData) != VK_SUCCESS) {
@@ -217,7 +219,7 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status drawFrame(Renderer* pRenderer, bool* resized, GLFWwindow* window) {
+    Status drawFrame(Renderer* pRenderer, bool* resized) {
 
         // This function takes an array of fences and waits for either one or all
         // of them to be signalled. The fourth parameter specifies that we're
@@ -269,15 +271,6 @@ namespace Renderer {
         // If our swapchain is out of date (no longer valid, then we re-create
         // it)
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-
-            onWindowMinimised(window, &pRenderer->deviceData.framebufferWidth,
-                               &pRenderer->deviceData.framebufferHeight);
-
-            // Re-create the swap chain in its entirety if the pipeline is no
-            // longer valid or is out of date.
-            recreateSwapchain(pRenderer);
-
-            *resized = false;
             // Go to the next iteration of the loop
             return Status::SKIPPED_FRAME;
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -357,14 +350,6 @@ namespace Renderer {
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR
             || *resized) {
 
-            onWindowMinimised(window, &pRenderer->deviceData.framebufferWidth,
-                               &pRenderer->deviceData.framebufferHeight);
-
-            // Re-create the swap chain in its entirety if the pipeline is no
-            // longer valid or is out of date.
-            recreateSwapchain(pRenderer);
-
-            *resized = false;
             return Status::SKIPPED_FRAME;
         } else if (result != VK_SUCCESS) {
             ERROR("Failed to present swapchain image!");

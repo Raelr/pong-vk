@@ -10,6 +10,10 @@
 
 namespace Renderer {
 
+    enum class WindowType {
+        GLFW
+    };
+
     struct Renderer {
         // Vulkan Device Data
         VulkanDeviceData deviceData                 {nullptr};
@@ -28,9 +32,9 @@ namespace Renderer {
     };
 
     // Device creation functions
-    Status initialiseRenderer(Renderer*, bool, GLFWwindow*);
+    Status initialiseRenderer(Renderer*, bool, void*, WindowType type);
     Status createSyncObjects(Renderer*, uint32_t = 2);
-    Status drawFrame(Renderer*, bool*, GLFWwindow*);
+    Status drawFrame(Renderer*, bool*);
 
     // Code to handle window minimisation
     Status onWindowMinimised(GLFWwindow*, int*, int*);

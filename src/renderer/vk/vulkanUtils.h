@@ -22,18 +22,18 @@ namespace Renderer {
     VkResult createRenderPass(VkDevice, VkFormat format, GraphicsPipelineData*);
 
     VkResult createDescriptorSetLayout(
-            VkDevice device,
-            VkDescriptorSetLayout* descriptorSetLayout,
-            VkDescriptorSetLayoutBinding* layoutBindings,
-            uint32_t layoutBindingCount
+        VkDevice device,
+        VkDescriptorSetLayout* descriptorSetLayout,
+        VkDescriptorSetLayoutBinding* layoutBindings,
+        uint32_t layoutBindingCount
     );
 
     VkResult createDescriptorPool(
-            VkDevice,
-            uint32_t,
-            VkDescriptorPool*,
-            VkDescriptorPoolSize*,
-            uint32_t
+        VkDevice,
+        uint32_t,
+        VkDescriptorPool*,
+        VkDescriptorPoolSize*,
+        uint32_t
     );
 
     VkResult createGraphicsPipeline(
@@ -56,17 +56,17 @@ namespace Renderer {
     );
 
     VkResult createCommandBuffers(
-            VkDevice device,
-            VkCommandBuffer* buffers,
-            GraphicsPipelineData* pGraphicsPipeline,
-            SwapchainData* pSwapchain,
-            VkFramebuffer* pFramebuffers,
-            VkCommandPool commandPool,
-            Buffers::VertexBuffer*,
-            Buffers::IndexBuffer*,
-            VkDescriptorSet* descriptorSets,
-            size_t objectCount,
-            uint32_t dynamicAlignment
+        VkDevice device,
+        VkCommandBuffer* buffers,
+        GraphicsPipelineData* pGraphicsPipeline,
+        SwapchainData* pSwapchain,
+        VkFramebuffer* pFramebuffers,
+        VkCommandPool commandPool,
+        Buffers::VertexBuffer*,
+        Buffers::IndexBuffer*,
+        VkDescriptorSet* descriptorSets,
+        size_t objectCount,
+        uint32_t dynamicAlignment
     );
 
     VkResult rerecordCommandBuffer(
