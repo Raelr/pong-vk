@@ -24,7 +24,7 @@ namespace Renderer {
             // much configuration.
             if (createVulkanDeviceData(&renderer->deviceData, window, enableValidationLayers)
                 != Status::SUCCESS) {
-                ERROR("Failed to create Vulkan Device. Closing Pong...");
+                PONG_ERROR("Failed to create Vulkan Device. Closing Pong...");
                 return Status::FAILURE;
             }
 
@@ -36,28 +36,28 @@ namespace Renderer {
 
         // Create the swapchain (should initialise both the swapchain and image views)
         if (createSwapchain(&renderer->swapchainData, &renderer->deviceData) != VK_SUCCESS) {
-            ERROR("Failed to create swapchain!");
+            PONG_ERROR("Failed to create swapchain!");
             return Status::FAILURE;
         }
 
-        INFO("Initialised Swapchain");
+        PONG_INFO("Initialised Swapchain");
 
         // ================================= RENDERER 2D ====================================
 
         if (!Renderer2D::initialiseRenderer2D(&renderer->deviceData,
             &renderer->renderer2DData, renderer->swapchainData)) {
-            ERROR("Failed to create renderer2D");
+            PONG_ERROR("Failed to create renderer2D");
             return Status::INITIALIZATION_FAILURE;
         }
 
-        INFO("Initialised renderer2D!");
+        PONG_INFO("Initialised renderer2D!");
 
 
         // ================================ SYNC OBJECTS ====================================
 
         createSyncObjects(renderer);
 
-        INFO("Created synchronisation objects");
+        PONG_INFO("Created synchronisation objects");
 
         return Status::SUCCESS;
     }
@@ -77,7 +77,7 @@ namespace Renderer {
             renderer->deviceData.validationLayerCount = pValidationLayersCount;
             status = Status::SUCCESS;
         } else {
-            ERROR("Unable to load in validation layers! Invalid validation layers have been provided");
+            PONG_ERROR("Unable to load in validation layers! Invalid validation layers have been provided");
         }
 
         return status;
@@ -211,7 +211,7 @@ namespace Renderer {
                 vkCreateFence(pRenderer->deviceData.logicalDevice, &fenceInfo, nullptr,
                     &pRenderer->inFlightFences[i]) != VK_SUCCESS) {
 
-                ERROR("Failed to create synchronisation objects for frame!");
+                PONG_ERROR("Failed to create synchronisation objects for frame!");
                 return Status::INITIALIZATION_FAILURE;
             }
         }
@@ -263,7 +263,7 @@ namespace Renderer {
                     pRenderer->renderer2DData.quadData.quadCount,
                     pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment) != VK_SUCCESS) {
 
-                ERROR("Failed to re-record command buffer!");
+                PONG_ERROR("Failed to re-record command buffer!");
                 return Status::FAILURE;
             }
         }
@@ -274,7 +274,7 @@ namespace Renderer {
             // Go to the next iteration of the loop
             return Status::SKIPPED_FRAME;
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            ERROR("Failed to acquire swapchain image!");
+            PONG_ERROR("Failed to acquire swapchain image!");
             return Status::FAILURE;
         }
 
@@ -320,7 +320,7 @@ namespace Renderer {
         // Finally, we submit the buffer to the graphics queue
         if (vkQueueSubmit(pRenderer->deviceData.graphicsQueue, 1, &submitInfo, pRenderer->inFlightFences[pRenderer->currentFrame])
             != VK_SUCCESS) {
-            ERROR("Failed to submit draw command buffer!");
+            PONG_ERROR("Failed to submit draw command buffer!");
             return Status::FAILURE;
         }
 
@@ -352,7 +352,7 @@ namespace Renderer {
 
             return Status::SKIPPED_FRAME;
         } else if (result != VK_SUCCESS) {
-            ERROR("Failed to present swapchain image!");
+            PONG_ERROR("Failed to present swapchain image!");
             return Status::FAILURE;
         }
 
@@ -444,7 +444,7 @@ namespace Renderer {
         }
 
         if (!Renderer2D::recreateRenderer2D(&pRenderer->deviceData, &pRenderer->renderer2DData, pRenderer->swapchainData)) {
-            ERROR("Failed to re-create swap chain on resize!");
+            PONG_ERROR("Failed to re-create swap chain on resize!");
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
@@ -462,10 +462,14 @@ namespace Renderer {
                 pRenderer->renderer2DData.quadData.dynamicData.dynamicAlignment)
             != VK_SUCCESS) {
 
-            ERROR("Failed to create command buffers!");
+            PONG_ERROR("Failed to create command buffers!");
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
         return VK_SUCCESS;
+    }
+
+    void flushRenderer(Renderer* pRenderer) {
+        pRenderer->renderer2DData.quadData.quadCount = 0;
     }
 }

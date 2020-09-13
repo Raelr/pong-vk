@@ -647,7 +647,7 @@ namespace Renderer {
         VkShaderModule shader;
         if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS)        {
             // TODO: Find a better method to propagate errors.
-            ERROR("Unable to create shader module!\n");
+            PONG_ERROR("Unable to create shader module!\n");
         }
         // Return the shader
         return shader;

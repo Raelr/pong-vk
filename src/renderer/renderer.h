@@ -54,6 +54,7 @@ namespace Renderer {
     Status drawQuad(Renderer*, glm::vec3, glm::vec3, float, glm::vec3);
 
     VkResult recreateSwapchain(Renderer* pRenderer);
+    void flushRenderer(Renderer* pRenderer);
 }
 
 #endif //PONG_VK_RENDERER_H

@@ -29,7 +29,7 @@ namespace Renderer {
             return Status::FAILURE;
         }
 
-        INFO("Requested Validation layers exist!");
+        PONG_INFO("Requested Validation layers exist!");
 
         return Status::SUCCESS;
     }
@@ -47,11 +47,11 @@ namespace Renderer {
         vkEnumerateInstanceExtensionProperties(nullptr, &vulkanExtensionCount, vkExtensions);
 
         // Print out and display all extensions.
-        INFO("Checking Extensions: ");
+        PONG_INFO("Checking Extensions: ");
 
         for (size_t i = 0; i < vulkanExtensionCount; i++) {
             char* extension = vkExtensions[i].extensionName;
-            INFO(extension);
+            PONG_INFO(extension);
         }
 
         uint32_t glfwExtensionCount = 0;
@@ -73,7 +73,7 @@ namespace Renderer {
 
         for (size_t i = 0; i < range; i++) {
             extensions[i] = glfwExtensions[i];
-            INFO(extensions[i]);
+            PONG_INFO(extensions[i]);
         }
 
         pDeviceData->extensions = extensions;
@@ -99,10 +99,10 @@ namespace Renderer {
 
         // Check if all GLFW extensions are supported by Vulkan.
         if (foundCount == glfwExtensionCount) {
-            INFO("GLFW extensions are supported by Vulkan!");
+            PONG_INFO("GLFW extensions are supported by Vulkan!");
             success = true;
         } else {
-            ERROR("GLFW extensions are NOT supported by Vulkan!");
+            PONG_ERROR("GLFW extensions are NOT supported by Vulkan!");
         }
 
         return success;
@@ -184,7 +184,7 @@ namespace Renderer {
 
     Status createGLFWWindowSurface(VkInstance instance, GLFWwindow* pWindow, VkSurfaceKHR* pSurface) {
         if (glfwCreateWindowSurface(instance, pWindow, nullptr, pSurface) != VK_SUCCESS) {
-            ERROR("Failed to create window surface!");
+            PONG_ERROR("Failed to create window surface!");
             return Status::INITIALIZATION_FAILURE;
         }
 
@@ -197,7 +197,7 @@ namespace Renderer {
         vkEnumeratePhysicalDevices(pDeviceData->instance, &deviceCount, nullptr);
 
         if (deviceCount == 0) {
-            ERROR("Failed to find GPUs that support Vulkan!");
+            PONG_ERROR("Failed to find GPUs that support Vulkan!");
             return Status::FAILURE;
         }
 
@@ -311,7 +311,7 @@ namespace Renderer {
         // Now we create the logical device using the data we've accumulated thus far.
         if (vkCreateDevice(pDeviceData->physicalDevice, &logicalDeviceInfo,nullptr,
                            &pDeviceData->logicalDevice) != VK_SUCCESS) {
-            ERROR("Failed to create logical device!");
+            PONG_ERROR("Failed to create logical device!");
             return Status::INITIALIZATION_FAILURE;
         }
 

@@ -1,5 +1,6 @@
 #include "renderer2D.h"
 #include "vk/initialisers.h"
+#include "core.h"
 
 namespace Renderer2D {
 
@@ -22,7 +23,7 @@ namespace Renderer2D {
 
         if (Renderer::createRenderPass(deviceData->logicalDevice, swapchain.swapchainFormat,
             &renderer2D->graphicsPipeline) != VK_SUCCESS) {
-            ERROR("Failed to create render pass!");
+            PONG_ERROR("Failed to create render pass!");
             return false;
         }
 
@@ -34,7 +35,7 @@ namespace Renderer2D {
 
         if (Renderer::createDescriptorSetLayout(deviceData->logicalDevice,
             &renderer2D->quadData.descriptorSetLayout, layoutBindings, 1) != VK_SUCCESS) {
-            ERROR("Failed to create descriptor set layout!");
+            PONG_ERROR("Failed to create descriptor set layout!");
             return false;
         }
 
@@ -48,7 +49,7 @@ namespace Renderer2D {
 
         if (Renderer::createGraphicsPipeline(deviceData->logicalDevice, &renderer2D->graphicsPipeline,
             &swapchain, &renderer2D->quadData.descriptorSetLayout) != VK_SUCCESS) {
-            ERROR("Failed to create graphics pipeline!");
+            PONG_ERROR("Failed to create graphics pipeline!");
             return false;
         }
 
@@ -67,7 +68,7 @@ namespace Renderer2D {
 
         if (Renderer::createFramebuffer(deviceData->logicalDevice, renderer2D->frameBuffers,
             &swapchain, &renderer2D->graphicsPipeline) != VK_SUCCESS) {
-            ERROR("Failed to create framebuffers!");
+            PONG_ERROR("Failed to create framebuffers!");
             return false;
         }
 
@@ -93,7 +94,7 @@ namespace Renderer2D {
         // Create the command pool
         if (vkCreateCommandPool(deviceData->logicalDevice, &poolInfo, nullptr,
             &renderer2D->commandPool) != VK_SUCCESS) {
-            ERROR("Failed to create command pool!");
+            PONG_ERROR("Failed to create command pool!");
             return false;
         }
 
@@ -108,14 +109,14 @@ namespace Renderer2D {
         // Create the vertex buffer and allocate the memory for it
         if (Renderer::createVertexBuffer(deviceData, &renderer2D->quadData.vertexBuffer,
             renderer2D->commandPool) != VK_SUCCESS) {
-            ERROR("Failed to create vertex buffer.");
+            PONG_ERROR("Failed to create vertex buffer.");
             return false;
         }
 
         // Create a uniform buffer for storing vertex data.
         if (Renderer::createIndexBuffer(deviceData, &renderer2D->quadData.indexBuffer,
             renderer2D->commandPool) != VK_SUCCESS) {
-            ERROR("Failed to create index buffer.");
+            PONG_ERROR("Failed to create index buffer.");
             return false;
         }
 
@@ -128,15 +129,15 @@ namespace Renderer2D {
                 swapchain.imageCount, &renderer2D->descriptorPool, poolSizes,
                 1) != VK_SUCCESS) {
 
-            ERROR("Failed to create descriptor pool.");
+            PONG_ERROR("Failed to create descriptor pool.");
             return false;
         }
 
         Buffers::DynamicUniformBuffer<glm::mat4> dynamicUbo;
         Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
 
-        INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
-        INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
+        PONG_INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
+        PONG_INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
 
         // ALLOCATE UNIFORM BUFFER
         if (Buffers::createBuffer(
@@ -165,7 +166,7 @@ namespace Renderer2D {
             &renderer2D->quadData.dynamicData.buffer,
             renderer2D->quadData.dynamicData.bufferSize) != VK_SUCCESS) {
 
-            ERROR("Failed to create descriptor sets!");
+            PONG_ERROR("Failed to create descriptor sets!");
             return false;
         }
 
@@ -197,7 +198,7 @@ namespace Renderer2D {
                 renderer2D->quadData.dynamicData.dynamicAlignment)
             != VK_SUCCESS) {
 
-            ERROR("Failed to create command buffers!");
+            PONG_ERROR("Failed to create command buffers!");
             return false;
         }
 
@@ -237,7 +238,7 @@ namespace Renderer2D {
 
         if (Renderer::createRenderPass(deviceData->logicalDevice, swapchain.swapchainFormat,
                                        &renderer2D->graphicsPipeline) != VK_SUCCESS) {
-            ERROR("Failed to create render pass!");
+            PONG_ERROR("Failed to create render pass!");
             return false;
         }
 
@@ -245,7 +246,7 @@ namespace Renderer2D {
 
         if (Renderer::createGraphicsPipeline(deviceData->logicalDevice, &renderer2D->graphicsPipeline,
                                              &swapchain, &renderer2D->quadData.descriptorSetLayout) != VK_SUCCESS) {
-            ERROR("Failed to create graphics pipeline!");
+            PONG_ERROR("Failed to create graphics pipeline!");
             return false;
         }
 
@@ -253,7 +254,7 @@ namespace Renderer2D {
 
         if (Renderer::createFramebuffer(deviceData->logicalDevice, renderer2D->frameBuffers,
                                         &swapchain, &renderer2D->graphicsPipeline) != VK_SUCCESS) {
-            ERROR("Failed to create framebuffers!");
+            PONG_ERROR("Failed to create framebuffers!");
             return false;
         }
 
@@ -266,15 +267,15 @@ namespace Renderer2D {
                 swapchain.imageCount, &renderer2D->descriptorPool, poolSizes,
                 1) != VK_SUCCESS) {
 
-            ERROR("Failed to create descriptor pool.");
+            PONG_ERROR("Failed to create descriptor pool.");
             return false;
         }
 
         Buffers::DynamicUniformBuffer<glm::mat4> dynamicUbo;
         Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
 
-        INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
-        INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
+        PONG_INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
+        PONG_INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
 
         // ALLOCATE UNIFORM BUFFER
         if (Buffers::createBuffer(
@@ -300,7 +301,7 @@ namespace Renderer2D {
                 &renderer2D->quadData.dynamicData.buffer,
                 renderer2D->quadData.dynamicData.bufferSize) != VK_SUCCESS) {
 
-            ERROR("Failed to create descriptor sets!");
+            PONG_ERROR("Failed to create descriptor sets!");
             return false;
         }
 

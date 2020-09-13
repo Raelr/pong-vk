@@ -18,7 +18,7 @@ namespace Renderer {
             [[maybe_unused]] void* pUserData) {                                          // User defined data (optional)
 
         // In this case we simply print out the message itself to the console.
-        ERROR(pCallbackData->pMessage);
+        PONG_ERROR(pCallbackData->pMessage);
 
         // Return value determines whether the call that triggers this message should be aborted.
         // Generally these should return false.

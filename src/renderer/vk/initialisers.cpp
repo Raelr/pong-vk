@@ -49,7 +49,7 @@ namespace Renderer {
                 supportDetails.formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 
                 chosenFormat = supportDetails.formats[i];
-                INFO("Found SRGB channel for rendering format");
+                PONG_INFO("Found SRGB channel for rendering format");
                 break;
                 // TODO: Might be good to have a fallback for when we fail to find the desired color space.
             }
@@ -67,7 +67,7 @@ namespace Renderer {
             if (supportDetails.presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
 
                 chosenPresentMode = supportDetails.presentModes[i];
-                INFO("Triple buffering enabled for present mode!");
+                PONG_INFO("Triple buffering enabled for present mode!");
                 break;
             }
         }
@@ -96,7 +96,7 @@ namespace Renderer {
                                              supportDetails.capabilities.maxImageExtent.height);
         }
 
-        INFO("Device extent has been set to: [ " +
+        PONG_INFO("Device extent has been set to: [ " +
              std::to_string(chosenExtent.width) + ", " +
              std::to_string(chosenExtent.height) + " ]");
 
@@ -307,7 +307,7 @@ namespace Renderer {
         // ======================= VULKAN INSTANCE CREATION ==================================
 
         if (checkVulkanExtensions(pDeviceData, enableValidationLayers) == Status::FAILURE) {
-            ERROR("No GLFW extensions available!");
+            PONG_ERROR("No GLFW extensions available!");
             return Status::FAILURE;
         }
 
@@ -315,17 +315,17 @@ namespace Renderer {
             return Status::INITIALIZATION_FAILURE;
         }
 
-        INFO("Initialised Vulkan instance.");
+        PONG_INFO("Initialised Vulkan instance.");
 
         if (enableValidationLayers) {
             if (initialiseDebugUtilsMessenger(pDeviceData->instance, &pDeviceData->debugMessenger)
                 != Status::SUCCESS) {
-                ERROR("Failed to create Debug utils messenger!");
+                PONG_ERROR("Failed to create Debug utils messenger!");
                 return Status::INITIALIZATION_FAILURE;
             }
         }
 
-        INFO("Created Debug Utils Messenger");
+        PONG_INFO("Created Debug Utils Messenger");
 
         // ============================ SURFACE CREATION ====================================
 
@@ -334,16 +334,16 @@ namespace Renderer {
             return Status::INITIALIZATION_FAILURE;
         }
 
-        INFO("Retrieved Surface from GLFW.");
+        PONG_INFO("Retrieved Surface from GLFW.");
 
         // ========================= PHYSICAL DEVICE CREATION ===============================
 
         if (createPhysicalDevice(pDeviceData) != Status::SUCCESS) {
-            ERROR("Failed to create physical device!");
+            PONG_ERROR("Failed to create physical device!");
             return Status::INITIALIZATION_FAILURE;
         }
 
-        INFO("Created physical device!");
+        PONG_INFO("Created physical device!");
 
         // ========================== LOGICAL DEVICE CREATION ===============================
 
@@ -351,7 +351,7 @@ namespace Renderer {
             return Status::INITIALIZATION_FAILURE;
         }
 
-        INFO("Created logical device!");
+        PONG_INFO("Created logical device!");
 
         return Status::SUCCESS;
     }

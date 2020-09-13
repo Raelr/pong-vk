@@ -4,6 +4,7 @@
 #include "vk/vulkanUtils.h"
 #include <glm/glm.hpp>
 #include "vk/vulkanDeviceData.h"
+#include "core.h"
 
 namespace Renderer2D {
 

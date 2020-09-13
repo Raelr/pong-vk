@@ -1,12 +1,10 @@
-#define GLFW_INCLUDE_VULKAN
-#include <glm/glm.hpp>
 #include <chrono>
 #include "logger.h"
 #include <cstdint>
 #include "renderer/renderer.h"
 #include "window/window.h"
 
-#define PONG_FATAL_ERROR(...) ERROR(__VA_ARGS__); return EXIT_FAILURE
+#define PONG_FATAL_ERROR(...) PONG_ERROR(__VA_ARGS__); return EXIT_FAILURE
 
 // Only enable validation layers when the program is run in DEBUG mode.
 #ifdef DEBUG
@@ -33,14 +31,14 @@ struct PlayerData {
 
 int main() {  
 
-    // -------------------- INITIALISE WINDOW --------------------------
+    // ----------------------- INITIALISE WINDOW -----------------------------
 
     initLogger();
 
     // Initialise the window struct
     auto window = PongWindow::initialiseWindow(PongWindow::NativeWindowType::GLFW, 800, 600, "Pong");
 
-    INFO("Created GLFW window");
+    PONG_INFO("Created GLFW window");
 
     // ============================ RENDERER =================================
 
@@ -65,29 +63,29 @@ int main() {
     uint32_t currentPlayers = 5;
 
     players[0] = {
-        {-250.0f,-150.0f,1.0f},
-        {0.0f,0.0f,1.0f},
-        {200.0f,200.0f, 0.0f}, -90.0f, 0
+            {-250.0f,-150.0f,1.0f},
+            {0.0f,0.0f,1.0f},
+            {200.0f,200.0f, 0.0f}, -90.0f, 0
     };
     players[1] = {
             {250.0f, -150.0f, 1.0f},
             {0.0f,0.0f,1.0f},
-            {200.0f,200.0f, 0.0f}, -90.0f, 1
+            {100.0f,100.0f, 0.0f}, -90.0f, 1
     };
     players[2] = {
             {-250.0f, 150.0f, 1.0f},
             {0.0f,0.0f,1.0f},
-            {200.0f,200.0f, 0.0f}, 90.0f, 2
+            {100.0f,200.0f, 0.0f}, 90.0f, 2
     };
     players[3] = {
             {250.0f, 150.0f, 1.0f},
             {0.0f,0.0f,1.0f},
-            {200.0f,200.0f, 0.0f}, 90.0f, 3
+            {200.0f,150.0f, 0.0f}, 90.0f, 3
     };
     players[4] = {
             {0.0f, 0.0f, 1.0f},
             {0.0f,0.0f,1.0f},
-            {200.0f,200.0f, 0.0f}, 90.0f, 4
+            {50.0f,200.0f, 0.0f}, 90.0f, 4
     };
 
     float oldTime, currentTime, deltaTime, elapsed, frames = 0.0f;
@@ -97,16 +95,13 @@ int main() {
     while (PongWindow::isWindowRunning(window)) {
         PongWindow::onWindowUpdate();
 
-        // Refresh the renderer and start again next frame
-        renderer.renderer2DData.quadData.quadCount = 0;
-
         currentTime = getTime();
         deltaTime = currentTime - oldTime;
         elapsed += deltaTime;
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
-            INFO("FRAMES: {0}", frames);
+            PONG_TRACE("FRAMES: {0}", frames);
             frames = 0;
             elapsed = 0;
         }
@@ -121,23 +116,23 @@ int main() {
                 player.scale);                                  // Scale
         }
 
+        // Draw our frame and store the result.
         Renderer::Status renderStatus = Renderer::drawFrame(&renderer, &window->windowData.isResized);
 
         if (renderStatus == Renderer::Status::FAILURE) {
-            ERROR("Error drawing frame - exiting main loop!");
+            PONG_ERROR("Error drawing frame - exiting main loop!");
             break;
-        }
-        else if (renderStatus == Renderer::Status::SKIPPED_FRAME) {
-            
+        } else if (renderStatus == Renderer::Status::SKIPPED_FRAME) {
             PongWindow::onWindowMinimised(window->nativeWindow, window->type, 
                 &renderer.deviceData.framebufferWidth, &renderer.deviceData.framebufferHeight);
             Renderer::recreateSwapchain(&renderer);
-
             window->windowData.isResized = false;
         }
 
         oldTime = currentTime;
         frames++;
+
+        Renderer::flushRenderer(&renderer);
     }
     
     // --------------------------- CLEANUP ------------------------------
@@ -146,7 +141,6 @@ int main() {
 
     // GLFW cleanup
     PongWindow::destroyWindow(window);
-    glfwTerminate();
 
     return EXIT_SUCCESS; 
 } 

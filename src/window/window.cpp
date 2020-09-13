@@ -49,6 +49,7 @@ namespace PongWindow {
 		if (window->type == NativeWindowType::GLFW) {
 			glfwDestroyWindow(static_cast<GLFWwindow*>(window->nativeWindow));
 			delete window;
+			glfwTerminate();
 		}
 	}
 
@@ -59,11 +60,7 @@ namespace PongWindow {
 			auto window = static_cast<GLFWwindow*>(nativeWindow);
 			glfwGetFramebufferSize(window, width, height);
 
-			ERROR(*width == NULL);
-
-			// If the window is minimized we simply pause rendering until it
-			// comes back!
-
+			// If the window is minimized we simply pause rendering until it comes back!
 			while (*width == 0 && *height == 0) {
 				glfwGetFramebufferSize(window, width, height);
 				glfwWaitEvents();
