@@ -1,6 +1,6 @@
 #include "renderer2D.h"
 #include "vk/initialisers.h"
-#include "core.h"
+
 
 namespace Renderer2D {
 

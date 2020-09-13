@@ -391,11 +391,8 @@ namespace Renderer {
         // Set the view
         glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
-        glm::mat4 proj = glm::ortho(
-                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2),
-                static_cast<float>(pRenderer->swapchainData.swapchainExtent.width) / 2,
-                static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2,
-                -(static_cast<float>(pRenderer->swapchainData.swapchainExtent.height) / 2), -1.0f, 1.0f);
+        // TODO: Need to find a way to pass the original size to the ortho camera to keep it stretching
+        glm::mat4 proj = glm::ortho(-400.0f, 400.f, 300.0f, -300.0f, -1.0f, 1.0f);
 
         // Rotate the model matrix
         model = proj * view * model;
