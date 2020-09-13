@@ -14,6 +14,8 @@
 #define KEY_D GLFW_KEY_D
 #define KEY_UP GLFW_KEY_UP
 #define KEY_DOWN GLFW_KEY_DOWN
+#define MOUSE_LMB GLFW_MOUSE_BUTTON_1
+#define MOUSE_RMB GLFW_MOUSE_BUTTON_2
 
 // Only enable validation layers when the program is run in DEBUG mode.
 #ifdef DEBUG
@@ -93,16 +95,16 @@ int main() {
         elapsed += deltaTime;
 
         // Input
-        if (Pong::getKeyDown(window, KEY_W)) {
+        if (Pong::isKeyPressed(window, KEY_W)) {
             players[0].position.y += (300.0 * deltaTime);
         }
-        if (Pong::getKeyDown(window, KEY_S)) {
+        if (Pong::isKeyPressed(window, KEY_S)) {
             players[0].position.y -= (300.0 * deltaTime);
         }
-        if (Pong::getKeyDown(window, KEY_UP)) {
+        if (Pong::isKeyPressed(window, KEY_UP)) {
             players[1].position.y += (300.0 * deltaTime);
         }
-        if (Pong::getKeyDown(window, KEY_DOWN)) {
+        if (Pong::isKeyPressed(window, KEY_DOWN)) {
             players[1].position.y -= (300.0 * deltaTime);
         }
 
@@ -121,7 +123,7 @@ int main() {
                 player.position,                                // Position
                 player.rotation,                                // Rotation
                 glm::radians(player.rotationAngle),             // angle (radians)
-                player.scale);                    // Scale
+                player.scale);                                  // Scale
         }
 
         // Draw our frame and store the result.

@@ -3,12 +3,35 @@
 
 namespace Pong {
 
-	bool getKeyDown(PongWindow::Window* window, int keycode) {
+	bool isKeyPressed(PongWindow::Window* window, int keycode) {
+
+	    bool status = false;
 
 		if (window->type == PongWindow::NativeWindowType::GLFW) {
-			auto status = glfwGetKey(static_cast<GLFWwindow*>(window->nativeWindow), keycode);
-			return status == GLFW_PRESS;
+			status = glfwGetKey(static_cast<GLFWwindow*>(window->nativeWindow), keycode) == GLFW_PRESS;
 		}
+
+		return status;
 	}
 
+    bool isMouseButtonPressed(PongWindow::Window* window, int mouseButtonCode) {
+        bool status = false;
+
+        if (window->type == PongWindow::NativeWindowType::GLFW) {
+            status = glfwGetMouseButton(static_cast<GLFWwindow*>(window->nativeWindow), mouseButtonCode) == GLFW_PRESS;
+        }
+
+        return status;
+    }
+
+    glm::vec2 getMousePosition(PongWindow::Window* window) {
+
+	    double xPos, yPos = 0.0;
+
+        if (window->type == PongWindow::NativeWindowType::GLFW) {
+            glfwGetCursorPos(static_cast<GLFWwindow*>(window->nativeWindow), &xPos, &yPos);
+        }
+
+        return { (float)xPos, (float)yPos };
+	}
 }
