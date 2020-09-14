@@ -4,8 +4,11 @@
 #include "renderer/renderer.h"
 #include "window/window.h"
 #include "pongApp/input.h"
+#include "pongApp/components.h"
 
 #define PONG_FATAL_ERROR(...) PONG_ERROR(__VA_ARGS__); return EXIT_FAILURE
+
+const float BALL_VELOCITY = 500.0f;
 
 // TODO: Move these to a separate file
 #define KEY_W GLFW_KEY_W
@@ -31,14 +34,6 @@ float getTime() {
     return std::chrono::duration<float,
             std::chrono::seconds::period>(currentTime - startTime).count();
 }
-
-struct PlayerData {
-    glm::vec3 position = { 0.0f, 0.0f, 0.0f };
-    glm::vec3 rotation = { 0.0f, 0.0f, 0.0f };
-    glm::vec3 scale = { 0.0f, 0.0f, 0.0f };
-    float rotationAngle = 0.f;
-    uint32_t playerIndex = 0;
-};
 
 int main() {  
 
@@ -68,19 +63,42 @@ int main() {
 
     // ------------------------ SCENE SETUP -----------------------------
 
-    PlayerData players[64];
-    uint32_t currentPlayers = 2;
+    uint32_t currentEntities = 3;
 
-    players[0] = {
+    Pong::Transform transformComponents[3];
+    Pong::Velocity velocityComponents[] {
+        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
+        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
+        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} }
+    };
+
+    transformComponents[0] = {
         {-350.0f,-150.0f,1.0f},
         {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 0.0f}, 0.0f, 0
+        {50.0f,100.0f, 0.0f}, 0.0f
     };
-    players[1] = {
+    transformComponents[1] = {
         {350.0f, -150.0f, 1.0f},
         {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 0.0f}, 0.0f, 1
+        {50.0f,100.0f, 0.0f}, 0.0f
     };
+    transformComponents[2] = {
+            {0.0f, 0.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {25.0f,25.0f, 0.0f}, 0.0f
+    };
+
+    Pong::RectAABB colliders[] {
+            Pong::initialiseAABBCollision(transformComponents[0]),
+            Pong::initialiseAABBCollision(transformComponents[1]),
+            Pong::initialiseAABBCollision(transformComponents[2])
+    };
+
+    PONG_INFO("minX {0} minY {1} maxX {2} maxY {3}", colliders[0].minX, colliders[0].minY, colliders[0].maxX, colliders[0].maxY);
+
+    size_t paddleA  {0};
+    size_t paddleB  {1};
+    size_t ball     {3};
 
     float oldTime, currentTime, deltaTime, elapsed, frames = 0.0f;
 
@@ -96,16 +114,20 @@ int main() {
 
         // Input
         if (Pong::isKeyPressed(window, KEY_W)) {
-            players[0].position.y += (300.0 * deltaTime);
+            velocityComponents[paddleA].positionVelocity.y += (300.0 * deltaTime);
         }
         if (Pong::isKeyPressed(window, KEY_S)) {
-            players[0].position.y -= (300.0 * deltaTime);
+            velocityComponents[paddleA].positionVelocity.y -= (300.0 * deltaTime);
         }
         if (Pong::isKeyPressed(window, KEY_UP)) {
-            players[1].position.y += (300.0 * deltaTime);
+            velocityComponents[paddleB].positionVelocity.y += (300.0 * deltaTime);
         }
         if (Pong::isKeyPressed(window, KEY_DOWN)) {
-            players[1].position.y -= (300.0 * deltaTime);
+            velocityComponents[paddleB].positionVelocity.y -= (300.0 * deltaTime);
+        }
+
+        for (int i = 0; i < currentEntities; i++) {
+            Pong::addVelocity(transformComponents[i], velocityComponents[i]);
         }
 
         // Basic FPS counter
@@ -116,14 +138,10 @@ int main() {
         }
 
         // Render Frame
-        for (int i = 0; i < currentPlayers; i++) {
-            PlayerData& player = players[i];
-            Renderer::drawQuad(
-                &renderer,                                      // Renderer
-                player.position,                                // Position
-                player.rotation,                                // Rotation
-                glm::radians(player.rotationAngle),             // angle (radians)
-                player.scale);                                  // Scale
+        for (int i = 0; i < currentEntities; i++) {
+            Pong::Transform& player = transformComponents[i];
+            Renderer::drawQuad(&renderer, player.position, player.rotation, glm::radians(player.rotationAngle),
+                player.scale);
         }
 
         // Draw our frame and store the result.
