@@ -73,12 +73,12 @@ int main() {
     };
 
     transformComponents[0] = {
-        {-350.0f,-150.0f,1.0f},
+        {-350.0f,-0.0f,1.0f},
         {0.0f,0.0f,1.0f},
         {50.0f,100.0f, 0.0f}, 0.0f
     };
     transformComponents[1] = {
-        {350.0f, -150.0f, 1.0f},
+        {350.0f, -0.0f, 1.0f},
         {0.0f,0.0f,1.0f},
         {50.0f,100.0f, 0.0f}, 0.0f
     };
@@ -98,9 +98,11 @@ int main() {
 
     size_t paddleA  {0};
     size_t paddleB  {1};
-    size_t ball     {3};
+    size_t ball     {2};
 
     float oldTime, currentTime, deltaTime, elapsed, frames = 0.0f;
+
+    glm::vec3 ballDirection {1.0f, 0.0f, 0.0f};
 
     // -------------------------- MAIN LOOP ------------------------------
 
@@ -126,8 +128,26 @@ int main() {
             velocityComponents[paddleB].positionVelocity.y -= (300.0 * deltaTime);
         }
 
+        // Game Logic
+
+        velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * ballDirection) * deltaTime);
+
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
+        }
+
+        for (size_t i = 0; i < currentEntities; i++) {
+            if (i == ball) continue;
+
+            if (Pong::isOverlapping(transformComponents[i], transformComponents[ball])) {
+                ballDirection = -ballDirection;
+            }
+        }
+
+        // Handle collision on sides
+        if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
+            transformComponents[ball].position.x < -static_cast<float>(window->windowData.width * 0.5f)) {
+            PONG_INFO("Out of bounds");
         }
 
         // Basic FPS counter

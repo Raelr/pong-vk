@@ -18,9 +18,15 @@ namespace Pong {
         return rectCollider;
     }
 
-    bool isOverlapping(RectAABB&, RectAABB&) {
-        bool isOverlapping = false;
-        return true;
+    bool isOverlapping(Transform& transformA, Transform& transformB) {
+
+        bool collisionX = ((transformA.position.x + transformA.scale.x) >= transformB.position.x
+            && (transformB.position.x + transformB.scale.x) >= transformA.position.x);
+
+        bool collisionY = ((transformA.position.y + transformA.scale.y) >= transformB.position.y &&
+                (transformB.position.y + transformB.scale.y) >= transformA.position.y);
+
+        return collisionX && collisionY;
     }
 }
 
