@@ -24,6 +24,7 @@ namespace Pong {
     void addVelocity(Transform&, Velocity&);
     RectAABB initialiseAABBCollision(Transform&);
     bool isOverlapping(Transform& transformA, Transform& transformB);
+    void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction);
 }
 
 #endif //PONG_VK_COMPONENTS_H

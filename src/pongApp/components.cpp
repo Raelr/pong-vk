@@ -20,13 +20,22 @@ namespace Pong {
 
     bool isOverlapping(Transform& transformA, Transform& transformB) {
 
-        bool collisionX = ((transformA.position.x + transformA.scale.x) >= transformB.position.x
-            && (transformB.position.x + transformB.scale.x) >= transformA.position.x);
+        bool collisionX = ((transformA.position.x + (transformA.scale.x * 0.5)) >= transformB.position.x
+            && (transformB.position.x + (transformB.scale.x * 0.5)) >= transformA.position.x);
 
-        bool collisionY = ((transformA.position.y + transformA.scale.y) >= transformB.position.y &&
-                (transformB.position.y + transformB.scale.y) >= transformA.position.y);
+        bool collisionY = ((transformA.position.y + (transformA.scale.y * 0.5)) >= transformB.position.y &&
+                (transformB.position.y + (transformA.scale.y * 0.5)) >= transformA.position.y);
 
         return collisionX && collisionY;
+    }
+
+    void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction) {
+
+        if (glm::sign(direction.x) == 1) {
+            transformA.position.x = (transformB.position.x - (transformB.scale.x));
+        } else if (glm::sign(direction.x) == -1) {
+            transformA.position.x = (transformB.position.x + (transformB.scale.x));
+        }
     }
 }
 

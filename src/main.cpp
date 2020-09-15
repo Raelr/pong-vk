@@ -138,8 +138,8 @@ int main() {
 
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-
-            if (Pong::isOverlapping(transformComponents[i], transformComponents[ball])) {
+            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i])) {
+                Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
                 ballDirection = -ballDirection;
             }
         }
