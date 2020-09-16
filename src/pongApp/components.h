@@ -17,12 +17,7 @@ namespace Pong {
         glm::vec3 rotationVelocity { 0.0f, 0.0f, 0.0f };
     };
 
-    struct RectAABB {
-        float minX, minY, maxX, maxY {0.0f};
-    };
-
     void addVelocity(Transform&, Velocity&);
-    RectAABB initialiseAABBCollision(Transform&);
     bool isOverlapping(Transform& transformA, Transform& transformB);
     void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction);
 }

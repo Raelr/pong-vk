@@ -88,14 +88,6 @@ int main() {
             {25.0f,25.0f, 0.0f}, 0.0f
     };
 
-    Pong::RectAABB colliders[] {
-            Pong::initialiseAABBCollision(transformComponents[0]),
-            Pong::initialiseAABBCollision(transformComponents[1]),
-            Pong::initialiseAABBCollision(transformComponents[2])
-    };
-
-    PONG_INFO("minX {0} minY {1} maxX {2} maxY {3}", colliders[0].minX, colliders[0].minY, colliders[0].maxX, colliders[0].maxY);
-
     size_t paddleA  {0};
     size_t paddleB  {1};
     size_t ball     {2};
@@ -139,7 +131,6 @@ int main() {
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(transformComponents[ball], transformComponents[i])) {
-                Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
                 ballDirection = -ballDirection;
             }
         }

@@ -1,4 +1,5 @@
 #include "components.h"
+#include "../logger.h"
 
 namespace Pong {
 
@@ -7,24 +8,21 @@ namespace Pong {
         velocity.positionVelocity = glm::vec3(0.0f);
     }
 
-    RectAABB initialiseAABBCollision(Transform& transform) {
-        RectAABB rectCollider {
-        transform.position.x - (transform.scale.x / 2.0f),
-        transform.position.y - (transform.scale.y / 2.0f),
-        transform.position.x + (transform.scale.x / 2.0f),
-        transform.position.y + (transform.scale.y / 2.0f)
-        };
-
-        return rectCollider;
-    }
-
     bool isOverlapping(Transform& transformA, Transform& transformB) {
 
-        bool collisionX = ((transformA.position.x + (transformA.scale.x * 0.5)) >= transformB.position.x
-            && (transformB.position.x + (transformB.scale.x * 0.5)) >= transformA.position.x);
+        float maxXA = transformA.position.x + (transformA.scale.x / 2.0f);
+        float minXA = transformA.position.x - (transformA.scale.x / 2.0f);
+        float maxXB = transformB.position.x + (transformB.scale.x / 2.0f);
+        float minXB = transformB.position.x - (transformB.scale.x / 2.0f);
 
-        bool collisionY = ((transformA.position.y + (transformA.scale.y * 0.5)) >= transformB.position.y &&
-                (transformB.position.y + (transformA.scale.y * 0.5)) >= transformA.position.y);
+        float maxYA = transformA.position.y + (transformA.scale.y / 2.0f);
+        float minYA = transformA.position.y - (transformA.scale.y / 2.0f);
+        float maxYB = transformB.position.y + (transformB.scale.y / 2.0f);
+        float minYB = transformB.position.y - (transformB.scale.y / 2.0f);
+
+        bool collisionX = (maxXB > maxXA && minXB < maxXA) || (maxXB > minXA && minXB < minXA);
+
+        bool collisionY = (maxYB > maxYA && minYB < maxYA) || (maxYB > minYA && minYB < minYA);
 
         return collisionX && collisionY;
     }
@@ -32,9 +30,10 @@ namespace Pong {
     void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction) {
 
         if (glm::sign(direction.x) == 1) {
-            transformA.position.x = (transformB.position.x - (transformB.scale.x));
+            float leftXB = transformB.position.x - (transformB.scale.x / 2.0f);
+
+            transformA.position.x = leftXB + 10;
         } else if (glm::sign(direction.x) == -1) {
-            transformA.position.x = (transformB.position.x + (transformB.scale.x));
         }
     }
 }
