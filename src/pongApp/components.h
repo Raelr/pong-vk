@@ -18,7 +18,7 @@ namespace Pong {
     };
 
     void addVelocity(Transform&, Velocity&);
-    bool isOverlapping(Transform& transformA, Transform& transformB);
+    bool isOverlapping(Transform& transformA, Transform& transformB, glm::vec2 direction);
     void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction);
 }
 

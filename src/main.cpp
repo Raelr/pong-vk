@@ -92,18 +92,21 @@ int main() {
     size_t paddleB  {1};
     size_t ball     {2};
 
-    float oldTime, currentTime, deltaTime, elapsed, frames = 0.0f;
+    float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
 
     glm::vec3 ballDirection {1.0f, 0.0f, 0.0f};
+
+    float timeFactor{ 1.0f };
 
     // -------------------------- MAIN LOOP ------------------------------
 
     while (PongWindow::isWindowRunning(window)) {
-        PongWindow::onWindowUpdate();
 
-        // Time
         currentTime = getTime();
-        deltaTime = currentTime - oldTime;
+
+        PongWindow::onWindowUpdate();
+        
+        deltaTime = std::clamp((currentTime - oldTime) * timeFactor, 0.0f, 0.033f);
         elapsed += deltaTime;
 
         // Input
@@ -130,7 +133,8 @@ int main() {
 
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i])) {
+            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i], ballDirection)) {
+                Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
                 ballDirection = -ballDirection;
             }
         }
@@ -138,7 +142,6 @@ int main() {
         // Handle collision on sides
         if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
             transformComponents[ball].position.x < -static_cast<float>(window->windowData.width * 0.5f)) {
-            PONG_INFO("Out of bounds");
         }
 
         // Basic FPS counter
@@ -162,10 +165,12 @@ int main() {
             PONG_ERROR("Error drawing frame - exiting main loop!");
             break;
         } else if (renderStatus == Renderer::Status::SKIPPED_FRAME) {
+            timeFactor = 0.0f;
             PongWindow::onWindowMinimised(window->nativeWindow, window->type,
                 &renderer.deviceData.framebufferWidth, &renderer.deviceData.framebufferHeight);
             Renderer::recreateSwapchain(&renderer);
             window->windowData.isResized = false;
+            timeFactor = 1.0f;
         }
 
         oldTime = currentTime;
