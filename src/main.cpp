@@ -75,17 +75,17 @@ int main() {
     transformComponents[0] = {
         {-350.0f,-0.0f,1.0f},
         {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 0.0f}, 0.0f
+        {50.0f,100.0f, 1.0f}, 0.0f
     };
     transformComponents[1] = {
         {350.0f, -0.0f, 1.0f},
         {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 0.0f}, 0.0f
+        {50.0f,100.0f, 1.0f}, 0.0f
     };
     transformComponents[2] = {
-            {0.0f, 0.0f, 1.0f},
-            {0.0f,0.0f,1.0f},
-            {25.0f,25.0f, 0.0f}, 0.0f
+        {0.0f, 0.0f, 1.0f},
+        {0.0f,0.0f,1.0f},
+        {25.0f,25.0f, 1.0f}, 0.0f
     };
 
     size_t paddleA  {0};
@@ -94,7 +94,7 @@ int main() {
 
     float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
 
-    glm::vec3 ballDirection {1.0f, 0.0f, 0.0f};
+    glm::vec3 ballDirection {-1.0f, 0.0f, 0.0f};
 
     float timeFactor{ 1.0f };
 
@@ -106,7 +106,7 @@ int main() {
 
         PongWindow::onWindowUpdate();
         
-        deltaTime = std::clamp((currentTime - oldTime) * timeFactor, 0.0f, 0.033f);
+        deltaTime = std::clamp((currentTime - oldTime) * timeFactor, 0.0f, 0.1f);
         elapsed += deltaTime;
 
         // Input
@@ -137,12 +137,36 @@ int main() {
                 Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
                 ballDirection = -ballDirection;
             }
-        }
+        } 
 
         // Handle collision on sides
         if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
             transformComponents[ball].position.x < -static_cast<float>(window->windowData.width * 0.5f)) {
         }
+
+        Renderer::drawQuad(&renderer,
+            { transformComponents[paddleA].position.x + transformComponents[paddleA].scale.x *0.5f ,
+            transformComponents[paddleA].position.y + transformComponents[paddleA].scale.y * 0.5f, 1.0f }, 
+            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
+            {10.0f, 10.0f, 1.0f});
+
+        Renderer::drawQuad(&renderer,
+            { transformComponents[paddleA].position.x - transformComponents[paddleA].scale.x * 0.5f ,
+            transformComponents[paddleA].position.y - transformComponents[paddleA].scale.y * 0.5f, 1.0f },
+            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
+            { 10.0f, 10.0f, 1.0f });
+
+        Renderer::drawQuad(&renderer,
+            { transformComponents[paddleA].position.x + transformComponents[paddleA].scale.x * 0.5f ,
+            transformComponents[paddleA].position.y - transformComponents[paddleA].scale.y * 0.5f, 1.0f },
+            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
+            { 10.0f, 10.0f, 1.0f });
+
+        Renderer::drawQuad(&renderer,
+            { transformComponents[paddleA].position.x - transformComponents[paddleA].scale.x * 0.5f ,
+            transformComponents[paddleA].position.y + transformComponents[paddleA].scale.y * 0.5f, 1.0f },
+            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
+            { 10.0f, 10.0f, 1.0f });
 
         // Basic FPS counter
         if (elapsed > 1.0f) {

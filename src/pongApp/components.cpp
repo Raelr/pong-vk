@@ -20,24 +20,9 @@ namespace Pong {
         float maxYB = transformB.position.y + (transformB.scale.y / 2.0f);
         float minYB = transformB.position.y - (transformB.scale.y / 2.0f);
 
-        float xDir = glm::sign(direction.x);
-        float yDir = glm::sign(direction.y);
+        bool collisionX = (maxXB > maxXA && minXB < maxXA) || (maxXB > minXA && minXB < minXA);
 
-        bool collisionX, collisionY = false;
-
-        if (xDir == 1) {
-            collisionX = (maxXB >= minXA && minXB <= minXA);
-        }
-        else {
-            collisionX = (maxXB >= maxXA && minXB <= maxXA);
-        }
-
-        if (yDir == 1) {
-            collisionY = (maxYB >= minYA && minYB <= minYA);
-        }
-        else {
-            collisionY = (maxYB >= maxYA && minYB <= maxYA);
-        }
+        bool collisionY = (maxYB > maxYA && minYB < maxYA) || (maxYB > minYA && minYB < minYA);
 
         return collisionX && collisionY;
     }
