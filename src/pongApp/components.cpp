@@ -8,7 +8,7 @@ namespace Pong {
         velocity.positionVelocity = glm::vec3(0.0f);
     }
 
-    bool isOverlapping(Transform& transformA, Transform& transformB, glm::vec2 direction) {
+    bool isOverlapping(Transform& transformA, Transform& transformB) {
 
         float maxXA = transformA.position.x + (transformA.scale.x / 2.0f);
         float minXA = transformA.position.x - (transformA.scale.x / 2.0f);
@@ -58,6 +58,22 @@ namespace Pong {
             float difference = bottomMostA - topMostB;
             transformA.position.x += difference;
         }
+    }
+
+    RectBounds initialiseRectBounds(Transform& transform) {
+        return {
+        transform.position.x - (transform.scale.x / 2.0f),
+        transform.position.y - (transform.scale.y / 2.0f),
+        transform.position.x + (transform.scale.x / 2.0f),
+        transform.position.y + (transform.scale.y / 2.0f)
+        };
+    }
+
+    void addVelocity(RectBounds& bounds, Velocity& velocity) {
+        bounds.minX += velocity.positionVelocity.x;
+        bounds.maxX += velocity.positionVelocity.x;
+        bounds.minY += velocity.positionVelocity.y;
+        bounds.maxY += velocity.positionVelocity.y;
     }
 }
 

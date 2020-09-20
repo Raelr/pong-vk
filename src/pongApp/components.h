@@ -17,9 +17,18 @@ namespace Pong {
         glm::vec3 rotationVelocity { 0.0f, 0.0f, 0.0f };
     };
 
+    struct RectBounds {
+        float minX {0};
+        float minY {0};
+        float maxX {0};
+        float maxY {0};
+    };
+
     void addVelocity(Transform&, Velocity&);
-    bool isOverlapping(Transform& transformA, Transform& transformB, glm::vec2 direction);
+    void addVelocity(RectBounds&, Velocity&);
+    bool isOverlapping(Transform& transformA, Transform& transformB);
     void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction);
+    RectBounds initialiseRectBounds(Transform&);
 }
 
 #endif //PONG_VK_COMPONENTS_H

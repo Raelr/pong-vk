@@ -65,32 +65,38 @@ int main() {
 
     uint32_t currentEntities = 3;
 
-    Pong::Transform transformComponents[3];
+    size_t paddleA  {0};
+    size_t paddleB  {1};
+    size_t ball     {2};
+
+    Pong::Transform transformComponents[] {
+        {
+            {-350.0f,-0.0f,1.0f},
+            {0.0f,0.0f,1.0f},
+            {50.0f,100.0f, 1.0f}, 0.0f
+        },
+        {
+            {350.0f, -0.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {50.0f,100.0f, 1.0f}, 0.0f
+        },
+        {
+            {0.0f, 0.0f, 1.0f},
+            {0.0f,0.0f,1.0f},
+            {25.0f,25.0f, 1.0f}, 0.0f
+        }
+    };
     Pong::Velocity velocityComponents[] {
         { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
         { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
         { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} }
     };
 
-    transformComponents[0] = {
-        {-350.0f,-0.0f,1.0f},
-        {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 1.0f}, 0.0f
+    Pong::RectBounds rectBoundComponents[] {
+        Pong::initialiseRectBounds(transformComponents[paddleA]),
+        Pong::initialiseRectBounds(transformComponents[paddleB]),
+        Pong::initialiseRectBounds(transformComponents[ball])
     };
-    transformComponents[1] = {
-        {350.0f, -0.0f, 1.0f},
-        {0.0f,0.0f,1.0f},
-        {50.0f,100.0f, 1.0f}, 0.0f
-    };
-    transformComponents[2] = {
-        {0.0f, 0.0f, 1.0f},
-        {0.0f,0.0f,1.0f},
-        {25.0f,25.0f, 1.0f}, 0.0f
-    };
-
-    size_t paddleA  {0};
-    size_t paddleB  {1};
-    size_t ball     {2};
 
     float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
 
@@ -129,11 +135,12 @@ int main() {
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
+            Pong::addVelocity(rectBoundComponents[i], velocityComponents[i]);
         }
 
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i], ballDirection)) {
+            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i])) {
                 Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
                 ballDirection = -ballDirection;
             }
@@ -143,30 +150,6 @@ int main() {
         if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
             transformComponents[ball].position.x < -static_cast<float>(window->windowData.width * 0.5f)) {
         }
-
-        Renderer::drawQuad(&renderer,
-            { transformComponents[paddleA].position.x + transformComponents[paddleA].scale.x *0.5f ,
-            transformComponents[paddleA].position.y + transformComponents[paddleA].scale.y * 0.5f, 1.0f }, 
-            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
-            {10.0f, 10.0f, 1.0f});
-
-        Renderer::drawQuad(&renderer,
-            { transformComponents[paddleA].position.x - transformComponents[paddleA].scale.x * 0.5f ,
-            transformComponents[paddleA].position.y - transformComponents[paddleA].scale.y * 0.5f, 1.0f },
-            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
-            { 10.0f, 10.0f, 1.0f });
-
-        Renderer::drawQuad(&renderer,
-            { transformComponents[paddleA].position.x + transformComponents[paddleA].scale.x * 0.5f ,
-            transformComponents[paddleA].position.y - transformComponents[paddleA].scale.y * 0.5f, 1.0f },
-            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
-            { 10.0f, 10.0f, 1.0f });
-
-        Renderer::drawQuad(&renderer,
-            { transformComponents[paddleA].position.x - transformComponents[paddleA].scale.x * 0.5f ,
-            transformComponents[paddleA].position.y + transformComponents[paddleA].scale.y * 0.5f, 1.0f },
-            { 0.0f,0.0f,1.0f }, glm::radians(0.0f),
-            { 10.0f, 10.0f, 1.0f });
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
