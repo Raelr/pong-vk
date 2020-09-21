@@ -25,10 +25,10 @@ namespace Pong {
     };
 
     void addVelocity(Transform&, Velocity&);
-    void addVelocity(RectBounds&, Velocity&);
-    bool isOverlapping(Transform& transformA, Transform& transformB);
-    void resolveCollision(Transform& transformA, Transform& transformB, glm::vec2 direction);
+    bool isOverlapping(RectBounds&, RectBounds&);
+    glm::vec3 resolveCollision(RectBounds& , RectBounds&, glm::vec2);
     RectBounds initialiseRectBounds(Transform&);
+    void updateRectBounds(RectBounds&, Transform&);
 }
 
 #endif //PONG_VK_COMPONENTS_H

@@ -135,16 +135,19 @@ int main() {
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
-            Pong::addVelocity(rectBoundComponents[i], velocityComponents[i]);
+            Pong::updateRectBounds(rectBoundComponents[i], transformComponents[i]);
+            velocityComponents[i].positionVelocity = glm::vec3(0.0f);
         }
 
+        // AABB Collisions
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-            if (Pong::isOverlapping(transformComponents[ball], transformComponents[i])) {
-                Pong::resolveCollision(transformComponents[ball], transformComponents[i], ballDirection);
+            if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
+                glm::vec3 difference = Pong::resolveCollision(rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
+                transformComponents[ball].position += difference;
                 ballDirection = -ballDirection;
             }
-        } 
+        }
 
         // Handle collision on sides
         if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
