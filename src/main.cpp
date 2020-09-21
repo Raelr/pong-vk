@@ -8,6 +8,11 @@
 
 #define PONG_FATAL_ERROR(...) PONG_ERROR(__VA_ARGS__); return EXIT_FAILURE
 
+// TODO: Handle paddle bounce logic
+// TODO: Handle scene resetting when ball hits either end of the map
+// TODO: Score tracking
+// TODO: Text rendering for menus + display
+
 const float BALL_VELOCITY = 500.0f;
 
 // TODO: Move these to a separate file
@@ -100,7 +105,7 @@ int main() {
 
     float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
 
-    glm::vec3 ballDirection {-1.0f, 0.0f, 0.0f};
+    glm::vec3 ballDirection {1.0f, 0.0f, 0.0f};
 
     float timeFactor{ 1.0f };
 
@@ -130,7 +135,6 @@ int main() {
         }
 
         // Game Logic
-
         velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * ballDirection) * deltaTime);
 
         for (int i = 0; i < currentEntities; i++) {
@@ -145,14 +149,20 @@ int main() {
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
                 glm::vec3 difference = Pong::resolveCollision(rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
                 transformComponents[ball].position += difference;
-                ballDirection = -ballDirection;
+                ballDirection.x = -ballDirection.x;
             }
         }
 
-        // Handle collision on sides
-        if ((transformComponents[ball].position.x > static_cast<float>(window->windowData.width * 0.5f)) ||
-            transformComponents[ball].position.x < -static_cast<float>(window->windowData.width * 0.5f)) {
+        // Handle hotizontal collisions with side of field.
+        if ((rectBoundComponents[ball].maxX > static_cast<float>(window->windowData.width * 0.5f)) ||
+                rectBoundComponents[ball].minX < -static_cast<float>(window->windowData.width * 0.5f)) {
+
+        // Handle vertical collisions with top and bottom of the map
+        } else if ((rectBoundComponents[ball].maxY > static_cast<float>(window->windowData.height * 0.5f)) ||
+                rectBoundComponents[ball].minY < -static_cast<float>(window->windowData.height * 0.5f)) {
+            ballDirection.y = -ballDirection.y;
         }
+
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
