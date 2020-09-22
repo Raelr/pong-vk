@@ -3,6 +3,7 @@
 // Layout the struct for handling a model-view projection
 layout (binding = 1) uniform UniformBufferObject {
     mat4 mvp;
+    vec3 color;
 } ubo;
 
 layout (location = 0) in vec2 inPosition;
@@ -16,5 +17,5 @@ void main() {
     // Define the position of the triangle
     gl_Position = ubo.mvp * vec4(inPosition, 0.0, 1.0);
     // Pass the colors to the fragColor variable
-    fragColor = inColor;
+    fragColor = ubo.color;
 }

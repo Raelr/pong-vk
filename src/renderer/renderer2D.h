@@ -8,14 +8,19 @@
 
 namespace Renderer2D {
 
+    struct QuadProperties {
+        glm::mat4 mvp;
+        glm::vec3 color;
+    };
+
     struct QuadData {
-        VkDescriptorSetLayout descriptorSetLayout               {VK_NULL_HANDLE};
-        size_t quadCount                                        {0};
-        size_t maxQuads                                         {256};
-        Buffers::VertexBuffer vertexBuffer                      {0};
-        Buffers::IndexBuffer indexBuffer                        {nullptr};
-        Buffers::DynamicUniformBuffer<glm::mat4> dynamicData    {0};
-        VkDescriptorSet* dynamicDescriptorSets                  {nullptr};
+        VkDescriptorSetLayout descriptorSetLayout                   {VK_NULL_HANDLE};
+        size_t quadCount                                            {0};
+        size_t maxQuads                                             {256};
+        Buffers::VertexBuffer vertexBuffer                          {0};
+        Buffers::IndexBuffer indexBuffer                            {nullptr};
+        Buffers::DynamicUniformBuffer<QuadProperties> dynamicData   {0};
+        VkDescriptorSet* dynamicDescriptorSets                      {nullptr};
     };
 
     struct Renderer2DData {

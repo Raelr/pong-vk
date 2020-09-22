@@ -6,10 +6,10 @@ namespace Renderer2D {
 
     static Buffers::Vertex quadVertices[] = {
             // Positions        // Colors
-            { {-0.5f, -0.5f},   {1.0f, 1.0f, 1.0f} },
-            { {0.5f, -0.5f},    {1.0f, 1.0f, 1.0f} },
-            { {0.5f, 0.5f},     {1.0f, 1.0f, 1.0f} },
-            { {-0.5f, 0.5f},    {1.0f, 1.0f, 1.0f} }
+            { {-0.5f,-0.5f } },
+            { {0.5f, -0.5f } },
+            { {0.5f,  0.5f } },
+            { {-0.5f, 0.5f } }
     };
 
     static uint16_t quadIndices[] = {
@@ -133,7 +133,7 @@ namespace Renderer2D {
             return false;
         }
 
-        Buffers::DynamicUniformBuffer<glm::mat4> dynamicUbo;
+        Buffers::DynamicUniformBuffer<QuadProperties> dynamicUbo;
         Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
 
         PONG_INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
@@ -271,7 +271,7 @@ namespace Renderer2D {
             return false;
         }
 
-        Buffers::DynamicUniformBuffer<glm::mat4> dynamicUbo;
+        Buffers::DynamicUniformBuffer<Renderer2D::QuadProperties> dynamicUbo;
         Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
 
         PONG_INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));

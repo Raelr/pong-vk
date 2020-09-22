@@ -378,9 +378,9 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale) {
+    Status drawQuad(Renderer* pRenderer, glm::vec3 pos, glm::vec3 rot, float degrees, glm::vec3 scale, glm::vec3 color) {
 
-        Buffers::DynamicUniformBuffer<glm::mat4>& dynamicUniformBuffer = pRenderer->renderer2DData.quadData.dynamicData;
+        Buffers::DynamicUniformBuffer<Renderer2D::QuadProperties>& dynamicUniformBuffer = pRenderer->renderer2DData.quadData.dynamicData;
 
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -397,10 +397,11 @@ namespace Renderer {
         // Rotate the model matrix
         model = proj * view * model;
 
-        glm::mat4* modelMat = (glm::mat4*)(((uint64_t)dynamicUniformBuffer.data
+        auto* properties = (Renderer2D::QuadProperties*)(((uint64_t)dynamicUniformBuffer.data
                 + (pRenderer->renderer2DData.quadData.quadCount * dynamicUniformBuffer.dynamicAlignment)));
 
-        *modelMat = model;
+        properties->mvp = model;
+        properties->color = color;
 
         VkDeviceMemory memory = pRenderer->renderer2DData.quadData.dynamicData.buffer.bufferMemory;
 

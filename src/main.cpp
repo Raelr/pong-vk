@@ -156,6 +156,7 @@ int main() {
         // Handle hotizontal collisions with side of field.
         if ((rectBoundComponents[ball].maxX > static_cast<float>(window->windowData.width * 0.5f)) ||
                 rectBoundComponents[ball].minX < -static_cast<float>(window->windowData.width * 0.5f)) {
+            // TODO: create a score management system.
 
         // Handle vertical collisions with top and bottom of the map
         } else if ((rectBoundComponents[ball].maxY > static_cast<float>(window->windowData.height * 0.5f)) ||
@@ -175,7 +176,7 @@ int main() {
         for (int i = 0; i < currentEntities; i++) {
             Pong::Transform& player = transformComponents[i];
             Renderer::drawQuad(&renderer, player.position, player.rotation, glm::radians(player.rotationAngle),
-                player.scale);
+                player.scale, {1.0f, 1.0f, 1.0f});
         }
 
         // Draw our frame and store the result.

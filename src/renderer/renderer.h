@@ -51,7 +51,7 @@ namespace Renderer {
     [[maybe_unused]] Status loadCustomDeviceExtensions(Renderer*, const char**, uint32_t);
 
     // Drawing
-    Status drawQuad(Renderer*, glm::vec3, glm::vec3, float, glm::vec3);
+    Status drawQuad(Renderer*, glm::vec3, glm::vec3, float, glm::vec3, glm::vec3);
 
     VkResult recreateSwapchain(Renderer* pRenderer);
     void flushRenderer(Renderer* pRenderer);
