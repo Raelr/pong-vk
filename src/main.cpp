@@ -13,7 +13,7 @@
 // TODO: Score tracking
 // TODO: Text rendering for menus + display
 
-const float BALL_VELOCITY = 500.0f;
+const float BALL_VELOCITY = 400.0f;
 
 // TODO: Move these to a separate file
 #define KEY_W GLFW_KEY_W
@@ -78,15 +78,15 @@ int main() {
         {
             {-350.0f,-0.0f,1.0f},
             {0.0f,0.0f,1.0f},
-            {50.0f,100.0f, 1.0f}, 0.0f
+            {30.0f,100.0f, 1.0f}, 0.0f
         },
         {
             {350.0f, -0.0f, 1.0f},
             {0.0f,0.0f,1.0f},
-            {50.0f,100.0f, 1.0f}, 0.0f
+            {30.0f,100.0f, 1.0f}, 0.0f
         },
         {
-            {0.0f, 0.0f, 1.0f},
+            {0.0f, 100.0f, 1.0f},
             {0.0f,0.0f,1.0f},
             {25.0f,25.0f, 1.0f}, 0.0f
         }
@@ -143,13 +143,19 @@ int main() {
             velocityComponents[i].positionVelocity = glm::vec3(0.0f);
         }
 
+        Pong::Transform& ballTransform = transformComponents[ball];
         // AABB Collisions
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
-                glm::vec3 difference = Pong::resolveCollision(rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
-                transformComponents[ball].position += difference;
+                //glm::vec3 difference = Pong::resolveCollision(rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
+                float distanceFromCentre = ballTransform.position.y - transformComponents[i].position.y;
+                float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
+                PONG_INFO(normalised);
+                //transformComponents[ball].position += difference;
                 ballDirection.x = -ballDirection.x;
+                ballDirection.y = normalised;
+                PONG_INFO("DIRECTION: {0}, {1}", ballDirection.x, ballDirection.y);
             }
         }
 
@@ -164,6 +170,8 @@ int main() {
             ballDirection.y = -ballDirection.y;
         }
 
+        float paddleASize = transformComponents[paddleA].scale.y;
+        float sectionSize = paddleASize / 3.0f;
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
@@ -178,6 +186,15 @@ int main() {
             Renderer::drawQuad(&renderer, player.position, player.rotation, glm::radians(player.rotationAngle),
                 player.scale, {1.0f, 1.0f, 1.0f});
         }
+
+        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position.x, transformComponents[paddleA].position.y + sectionSize, 1.0f}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
+            {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
+
+        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
+                           {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
+
+        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position.x, transformComponents[paddleA].position.y - sectionSize, 1.0f}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
+                           {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
 
         // Draw our frame and store the result.
         Renderer::Status renderStatus = Renderer::drawFrame(&renderer, &window->windowData.isResized);
