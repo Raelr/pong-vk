@@ -86,7 +86,7 @@ int main() {
             {30.0f,100.0f, 1.0f}, 0.0f
         },
         {
-            {0.0f, 100.0f, 1.0f},
+            {0.0f, 0.0f, 1.0f},
             {0.0f,0.0f,1.0f},
             {25.0f,25.0f, 1.0f}, 0.0f
         }
@@ -135,7 +135,7 @@ int main() {
         }
 
         // Game Logic
-        velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * ballDirection) * deltaTime);
+        velocityComponents[ball].positionVelocity += (BALL_VELOCITY * ballDirection * deltaTime);
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
@@ -148,14 +148,16 @@ int main() {
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
-                //glm::vec3 difference = Pong::resolveCollision(rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
-                float distanceFromCentre = ballTransform.position.y - transformComponents[i].position.y;
+                glm::vec3 difference = Pong::resolveCollision(transformComponents[ball], rectBoundComponents[ball],
+                    transformComponents[i], rectBoundComponents[i], ballDirection);
+                transformComponents[ball].position += difference;
+                //PONG_INFO(difference.x);
+                float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
-                PONG_INFO(normalised);
-                //transformComponents[ball].position += difference;
+                //PONG_INFO(normalised);
                 ballDirection.x = -ballDirection.x;
                 ballDirection.y = normalised;
-                PONG_INFO("DIRECTION: {0}, {1}", ballDirection.x, ballDirection.y);
+                //PONG_INFO("DIRECTION: {0}, {1}", ballDirection.x, ballDirection.y);
             }
         }
 
@@ -186,15 +188,6 @@ int main() {
             Renderer::drawQuad(&renderer, player.position, player.rotation, glm::radians(player.rotationAngle),
                 player.scale, {1.0f, 1.0f, 1.0f});
         }
-
-        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position.x, transformComponents[paddleA].position.y + sectionSize, 1.0f}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
-            {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
-
-        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
-                           {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
-
-        Renderer::drawQuad(&renderer, {transformComponents[paddleA].position.x, transformComponents[paddleA].position.y - sectionSize, 1.0f}, {0.0f, 0.0f, 1.0f}, glm::radians(0.0f),
-                           {transformComponents[paddleA].scale.x, sectionSize - 2.0f, 25.0f}, {1.0f, 0.0f, 0.0f});
 
         // Draw our frame and store the result.
         Renderer::Status renderStatus = Renderer::drawFrame(&renderer, &window->windowData.isResized);

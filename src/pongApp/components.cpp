@@ -18,25 +18,28 @@ namespace Pong {
         return collisionX && collisionY;
     }
 
-    glm::vec3 resolveCollision(RectBounds& RectBoundsA, RectBounds& RectBoundsB, glm::vec2 direction) {
+    glm::vec3 resolveCollision(Transform& transformA, RectBounds& rectA, Transform& transformB,
+        RectBounds& rectB, glm::vec2 direction) {
 
-        float xDir = glm::sign(direction.x);
-        float yDir = glm::sign(direction.y);
+        float dirX = glm::sign(direction.x);
+        float dirY = glm::sign(direction.y);
 
         glm::vec3 difference = {0.0f, 0.0f, 0.0f};
 
-        if (xDir == 1) {
-            difference.x = RectBoundsB.minX - RectBoundsA.maxX;
+        if (dirX == 1) {
+            difference.x = (rectB.minX - transformA.position.x) - (transformA.scale.x * 0.5f);
+        } else if (dirX == -1) {
+            difference.x = (rectB.maxX - transformA.position.x) + (transformA.scale.x * 0.5f);
         }
-        else if (xDir == -1) {
-            difference.x = RectBoundsB.maxX - RectBoundsA.minX;
-        }
-        if (yDir == 1) {
-            difference.y = RectBoundsB.maxY - RectBoundsA.minY;
-        }
-        else if (yDir == -1) {
-            difference.y = RectBoundsB.minY - RectBoundsA.maxY;
-        }
+
+//        if (dirY == 1) {
+//            difference.y = (rectB.minY - transformA.position.y) - (transformA.scale.y * 0.5f);
+//            PONG_INFO("UP");
+//        } else if (dirY == -1) {
+//            difference.y = (rectB.maxY - transformA.position.y) + (transformA.scale.x * 0.5f);
+//        }
+
+        PONG_INFO("DIFFERENCE (X: {0} | Y: {1})", difference.x, difference.y);
 
         return difference;
     }
