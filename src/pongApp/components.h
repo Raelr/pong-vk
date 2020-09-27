@@ -6,14 +6,14 @@
 namespace Pong {
 
     struct Transform {
-        glm::vec3 position { 0.0f, 0.0f, 0.0f };
+        glm::vec2 position { 0.0f, 0.0f };
         glm::vec3 rotation { 0.0f, 0.0f, 0.0f };
         glm::vec3 scale { 0.0f, 0.0f, 0.0f };
         float rotationAngle {0.f};
     };
 
     struct Velocity {
-        glm::vec3 positionVelocity { 0.0f, 0.0f, 0.0f };
+        glm::vec2 positionVelocity { 0.0f, 0.0f };
         glm::vec3 rotationVelocity { 0.0f, 0.0f, 0.0f };
     };
 
@@ -26,7 +26,7 @@ namespace Pong {
 
     void addVelocity(Transform&, Velocity&);
     bool isOverlapping(RectBounds&, RectBounds&);
-    glm::vec3 resolveCollision(Transform&, RectBounds&, Transform&, RectBounds&, glm::vec2);
+    glm::vec2 resolveCollision(Transform&, Transform&, RectBounds&, glm::vec2&);
     RectBounds initialiseRectBounds(Transform&);
     void updateRectBounds(RectBounds&, Transform&);
 }

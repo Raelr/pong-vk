@@ -77,25 +77,25 @@ int main() {
 
     Pong::Transform transformComponents[] {
         {
-            {-350.0f,-0.0f,1.0f},
+            {-325.0f,0.0f,},
             {0.0f,0.0f,1.0f},
-            {30.0f,100.0f, 1.0f}, 0.0f
+            {20.0f,75.0f, 1.0f}, 0.0f
         },
         {
-            {350.0f, -0.0f, 1.0f},
+            {325.0f, 0.0f },
             {0.0f,0.0f,1.0f},
-            {30.0f,100.0f, 1.0f}, 0.0f
+            {20.0f,75.0f, 1.0f}, 0.0f
         },
         {
-            {0.0f, 0.0f, 1.0f},
+            {0.0f, 0.0f},
             {0.0f,0.0f,1.0f},
-            {25.0f,25.0f, 1.0f}, 0.0f
+            {20.0f,20.0f, 1.0f}, 0.0f
         }
     };
     Pong::Velocity velocityComponents[] {
-        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
-        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
-        { {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} }
+        { {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
+        { {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} },
+        { {0.0f, 0.0f}, {0.0f, 0.0f, 0.0f} }
     };
 
     Pong::RectBounds rectBoundComponents[] {
@@ -106,7 +106,7 @@ int main() {
 
     float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
 
-    glm::vec3 ballDirection {1.0f, 0.0f, 0.0f};
+    glm::vec2 ballDirection {1.0f, 0.0f};
 
     float timeFactor{ 1.0f };
 
@@ -150,11 +150,11 @@ int main() {
                 transformComponents[i].position = { 
                     transformComponents[i].position.x, 
                     std::clamp(transformComponents[i].position.y,-windowSize.y + (transformComponents[i].scale.y * 0.5f), 
-                    windowSize.y - (transformComponents[i].scale.y * 0.5f)), 1.0f 
+                    windowSize.y - (transformComponents[i].scale.y * 0.5f))
                 };
             }
             Pong::updateRectBounds(rectBoundComponents[i], transformComponents[i]);
-            velocityComponents[i].positionVelocity = glm::vec3(0.0f);
+            velocityComponents[i].positionVelocity = glm::vec2(0.0f);
         }
 
         Pong::Transform& ballTransform = transformComponents[ball];
@@ -162,29 +162,30 @@ int main() {
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
-                glm::vec3 difference = Pong::resolveCollision(transformComponents[ball], rectBoundComponents[ball],
-                    transformComponents[i], rectBoundComponents[i], ballDirection);
+                glm::vec2 difference = Pong::resolveCollision(transformComponents[ball], transformComponents[i], rectBoundComponents[i], ballDirection);
                 transformComponents[ball].position += difference;
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
-                ballDirection.x = -ballDirection.x;
                 ballDirection.y = normalised;
             }
         }
 
         // Handle hotizontal collisions with side of field.
-        if ((rectBoundComponents[ball].maxX > static_cast<float>(window->windowData.width * 0.5f)) ||
-                rectBoundComponents[ball].minX < -static_cast<float>(window->windowData.width * 0.5f)) {
+        if ((rectBoundComponents[ball].maxX > windowSize.x) ||
+                rectBoundComponents[ball].minX < -windowSize.x) {
             // TODO: create a score management system.
 
         // Handle vertical collisions with top and bottom of the map
-        } else if ((rectBoundComponents[ball].maxY > static_cast<float>(window->windowData.height * 0.5f)) ||
-                rectBoundComponents[ball].minY < -static_cast<float>(window->windowData.height * 0.5f)) {
+        } else if ((rectBoundComponents[ball].maxY > windowSize.y) ||
+                rectBoundComponents[ball].minY < -windowSize.y) {
+            if (glm::sign(ballDirection.y) == 1) {
+                transformComponents[ball].position.y = windowSize.y - transformComponents[ball].scale.y;
+            } else if (glm::sign(ballDirection.y) == -1) {
+                transformComponents[ball].position.y = -windowSize.y + transformComponents[ball].scale.y;
+            }
+
             ballDirection.y = -ballDirection.y;
         }
-
-        float paddleASize = transformComponents[paddleA].scale.y;
-        float sectionSize = paddleASize / 3.0f;
 
         // Basic FPS counter
         if (elapsed > 1.0f) {
@@ -196,7 +197,7 @@ int main() {
         // Render Frame
         for (int i = 0; i < currentEntities; i++) {
             Pong::Transform& player = transformComponents[i];
-            Renderer::drawQuad(&renderer, player.position, player.rotation, glm::radians(player.rotationAngle),
+            Renderer::drawQuad(&renderer, { player.position.x, player.position.y, 0.0f }, player.rotation, glm::radians(player.rotationAngle),
                 player.scale, {1.0f, 1.0f, 1.0f});
         }
 

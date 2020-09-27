@@ -18,8 +18,8 @@ namespace Pong {
         return collisionX && collisionY;
     }
 
-    glm::vec3 resolveCollision(Transform& transformA, RectBounds& rectA, Transform& transformB,
-        RectBounds& rectB, glm::vec2 direction) {
+    glm::vec2 resolveCollision(Transform& transformA, Transform& transformB,
+        RectBounds& rectB, glm::vec2& direction) {
 
         glm::vec2 directions[] = {
             {1.0f, 0.0f},
@@ -43,27 +43,30 @@ namespace Pong {
         float dirX = glm::sign(hit_direction.x);
         float dirY = glm::sign(hit_direction.y);
 
-        glm::vec3 difference = { 0.0f, 0.0f, 0.0f };
+        glm::vec2 difference = { 0.0f, 0.0f};
 
         if (dirX == 1) {
             float distanceFromCenters = transformB.position.x - transformA.position.x;
             float desiredPosition = rectB.minX - distanceFromCenters;
             difference.x = desiredPosition - transformA.position.x;
+            direction.x = -direction.x;
         } else if (dirX == -1) {
             float distanceFromCenters = transformB.position.x - transformA.position.x;
             float desiredPosition = rectB.maxX - distanceFromCenters;
             difference.x = desiredPosition - transformA.position.x;
+            direction.x = -direction.x;
         }
-
         if (dirY == 1) {
             float distanceFromCenters = transformB.position.y - transformA.position.y;
             float desiredPosition = rectB.minY - distanceFromCenters;
             difference.y = desiredPosition - transformA.position.y;
+            direction.y = -direction.y;
         }
         else if (dirY == -1) {
             float distanceFromCenters = transformB.position.y - transformA.position.y;
             float desiredPosition = rectB.maxY - distanceFromCenters;
             difference.y = desiredPosition - transformA.position.y;
+            direction.y = -direction.y;
         }
 
         return difference;
