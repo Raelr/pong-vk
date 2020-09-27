@@ -9,11 +9,11 @@ namespace Pong {
 
     bool isOverlapping(RectBounds& rectA, RectBounds& rectB) {
 
-        bool collisionX = (rectB.maxX > rectA.maxX && rectB.minX < rectA.maxX)
-                || (rectB.maxX > rectA.minX && rectB.minX < rectA.minX);
+        bool collisionX = (rectB.maxX >= rectA.maxX && rectB.minX <= rectA.maxX)
+                || (rectB.maxX >= rectA.minX && rectB.minX <= rectA.minX);
 
-        bool collisionY = (rectB.maxY > rectA.maxY && rectB.minY < rectA.maxY)
-                || (rectB.maxY > rectA.minY && rectB.minY < rectA.minY);
+        bool collisionY = (rectB.maxY >= rectA.maxY && rectB.minY <= rectA.maxY)
+                || (rectB.maxY >= rectA.minY && rectB.minY <= rectA.minY);
 
         return collisionX && collisionY;
     }
@@ -21,25 +21,50 @@ namespace Pong {
     glm::vec3 resolveCollision(Transform& transformA, RectBounds& rectA, Transform& transformB,
         RectBounds& rectB, glm::vec2 direction) {
 
-        float dirX = glm::sign(direction.x);
-        float dirY = glm::sign(direction.y);
+        glm::vec2 directions[] = {
+            {1.0f, 0.0f},
+            {0.0f, 1.0f},
+            {-1.0f, 0.0f},
+            {0.0, -1.0}
+        };
 
-        glm::vec3 difference = {0.0f, 0.0f, 0.0f};
-
-        if (dirX == 1) {
-            difference.x = (rectB.minX - transformA.position.x) - (transformA.scale.x * 0.5f);
-        } else if (dirX == -1) {
-            difference.x = (rectB.maxX - transformA.position.x) + (transformA.scale.x * 0.5f);
+        float max = 0.0f;
+        size_t best_match = -1;
+        for (size_t i = 0; i < 4; i++) {
+            float dot_product = glm::dot(glm::normalize(direction), directions[i]);
+            if (dot_product > max) {
+                best_match = i;
+                max = dot_product;
+            }
         }
 
-//        if (dirY == 1) {
-//            difference.y = (rectB.minY - transformA.position.y) - (transformA.scale.y * 0.5f);
-//            PONG_INFO("UP");
-//        } else if (dirY == -1) {
-//            difference.y = (rectB.maxY - transformA.position.y) + (transformA.scale.x * 0.5f);
-//        }
+        glm::vec2 hit_direction = directions[best_match];
 
-        PONG_INFO("DIFFERENCE (X: {0} | Y: {1})", difference.x, difference.y);
+        float dirX = glm::sign(hit_direction.x);
+        float dirY = glm::sign(hit_direction.y);
+
+        glm::vec3 difference = { 0.0f, 0.0f, 0.0f };
+
+        if (dirX == 1) {
+            float distanceFromCenters = transformB.position.x - transformA.position.x;
+            float desiredPosition = rectB.minX - distanceFromCenters;
+            difference.x = desiredPosition - transformA.position.x;
+        } else if (dirX == -1) {
+            float distanceFromCenters = transformB.position.x - transformA.position.x;
+            float desiredPosition = rectB.maxX - distanceFromCenters;
+            difference.x = desiredPosition - transformA.position.x;
+        }
+
+        if (dirY == 1) {
+            float distanceFromCenters = transformB.position.y - transformA.position.y;
+            float desiredPosition = rectB.minY - distanceFromCenters;
+            difference.y = desiredPosition - transformA.position.y;
+        }
+        else if (dirY == -1) {
+            float distanceFromCenters = transformB.position.y - transformA.position.y;
+            float desiredPosition = rectB.maxY - distanceFromCenters;
+            difference.y = desiredPosition - transformA.position.y;
+        }
 
         return difference;
     }

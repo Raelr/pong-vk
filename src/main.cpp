@@ -13,7 +13,8 @@
 // TODO: Score tracking
 // TODO: Text rendering for menus + display
 
-const float BALL_VELOCITY = 400.0f;
+const float BALL_VELOCITY = 600.0f;
+const float PADDLE_VELOCITY = 400.0f;
 
 // TODO: Move these to a separate file
 #define KEY_W GLFW_KEY_W
@@ -113,6 +114,11 @@ int main() {
 
     while (PongWindow::isWindowRunning(window)) {
 
+        glm::vec2 windowSize = {
+            static_cast<float>(window->windowData.width * 0.5f),
+            static_cast<float>(window->windowData.height * 0.5f)
+        };
+
         currentTime = getTime();
 
         PongWindow::onWindowUpdate();
@@ -122,16 +128,17 @@ int main() {
 
         // Input
         if (Pong::isKeyPressed(window, KEY_W)) {
-            velocityComponents[paddleA].positionVelocity.y += (300.0 * deltaTime);
+            velocityComponents[paddleA].positionVelocity.y += (PADDLE_VELOCITY * deltaTime);
         }
         if (Pong::isKeyPressed(window, KEY_S)) {
-            velocityComponents[paddleA].positionVelocity.y -= (300.0 * deltaTime);
+            velocityComponents[paddleA].positionVelocity.y -= (PADDLE_VELOCITY * deltaTime);
         }
+
         if (Pong::isKeyPressed(window, KEY_UP)) {
-            velocityComponents[paddleB].positionVelocity.y += (300.0 * deltaTime);
+            velocityComponents[paddleB].positionVelocity.y += (PADDLE_VELOCITY * deltaTime);
         }
         if (Pong::isKeyPressed(window, KEY_DOWN)) {
-            velocityComponents[paddleB].positionVelocity.y -= (300.0 * deltaTime);
+            velocityComponents[paddleB].positionVelocity.y -= (PADDLE_VELOCITY * deltaTime);
         }
 
         // Game Logic
@@ -139,6 +146,13 @@ int main() {
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
+            if (i != ball) {
+                transformComponents[i].position = { 
+                    transformComponents[i].position.x, 
+                    std::clamp(transformComponents[i].position.y,-windowSize.y + (transformComponents[i].scale.y * 0.5f), 
+                    windowSize.y - (transformComponents[i].scale.y * 0.5f)), 1.0f 
+                };
+            }
             Pong::updateRectBounds(rectBoundComponents[i], transformComponents[i]);
             velocityComponents[i].positionVelocity = glm::vec3(0.0f);
         }
@@ -151,13 +165,10 @@ int main() {
                 glm::vec3 difference = Pong::resolveCollision(transformComponents[ball], rectBoundComponents[ball],
                     transformComponents[i], rectBoundComponents[i], ballDirection);
                 transformComponents[ball].position += difference;
-                //PONG_INFO(difference.x);
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
-                //PONG_INFO(normalised);
                 ballDirection.x = -ballDirection.x;
                 ballDirection.y = normalised;
-                //PONG_INFO("DIRECTION: {0}, {1}", ballDirection.x, ballDirection.y);
             }
         }
 
