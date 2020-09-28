@@ -104,9 +104,12 @@ int main() {
         Pong::initialiseRectBounds(transformComponents[ball])
     };
 
-    float oldTime, currentTime, deltaTime, elapsed, frames { 0.0f };
+    float oldTime, currentTime, deltaTime, elapsed, resetElapsed, frames { 0.0f };
+
+    bool isResetting {false};
 
     glm::vec2 ballDirection {1.0f, 0.0f};
+    glm::vec2 oldDirection = ballDirection;
 
     float timeFactor{ 1.0f };
 
@@ -171,20 +174,34 @@ int main() {
         }
 
         // Handle hotizontal collisions with side of field.
-        if ((rectBoundComponents[ball].maxX > windowSize.x) ||
+        if (!isResetting) {
+            if ((rectBoundComponents[ball].maxX > windowSize.x) ||
                 rectBoundComponents[ball].minX < -windowSize.x) {
-            // TODO: create a score management system.
 
-        // Handle vertical collisions with top and bottom of the map
-        } else if ((rectBoundComponents[ball].maxY > windowSize.y) ||
-                rectBoundComponents[ball].minY < -windowSize.y) {
-            if (glm::sign(ballDirection.y) == 1) {
-                transformComponents[ball].position.y = windowSize.y - transformComponents[ball].scale.y;
-            } else if (glm::sign(ballDirection.y) == -1) {
-                transformComponents[ball].position.y = -windowSize.y + transformComponents[ball].scale.y;
+                transformComponents[ball].position = {0.0f,0.0f};
+                oldDirection = ballDirection;
+                ballDirection = {0.0f,0.0f};
+                isResetting = true;
+                // Handle vertical collisions with top and bottom of the map
+            } else if ((rectBoundComponents[ball].maxY > windowSize.y) ||
+                       rectBoundComponents[ball].minY < -windowSize.y) {
+                if (glm::sign(ballDirection.y) == 1) {
+                    transformComponents[ball].position.y = windowSize.y - transformComponents[ball].scale.y;
+                } else if (glm::sign(ballDirection.y) == -1) {
+                    transformComponents[ball].position.y = -windowSize.y + transformComponents[ball].scale.y;
+                }
+
+                ballDirection.y = -ballDirection.y;
             }
+        } else {
+            resetElapsed += deltaTime;
+            if (resetElapsed >= 1.0f) {
 
-            ballDirection.y = -ballDirection.y;
+                ballDirection.x = -oldDirection.x;
+                ballDirection.y = 0;
+                resetElapsed = 0.0f;
+                isResetting = false;
+            }
         }
 
         // Basic FPS counter

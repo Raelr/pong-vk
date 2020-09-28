@@ -9,11 +9,11 @@ namespace Pong {
 
     bool isOverlapping(RectBounds& rectA, RectBounds& rectB) {
 
-        bool collisionX = (rectB.maxX >= rectA.maxX && rectB.minX <= rectA.maxX)
-                || (rectB.maxX >= rectA.minX && rectB.minX <= rectA.minX);
+        bool collisionX = (rectB.maxX > rectA.maxX && rectB.minX < rectA.maxX)
+                || (rectB.maxX > rectA.minX && rectB.minX < rectA.minX);
 
-        bool collisionY = (rectB.maxY >= rectA.maxY && rectB.minY <= rectA.maxY)
-                || (rectB.maxY >= rectA.minY && rectB.minY <= rectA.minY);
+        bool collisionY = (rectB.maxY > rectA.maxY && rectB.minY < rectA.maxY)
+                || (rectB.maxY > rectA.minY && rectB.minY < rectA.minY);
 
         return collisionX && collisionY;
     }
