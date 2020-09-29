@@ -157,7 +157,6 @@ int main() {
                 };
             }
             Pong::updateRectBounds(rectBoundComponents[i], transformComponents[i]);
-            velocityComponents[i].positionVelocity = glm::vec2(0.0f);
         }
 
         Pong::Transform& ballTransform = transformComponents[ball];
@@ -202,6 +201,10 @@ int main() {
                 resetElapsed = 0.0f;
                 isResetting = false;
             }
+        }
+
+        for (size_t i = 0; i < currentEntities; i++) {
+            velocityComponents[i].positionVelocity = glm::vec2(0.0f);
         }
 
         // Basic FPS counter
