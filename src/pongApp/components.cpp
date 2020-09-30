@@ -19,7 +19,7 @@ namespace Pong {
     }
 
     glm::vec2 resolveCollision(Transform& transformA, Transform& transformB,
-        RectBounds& rectB, glm::vec2& direction) {
+        RectBounds& rectA, RectBounds& rectB, glm::vec2& direction) {
 
         glm::vec2 directions[] = {
             {1.0f, 0.0f},
@@ -40,56 +40,28 @@ namespace Pong {
 
         glm::vec2 hit_direction = directions[best_match];
 
-        float dirX = glm::sign(direction.x);
-        float dirY = glm::sign(direction.y);
+        float dirX = glm::sign(hit_direction.x);
+        float dirY = glm::sign(hit_direction.y);
 
         glm::vec2 difference = { 0.0f, 0.0f};
 
-        float timeXCollision, timeYCollision {0.0f};
+        float distanceFromPoints {0.0f};
 
-        // Right of Left collisions
-        if ((dirX == 1 && dirY == 0) || (dirX == -1 && dirY == 0))  {
-            if (dirX == 1) {
-                timeXCollision = ((transformA.position.x + (transformA.scale.x * 0.5)) - rectB.minX) / -600.0f;
-            } else {
-                timeXCollision = ((transformA.position.x - (transformA.scale.x * 0.5)) - rectB.minX) / 600.0f;
-            }
-            PONG_INFO("X collision time: {0}", timeXCollision * 600.0f);
-            difference.x = timeXCollision * 600.0f;
-            direction.x = -direction.x;
+        if (dirX == 1) {
+            distanceFromPoints = rectB.minX - rectA.maxX;
+            difference.x = distanceFromPoints;
+        } else if (dirX == -1){
+            distanceFromPoints = rectB.maxX - rectA.minX;
+            difference.x = distanceFromPoints;
         }
 
-        // Top and Bottom collisions
-        if ((dirY == 1 && dirX == 0) || (dirY == -1 && dirX == 0))  {
-            if (dirY == 1) {
-                timeYCollision = (rectB.minY - (transformA.position.y + (transformA.scale.y * 0.5))) / 600.0f;
+        if (dirY == 1 || dirY == -1) {
+            if (transformA.position.y > transformB.position.y) {
+                distanceFromPoints = rectB.maxY - rectA.minY;
             } else {
-                timeYCollision = (rectB.maxY - (transformA.position.y - (transformA.scale.y * 0.5))) / 600.0f;
+                distanceFromPoints = rectB.minY - rectA.maxY;
             }
-            difference.y = timeYCollision * 600.0f;
-            direction.y = -direction.y;
-        }
-
-        // Diagonals
-        if ((dirY == 1 && dirX == 1) || (dirY == -1 && dirX == -1) || (dirY == -1 && dirX == 1) || (dirY == 1 && dirX == -1) )  {
-            if (dirX == 1) {
-                timeXCollision = (rectB.minX - (transformA.position.x + (transformA.scale.x * 0.5))) / 600.0f;
-            } else {
-                timeXCollision = (rectB.maxX - (transformA.position.x - (transformA.scale.x * 0.5))) / 600.0f;
-            }
-
-            if (dirY == 1) {
-                timeYCollision = (rectB.minY - (transformA.position.y + (transformA.scale.y * 0.5))) / 600.0f;
-            } else {
-                timeYCollision = (rectB.maxY - (transformA.position.y - (transformA.scale.y * 0.5))) / 600.0f;
-            }
-            PONG_INFO("Y collision time: {0}", timeYCollision);
-            PONG_INFO("X collision time: {0}", timeXCollision);
-
-            difference = (timeXCollision < timeYCollision) ? glm::vec2(timeXCollision, 0.0f)
-                    : glm::vec2(0.0f, timeYCollision);
-
-            direction = -direction;
+            difference.x = distanceFromPoints;
         }
 
         return difference;
