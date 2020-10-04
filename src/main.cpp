@@ -145,7 +145,7 @@ int main() {
         }
 
         // Game Logic
-        velocityComponents[ball].positionVelocity += (BALL_VELOCITY * ballDirection * deltaTime);
+        velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * ballDirection) * deltaTime);
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
@@ -164,15 +164,18 @@ int main() {
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
-                glm::vec2 difference = Pong::resolveCollision(transformComponents[ball], transformComponents[i], rectBoundComponents[i], ballDirection);
+                glm::vec2 difference = Pong::resolveCollision(transformComponents[ball], transformComponents[i],
+                    rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
                 transformComponents[ball].position += difference;
+                // ball bounce
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
                 ballDirection.y = normalised;
+                ballDirection.x = -ballDirection.x;
             }
         }
 
-        // Handle hotizontal collisions with side of field.
+        // Handle horizontal collisions with side of field.
         if (!isResetting) {
             if ((rectBoundComponents[ball].maxX > windowSize.x) ||
                 rectBoundComponents[ball].minX < -windowSize.x) {
