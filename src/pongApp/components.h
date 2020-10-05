@@ -5,6 +5,13 @@
 
 namespace Pong {
 
+    enum class CollisionDirection {
+        RIGHT   = 0,
+        UP      = 1,
+        LEFT    = 2,
+        DOWN    = 3
+    };
+
     struct Transform {
         glm::vec2 position { 0.0f, 0.0f };
         glm::vec3 rotation { 0.0f, 0.0f, 0.0f };
@@ -17,6 +24,11 @@ namespace Pong {
         glm::vec3 rotationVelocity { 0.0f, 0.0f, 0.0f };
     };
 
+    struct CollisionInfo {
+        CollisionDirection direction {CollisionDirection::RIGHT};
+        glm::vec2 difference {0.0f, 0.0f};
+    };
+
     struct RectBounds {
         float minX {0};
         float minY {0};
@@ -26,7 +38,7 @@ namespace Pong {
 
     void addVelocity(Transform&, Velocity&);
     bool isOverlapping(RectBounds&, RectBounds&);
-    glm::vec2 resolveCollision(Transform&, Transform&, RectBounds&, RectBounds&, glm::vec2&);
+    CollisionInfo resolveCollision(Transform&, Transform&, RectBounds&, RectBounds&, glm::vec2&);
     RectBounds initialiseRectBounds(Transform&);
     void updateRectBounds(RectBounds&, Transform&);
 }

@@ -77,12 +77,12 @@ int main() {
 
     Pong::Transform transformComponents[] {
         {
-            {-325.0f,0.0f,},
+            {-375.0f,0.0f,},
             {0.0f,0.0f,1.0f},
             {20.0f,75.0f, 1.0f}, 0.0f
         },
         {
-            {325.0f, 0.0f },
+            {375.0f, 0.0f },
             {0.0f,0.0f,1.0f},
             {20.0f,75.0f, 1.0f}, 0.0f
         },
@@ -164,14 +164,19 @@ int main() {
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
             if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
-                glm::vec2 difference = Pong::resolveCollision(transformComponents[ball], transformComponents[i],
+                Pong::CollisionInfo info = Pong::resolveCollision(transformComponents[ball], transformComponents[i],
                     rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
-                transformComponents[ball].position += difference;
+                transformComponents[ball].position += info.difference;
                 // ball bounce
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
+
+                if (info.direction == Pong::CollisionDirection::RIGHT
+                    || info.direction == Pong::CollisionDirection::LEFT) {
+                    ballDirection.x = -ballDirection.x;
+                }
+
                 ballDirection.y = normalised;
-                ballDirection.x = -ballDirection.x;
             }
         }
 

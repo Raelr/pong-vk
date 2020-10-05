@@ -9,16 +9,16 @@ namespace Pong {
 
     bool isOverlapping(RectBounds& rectA, RectBounds& rectB) {
 
-        bool collisionX = (rectB.maxX > rectA.maxX && rectB.minX < rectA.maxX)
-                || (rectB.maxX > rectA.minX && rectB.minX < rectA.minX);
+        bool collisionX = (rectB.maxX >= rectA.maxX && rectB.minX <= rectA.maxX)
+                || (rectB.maxX >= rectA.minX && rectB.minX <= rectA.minX);
 
-        bool collisionY = (rectB.maxY > rectA.maxY && rectB.minY < rectA.maxY)
-                || (rectB.maxY > rectA.minY && rectB.minY < rectA.minY);
+        bool collisionY = (rectB.maxY >= rectA.maxY && rectB.minY <= rectA.maxY)
+                || (rectB.maxY >= rectA.minY && rectB.minY <= rectA.minY);
 
         return collisionX && collisionY;
     }
 
-    glm::vec2 resolveCollision(Transform& transformA, Transform& transformB,
+    CollisionInfo resolveCollision(Transform& transformA, Transform& transformB,
         RectBounds& rectA, RectBounds& rectB, glm::vec2& direction) {
 
         glm::vec2 directions[] = {
@@ -47,24 +47,24 @@ namespace Pong {
 
         float distanceFromPoints {0.0f};
 
-        if (dirX == 1) {
-            distanceFromPoints = rectB.minX - rectA.maxX;
-            difference.x = distanceFromPoints;
-        } else if (dirX == -1){
-            distanceFromPoints = rectB.maxX - rectA.minX;
+        if (dirX == 1 || dirY == -1) {
+            if (transformA.position.x >= transformB.position.x) {
+                distanceFromPoints = rectB.maxX - rectA.minX;
+            } else {
+                distanceFromPoints = rectB.minX - rectA.maxX;
+            }
             difference.x = distanceFromPoints;
         }
-
         if (dirY == 1 || dirY == -1) {
-            if (transformA.position.y > transformB.position.y) {
+            if (transformA.position.y >= transformB.position.y) {
                 distanceFromPoints = rectB.maxY - rectA.minY;
             } else {
                 distanceFromPoints = rectB.minY - rectA.maxY;
             }
-            difference.x = distanceFromPoints;
+            difference.y = distanceFromPoints;
         }
 
-        return difference;
+        return {(CollisionDirection)best_match, difference};
     }
 
     RectBounds initialiseRectBounds(Transform& transform) {
