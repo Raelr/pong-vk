@@ -14,7 +14,7 @@
 // TODO: Text rendering for menus + display
 
 const float BALL_VELOCITY = 600.0f;
-const float PADDLE_VELOCITY = 400.0f;
+const float PADDLE_VELOCITY = 500.0f;
 
 // TODO: Move these to a separate file
 #define KEY_W GLFW_KEY_W
@@ -104,14 +104,14 @@ int main() {
         Pong::initialiseRectBounds(transformComponents[ball])
     };
 
-    float oldTime, currentTime, deltaTime, elapsed, resetElapsed, frames { 0.0f };
+    float oldTime, currentTime, deltaTime, elapsed, resetElapsed, collisionElapsed, frames { 0.0f };
 
-    bool isResetting {false};
+    bool isResetting{false};
 
     glm::vec2 ballDirection {1.0f, 0.0f};
     glm::vec2 oldDirection = ballDirection;
 
-    float timeFactor{ 1.0f };
+    float timeFactor{1.0f};
 
     // -------------------------- MAIN LOOP ------------------------------
 
@@ -160,10 +160,13 @@ int main() {
         }
 
         Pong::Transform& ballTransform = transformComponents[ball];
+
+        collisionElapsed += deltaTime;
         // AABB Collisions
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-            if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
+            if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i]) && collisionElapsed >= 0.00001) {
+                PONG_INFO("Collision");
                 Pong::CollisionInfo info = Pong::resolveCollision(transformComponents[ball], transformComponents[i],
                     rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
                 transformComponents[ball].position += info.difference;
@@ -177,6 +180,7 @@ int main() {
                 }
 
                 ballDirection.y = normalised;
+                collisionElapsed = 0.0f;
             }
         }
 
@@ -197,13 +201,11 @@ int main() {
                 } else if (glm::sign(ballDirection.y) == -1) {
                     transformComponents[ball].position.y = -windowSize.y + transformComponents[ball].scale.y;
                 }
-
                 ballDirection.y = -ballDirection.y;
             }
         } else {
             resetElapsed += deltaTime;
             if (resetElapsed >= 1.0f) {
-
                 ballDirection.x = -oldDirection.x;
                 ballDirection.y = 0;
                 resetElapsed = 0.0f;

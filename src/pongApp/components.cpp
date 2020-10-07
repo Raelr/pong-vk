@@ -9,11 +9,11 @@ namespace Pong {
 
     bool isOverlapping(RectBounds& rectA, RectBounds& rectB) {
 
-        bool collisionX = (rectB.maxX >= rectA.maxX && rectB.minX <= rectA.maxX)
-                || (rectB.maxX >= rectA.minX && rectB.minX <= rectA.minX);
+        bool collisionX = (rectB.maxX > rectA.maxX && rectB.minX < rectA.maxX)
+                || (rectB.maxX > rectA.minX && rectB.minX < rectA.minX);
 
-        bool collisionY = (rectB.maxY >= rectA.maxY && rectB.minY <= rectA.maxY)
-                || (rectB.maxY >= rectA.minY && rectB.minY <= rectA.minY);
+        bool collisionY = (rectB.maxY > rectA.maxY && rectB.minY < rectA.maxY)
+                || (rectB.maxY > rectA.minY && rectB.minY < rectA.minY);
 
         return collisionX && collisionY;
     }
@@ -47,7 +47,7 @@ namespace Pong {
 
         float distanceFromPoints {0.0f};
 
-        if (dirX == 1 || dirY == -1) {
+        if (dirX == 1 || dirX == -1) {
             if (transformA.position.x >= transformB.position.x) {
                 distanceFromPoints = rectB.maxX - rectA.minX;
             } else {
