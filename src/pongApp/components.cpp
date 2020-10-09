@@ -22,15 +22,19 @@ namespace Pong {
         RectBounds& rectA, RectBounds& rectB, glm::vec2& direction) {
 
         glm::vec2 directions[] = {
-            {1.0f, 0.0f},
-            {0.0f, 1.0f},
-            {-1.0f, 0.0f},
-            {0.0, -1.0}
+            {1.0f, 0.0f},   // right
+            {0.0f, 1.0f},   // up
+            {-1.0f, 0.0f},  // left
+            {0.0, -1.0},    // down
+            {1.0, 1.0},     // diagonal up-right
+            {-1.0, 1.0},    // diaglonal up-left
+            {1.0, -1.0},    // diagonal down-right
+            {-1.0, -1.0},   // diagonal down-left
         };
 
         float max = 0.0f;
         size_t best_match = -1;
-        for (size_t i = 0; i < 4; i++) {
+        for (size_t i = 0; i < 8; i++) {
             float dot_product = glm::dot(glm::normalize(direction), directions[i]);
             if (dot_product > max) {
                 best_match = i;

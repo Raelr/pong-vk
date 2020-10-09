@@ -13,7 +13,7 @@
 // TODO: Score tracking
 // TODO: Text rendering for menus + display
 
-const float BALL_VELOCITY = 600.0f;
+const float BALL_VELOCITY = 800.0f;
 const float PADDLE_VELOCITY = 500.0f;
 
 // TODO: Move these to a separate file
@@ -104,7 +104,7 @@ int main() {
         Pong::initialiseRectBounds(transformComponents[ball])
     };
 
-    float oldTime, currentTime, deltaTime, elapsed, resetElapsed, collisionElapsed, frames { 0.0f };
+    float oldTime, currentTime, deltaTime, elapsed, resetElapsed, frames { 0.0f };
 
     bool isResetting{false};
 
@@ -145,7 +145,8 @@ int main() {
         }
 
         // Game Logic
-        velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * ballDirection) * deltaTime);
+        if (ballDirection != glm::vec2(0.0f))
+            velocityComponents[ball].positionVelocity += ((BALL_VELOCITY * glm::normalize(ballDirection)) * deltaTime);
 
         for (int i = 0; i < currentEntities; i++) {
             Pong::addVelocity(transformComponents[i], velocityComponents[i]);
@@ -160,27 +161,33 @@ int main() {
         }
 
         Pong::Transform& ballTransform = transformComponents[ball];
-
-        collisionElapsed += deltaTime;
         // AABB Collisions
         for (size_t i = 0; i < currentEntities; i++) {
             if (i == ball) continue;
-            if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i]) && collisionElapsed >= 0.00001) {
-                PONG_INFO("Collision");
+            if (Pong::isOverlapping(rectBoundComponents[ball], rectBoundComponents[i])) {
                 Pong::CollisionInfo info = Pong::resolveCollision(transformComponents[ball], transformComponents[i],
                     rectBoundComponents[ball], rectBoundComponents[i], ballDirection);
-                transformComponents[ball].position += info.difference;
                 // ball bounce
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
 
-                if (info.direction == Pong::CollisionDirection::RIGHT
+                // Check for diagonal collisions
+                if (info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_LEFT
+                    || info.direction == Pong::CollisionDirection::DIAGONAL_UP_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_UP_LEFT) {
+                    
+                    if (glm::abs(info.difference.x) < glm::abs(info.difference.y)) {
+                        transformComponents[ball].position.x += info.difference.x;
+                    } else if (glm::abs(info.difference.y) < glm::abs(info.difference.x)) {
+                        transformComponents[ball].position.y += info.difference.y;
+                    }
+                    ballDirection.x = -ballDirection.x;
+                } else if (info.direction == Pong::CollisionDirection::RIGHT
                     || info.direction == Pong::CollisionDirection::LEFT) {
+                    transformComponents[ball].position.x += info.difference.x;
                     ballDirection.x = -ballDirection.x;
                 }
 
                 ballDirection.y = normalised;
-                collisionElapsed = 0.0f;
             }
         }
 
@@ -193,7 +200,7 @@ int main() {
                 oldDirection = ballDirection;
                 ballDirection = {0.0f,0.0f};
                 isResetting = true;
-                // Handle vertical collisions with top and bottom of the map
+
             } else if ((rectBoundComponents[ball].maxY > windowSize.y) ||
                        rectBoundComponents[ball].minY < -windowSize.y) {
                 if (glm::sign(ballDirection.y) == 1) {

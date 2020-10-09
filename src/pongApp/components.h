@@ -9,7 +9,11 @@ namespace Pong {
         RIGHT   = 0,
         UP      = 1,
         LEFT    = 2,
-        DOWN    = 3
+        DOWN    = 3,
+        DIAGONAL_UP_RIGHT = 4, 
+        DIAGONAL_UP_LEFT = 5,
+        DIAGONAL_DOWN_RIGHT = 6,
+        DIAGONAL_DOWN_LEFT = 7
     };
 
     struct Transform {
