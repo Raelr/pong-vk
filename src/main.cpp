@@ -171,23 +171,30 @@ int main() {
                 float distanceFromCentre = transformComponents[ball].position.y - transformComponents[i].position.y;
                 float normalised = std::clamp(distanceFromCentre / (transformComponents[i].scale.y * 0.5f), -1.0f, 1.0f);
 
-                // Check for diagonal collisions
-                if (info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_LEFT
-                    || info.direction == Pong::CollisionDirection::DIAGONAL_UP_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_UP_LEFT) {
-                    
-                    if (glm::abs(info.difference.x) < glm::abs(info.difference.y)) {
-                        transformComponents[ball].position.x += info.difference.x;
-                    } else if (glm::abs(info.difference.y) < glm::abs(info.difference.x)) {
-                        transformComponents[ball].position.y += info.difference.y;
-                    }
-                    ballDirection.x = -ballDirection.x;
-                } else if (info.direction == Pong::CollisionDirection::RIGHT
-                    || info.direction == Pong::CollisionDirection::LEFT) {
-                    transformComponents[ball].position.x += info.difference.x;
-                    ballDirection.x = -ballDirection.x;
-                }
+                // Check for which direction the collisions occurred in
+                if (info.direction == Pong::CollisionDirection::UP || info.direction == Pong::CollisionDirection::DOWN) {
+                    ballDirection.y = -ballDirection.y;
+                } else {
+                    if (info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_DOWN_LEFT
+                        || info.direction == Pong::CollisionDirection::DIAGONAL_UP_RIGHT || info.direction == Pong::CollisionDirection::DIAGONAL_UP_LEFT) {
 
-                ballDirection.y = normalised;
+                        if (glm::abs(info.difference.x) < glm::abs(info.difference.y)) {
+                            transformComponents[ball].position.x += info.difference.x;
+                            ballDirection.x = -ballDirection.x;
+                        }
+                        else if (glm::abs(info.difference.y) < glm::abs(info.difference.x)) {
+                            transformComponents[ball].position.y += info.difference.y;
+                            ballDirection.y = -ballDirection.y;
+                        }
+                    }
+                    else if (info.direction == Pong::CollisionDirection::RIGHT
+                        || info.direction == Pong::CollisionDirection::LEFT) {
+                        transformComponents[ball].position.x += info.difference.x;
+                        ballDirection.x = -ballDirection.x;
+                    }
+
+                    ballDirection.y = normalised;
+                }
             }
         }
 

@@ -33,16 +33,16 @@ namespace Pong {
         };
 
         float max = 0.0f;
-        size_t best_match = -1;
+        size_t bestMatch = -1;
         for (size_t i = 0; i < 8; i++) {
             float dot_product = glm::dot(glm::normalize(direction), directions[i]);
             if (dot_product > max) {
-                best_match = i;
+                bestMatch = i;
                 max = dot_product;
             }
         }
 
-        glm::vec2 hit_direction = directions[best_match];
+        glm::vec2 hit_direction = directions[bestMatch];
 
         float dirX = glm::sign(hit_direction.x);
         float dirY = glm::sign(hit_direction.y);
@@ -68,7 +68,7 @@ namespace Pong {
             difference.y = distanceFromPoints;
         }
 
-        return {(CollisionDirection)best_match, difference};
+        return { (CollisionDirection)bestMatch, difference };
     }
 
     RectBounds initialiseRectBounds(Transform& transform) {
