@@ -10,58 +10,11 @@ This repo will primarily follow the Vulkan tutorials by [Alexander Overvoorde](h
 
 So far, we've succeeded in getting multiple objects rendering to screen.
 
-<img src="https://github.com/Raelr/pong-vk/blob/master/assets/mulipleObjects.png" alt="Quads" width="400" height="300">
+<img src="https://github.com/Raelr/pong-vk/blob/master/assets/Pong.gif" alt="Quads" width="400" height="300">
 
 We've built a simple API for rendering objects to the screen. The renderer currently allocates a new uniform buffer and descriptor set for all new objects on the screen. The API currently works as follows:
 
-```c++
-Renderer::Renderer renderer;
-
-    // Let the renderer know that we want to load in default validation layers
-    Renderer::loadDefaultValidationLayers(&renderer);
-    Renderer::loadDefaultDeviceExtensions(&renderer);
-
-    if (Renderer::initialiseRenderer(&renderer, enableValidationLayers, window)
-        != Renderer::Status::SUCCESS) {
-        PONG_FATAL_ERROR("Failed to initialise renderer!");
-    }
-
-    // ------------------------ SCENE SETUP -----------------------------
-    
-    // Player Definition
-    
-    PlayerData players[64];
-    uint32_t currentPlayers = 1;
-
-    players[0] = {
-        {-250.0f,-150.0f,1.0f},
-        {0.0f,0.0f,1.0f},
-        {200.0f,200.0f, 0.0f}, -90.0f, 0
-    };
-    
-    [...]
-    
-    // Main Loop
-    
-    for (int i = 0; i < currentPlayers; i++) {
-        PlayerData& player = players[i];
-        Renderer::drawQuad(&renderer, player.position, player.rotation,
-            getTime() * glm::radians(player.rotationAngle), player.scale, player.playerIndex);
-    }
-
-    if (Renderer::drawFrame(&renderer, &pongData.framebufferResized, window)
-        == Renderer::Status::FAILURE) {
-        ERROR("Error drawing frame - exiting main loop!");
-        break;
-    }
-    
-    [...]
-    
-    // Shutdown
-    
-    Renderer::cleanupRenderer(&renderer, enableValidationLayers);
-```
-The renderer has now been adjusted to use a singe Dynamic uniform buffer for each quad! We are now able to create new quads during runtime!
+We now have basic gameplay logic! The collision system is in place and is able to process collisions between the ball and the paddles. 
 
 ### Next Steps:
 
@@ -71,13 +24,6 @@ With this step complete, we can now focus on:
 2. Cleaning up the renderer/renderer2D modules to make them more coherent. 
     1. Add a scene system for grouping objects
     2. Perhaps add text rendering support...?
-3. Adding a small entity management system for safe addition and removal of objects.
-4. Adding some sort of performance counter (such as FPS)
-5. Gameplay
-    1. Basic collision detection.
-    2. Bounce of the ball
-    3. Player Movement
-    4. Menus and win states.
 
 ## Setup Notes
 
