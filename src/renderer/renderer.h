@@ -57,6 +57,9 @@ namespace Renderer {
     void flushRenderer(Renderer* pRenderer);
 
     Status loadImage(char*, VulkanDeviceData*);
+    Status createImage(VulkanDeviceData*, uint32_t,
+        uint32_t, VkFormat, VkImageTiling, VkImageUsageFlags,
+        VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
 }
 
 #endif //PONG_VK_RENDERER_H

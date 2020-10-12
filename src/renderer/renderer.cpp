@@ -473,6 +473,59 @@ namespace Renderer {
         pRenderer->renderer2DData.quadData.quadCount = 0;
     }
 
+    Status createImage(
+        VulkanDeviceData* deviceData, 
+        uint32_t width, 
+        uint32_t height, 
+        VkFormat format, 
+        VkImageTiling tiling,
+        VkImageUsageFlags usageFlags, 
+        VkMemoryPropertyFlags properties, 
+        VkImage& image, 
+        VkDeviceMemory& imageMemory) {
+
+        VkImage textureImage;
+        VkDeviceMemory textureImageMemory;
+
+        VkImageCreateInfo imageInfo{};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        imageInfo.imageType = VK_IMAGE_TYPE_2D;
+        imageInfo.extent.width = width;
+        imageInfo.extent.height = height;
+        imageInfo.extent.depth = 1;
+        imageInfo.mipLevels = 1;
+        imageInfo.arrayLayers = 1;
+        imageInfo.format = format;
+        imageInfo.tiling = tiling;
+        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageInfo.usage = usageFlags;
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+        if (vkCreateImage(deviceData->logicalDevice, &imageInfo, nullptr, &textureImage) != VK_SUCCESS) {
+            PONG_ERROR("failed to create image!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(deviceData->logicalDevice, textureImage, &memRequirements);
+
+        uint32_t memoryType;
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = Buffers::findMemoryType(deviceData->physicalDevice, &memoryType, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, &textureImageMemory) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate image memory!");
+        }
+
+        vkBindImageMemory(deviceData->logicalDevice, textureImage, textureImageMemory, 0);
+
+        return Status::SUCCESS;
+    }
+
     Status loadImage(char* imagePath, VulkanDeviceData* deviceData) {
 
         int width, height, channels = 0;
@@ -488,13 +541,15 @@ namespace Renderer {
 
         Buffers::BufferData bufferData;
 
-        if (Buffers::createBuffer(deviceData->physicalDevice,
+        if (Buffers::createBuffer(
+            deviceData->physicalDevice,
             deviceData->logicalDevice,
             imageSize,
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             bufferData) != VK_SUCCESS) {
+
             PONG_ERROR("Failed to create buffer for texture");
             return Status::INITIALIZATION_FAILURE;
         }
@@ -505,6 +560,23 @@ namespace Renderer {
         vkUnmapMemory(deviceData->logicalDevice, bufferData.bufferMemory);
 
         stbi_image_free(pixels);
+
+        VkImage textureImage;
+        VkDeviceMemory textureImageMemory;
+
+        createImage(
+            deviceData, 
+            width, 
+            height, 
+            VK_FORMAT_R8G8B8A8_SRGB, 
+            VK_IMAGE_TILING_OPTIMAL, 
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+            textureImage, 
+            textureImageMemory
+        );
+
+        PONG_INFO("SUCCESSFULLY LOADED IMAGE!");
 
         return Status::SUCCESS;
     }
