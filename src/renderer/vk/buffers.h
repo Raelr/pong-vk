@@ -11,8 +11,8 @@ namespace Buffers {
 
     // Simple struct for storing buffer data.
     struct BufferData {
-        VkBuffer buffer;
-        VkDeviceMemory bufferMemory;
+        VkBuffer buffer { VK_NULL_HANDLE };
+        VkDeviceMemory bufferMemory { VK_NULL_HANDLE };
     };
 
     // -------------------------- INDEX BUFFER STRUCT ---------------------------

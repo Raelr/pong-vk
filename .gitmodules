@@ -7,3 +7,9 @@
 [submodule "vendor/spdlog"]
 	path = vendor/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "vendor/pong-vk"]
+	path = vendor/pong-vk
+	url = https://github.com/Raelr/pong-vk.git
+[submodule "vendor/stb"]
+	path = vendor/stb
+	url = https://github.com/nothings/stb.git

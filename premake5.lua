@@ -25,7 +25,8 @@ project "Pong"
           os.getenv("VULKAN_SDK") .. "/include",
           "vendor/glm",
           "vendor/GLFW/glfw/include",
-          "vendor/spdlog/include"
+          "vendor/spdlog/include",
+          "vendor/stb/"
      }
 
      filter "system:macosx"

@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "vk/initialisers.h"
 #include <glm/gtx/string_cast.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 namespace Renderer {
 
@@ -469,5 +471,41 @@ namespace Renderer {
 
     void flushRenderer(Renderer* pRenderer) {
         pRenderer->renderer2DData.quadData.quadCount = 0;
+    }
+
+    Status loadImage(char* imagePath, VulkanDeviceData* deviceData) {
+
+        int width, height, channels = 0;
+
+        stbi_uc* pixels = stbi_load(imagePath, &width, &height, &channels, STBI_rgb_alpha);
+
+        VkDeviceSize imageSize = width * height * 4;
+
+        if (!pixels) {
+            PONG_ERROR("Failed to load in texture!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        Buffers::BufferData bufferData;
+
+        if (Buffers::createBuffer(deviceData->physicalDevice,
+            deviceData->logicalDevice,
+            imageSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            bufferData) != VK_SUCCESS) {
+            PONG_ERROR("Failed to create buffer for texture");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
+        void* data; 
+        vkMapMemory(deviceData->logicalDevice, bufferData.bufferMemory, 0, imageSize, 0, &data);
+        memcpy(data, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(deviceData->logicalDevice, bufferData.bufferMemory);
+
+        stbi_image_free(pixels);
+
+        return Status::SUCCESS;
     }
 }
