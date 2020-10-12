@@ -10,7 +10,7 @@ This repo will primarily follow the Vulkan tutorials by [Alexander Overvoorde](h
 
 So far, we've succeeded in getting multiple objects rendering to screen.
 
-<img src="https://github.com/Raelr/pong-vk/blob/master/assets/Pong.gif" alt="Quads" width="400" height="300">
+<img src="https://github.com/Raelr/pong-vk/blob/master/assets/Pong.gif" alt="Pong process" width="400" height="300">
 
 We've built a simple API for rendering objects to the screen. The renderer currently allocates a new uniform buffer and descriptor set for all new objects on the screen. The API currently works as follows:
 
@@ -45,6 +45,7 @@ If you find that the submodules fail to install, you should try and delete the f
 * vendor/glm
 * vendor/spdlog
 * vendor/GLFW/glfw
+* vendor/stb
 
 Then try and re-run the submodules command and see if it works.
 
