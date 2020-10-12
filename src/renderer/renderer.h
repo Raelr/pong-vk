@@ -55,6 +55,8 @@ namespace Renderer {
 
     VkResult recreateSwapchain(Renderer* pRenderer);
     void flushRenderer(Renderer* pRenderer);
+
+    Status loadImage(char*, VulkanDeviceData*);
 }
 
 #endif //PONG_VK_RENDERER_H

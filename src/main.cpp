@@ -67,6 +67,8 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
+    Renderer::loadImage("assets/WhiteDefault.png", &renderer.deviceData);
+
     // ------------------------ SCENE SETUP -----------------------------
 
     uint32_t currentEntities = 3;
