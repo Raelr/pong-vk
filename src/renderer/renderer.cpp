@@ -507,12 +507,10 @@ namespace Renderer {
         VkMemoryRequirements memRequirements;
         vkGetImageMemoryRequirements(deviceData->logicalDevice, image, &memRequirements);
 
-        uint32_t memoryType;
-
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = Buffers::findMemoryType(deviceData->physicalDevice, &memoryType, memRequirements.memoryTypeBits, properties);
+        Buffers::findMemoryType(deviceData->physicalDevice, &allocInfo.memoryTypeIndex, memRequirements.memoryTypeBits, properties);
 
         if (vkAllocateMemory(deviceData->logicalDevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate image memory!");
