@@ -112,6 +112,10 @@ namespace Renderer {
         VkDescriptorPool* pool, uint32_t imageCount,
         Buffers::BufferData* uBuffers, uint32_t bufferSize
     );
+
+    VkCommandBuffer beginSingleTimeCommands(VkDevice, VkCommandPool);
+    void endSingleTimeCommands(VkDevice, VkCommandBuffer&, VkQueue&, VkCommandPool);
+    void copyBuffer(VkQueue, VkDevice, VkCommandPool, VkDeviceSize, VkBuffer, VkBuffer);
 }
 
 #endif

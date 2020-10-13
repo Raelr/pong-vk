@@ -70,12 +70,10 @@ namespace Buffers {
 
     // Used to copy data between a staging buffer and a standard buffer (index or vertex)
     void copyBuffer(
-        VkQueue,
-        VkDevice,
-        VkBuffer,
-        VkBuffer,
+        VkCommandBuffer,
         VkDeviceSize,
-        VkCommandPool
+        VkBuffer,
+        VkBuffer
     );
 
     // Used to actually allocate memory from the GPU for a buffer.

@@ -133,13 +133,14 @@ namespace Renderer2D {
             return false;
         }
 
+        // Calculate Uniform Buffer Memory
         Buffers::DynamicUniformBuffer<QuadProperties> dynamicUbo;
         Buffers::calculateBufferSize(&dynamicUbo, deviceData->physicalDevice, renderer2D->quadData.maxQuads);
 
         PONG_INFO("Buffer size: " + std::to_string(dynamicUbo.bufferSize));
         PONG_INFO("Dynamic alignment: " + std::to_string(dynamicUbo.dynamicAlignment));
 
-        // ALLOCATE UNIFORM BUFFER
+        // CREATE UNIFORM BUFFER
         if (Buffers::createBuffer(
                 deviceData->physicalDevice,
                 deviceData->logicalDevice,

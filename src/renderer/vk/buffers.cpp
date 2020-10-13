@@ -66,57 +66,15 @@ namespace Buffers {
 		return VK_SUCCESS;
 	}
 
-	void copyBuffer(
-		VkQueue submitQueue,
-		VkDevice device,
-		VkBuffer srcBuffer,
-		VkBuffer dstBuffer,
-		VkDeviceSize size,
-		VkCommandPool commandPool
-	) {
-		// Transferring memory between buffers always occurs in our command buffers.
-		// Start by creating a command buffer and specify its usage.
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = commandPool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-		
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		// Immediately start recording the command buffer
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	void copyBuffer(VkCommandBuffer commandBuffer, VkDeviceSize size, VkBuffer srcBuffer, VkBuffer dstBuffer) {
 
 		// Define how data will be transferred between buffers in a
 		// CopyRegion struct. 
 		VkBufferCopy copyRegion{};
-		copyRegion.srcOffset = 0; // optional
-		copyRegion.dstOffset = 0; // optional
 		// Specify the size of the buffer to be transferred
 		copyRegion.size = size;
 		// Copy the buffer data between the staging and destination buffer
 		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		// End recording
-		vkEndCommandBuffer(commandBuffer);
-
-		// Now define how the data will be submitted to the queue
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		// Submit the data to our queue (usually the graphics queue)
-		vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		// Wait for the queue to become idle
-		vkQueueWaitIdle(submitQueue);
-		// Clean up the command buffer after usage
-		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
 	// Used to allocate memory from the GPU for a buffer.
@@ -224,25 +182,4 @@ namespace Buffers {
         free(data);
     #endif
     }
-
-//	template <typename T>
-//    void calculateBufferSize(DynamicUniformBuffer<T>* ubo, VkPhysicalDevice device, size_t objects) {
-//
-//	    VkPhysicalDeviceProperties properties;
-//	    vkGetPhysicalDeviceProperties(device, &properties);
-//
-//	    size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
-//
-//	    size_t dynamicAlignment = sizeof(T);
-//
-//        if (minUboAlignment > 0) {
-//            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-//        }
-//
-//        size_t bufferSize = objects * dynamicAlignment;
-//
-//        ubo->bufferSize = bufferSize;
-//        ubo->dynamicAlignment = dynamicAlignment;
-//        ubo->data = (T*)alignedAlloc(bufferSize, dynamicAlignment);
-//	}
 }
