@@ -56,7 +56,7 @@ namespace Renderer {
     VkResult recreateSwapchain(Renderer* pRenderer);
     void flushRenderer(Renderer* pRenderer);
 
-    Status loadImage(char const*, VulkanDeviceData*);
+    Status loadImage(Renderer*, char const*);
     Status createImage(VulkanDeviceData*, uint32_t,
         uint32_t, VkFormat, VkImageTiling, VkImageUsageFlags,
         VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);

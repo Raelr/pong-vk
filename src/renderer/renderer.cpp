@@ -521,7 +521,7 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status loadImage(char const* imagePath, VulkanDeviceData* deviceData) {
+    Status loadImage(Renderer* renderer, char const* imagePath) {
 
         int width, height, channels = 0;
 
@@ -537,10 +537,10 @@ namespace Renderer {
         Buffers::BufferData bufferData;
 
         if (Buffers::createBuffer(
-            deviceData->physicalDevice,
-            deviceData->logicalDevice,
+            renderer->deviceData.physicalDevice,
+            renderer->deviceData.logicalDevice,
             imageSize,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             bufferData) != VK_SUCCESS) {
@@ -550,9 +550,9 @@ namespace Renderer {
         }
 
         void* data; 
-        vkMapMemory(deviceData->logicalDevice, bufferData.bufferMemory, 0, imageSize, 0, &data);
+        vkMapMemory(renderer->deviceData.logicalDevice, bufferData.bufferMemory, 0, imageSize, 0, &data);
         memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(deviceData->logicalDevice, bufferData.bufferMemory);
+        vkUnmapMemory(renderer->deviceData.logicalDevice, bufferData.bufferMemory);
 
         stbi_image_free(pixels);
 
@@ -560,7 +560,7 @@ namespace Renderer {
         VkDeviceMemory textureImageMemory;
 
         createImage(
-            deviceData, 
+            &renderer->deviceData,
             width, 
             height, 
             VK_FORMAT_R8G8B8A8_SRGB, 
@@ -570,6 +570,20 @@ namespace Renderer {
             textureImage, 
             textureImageMemory
         );
+
+        if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
+            renderer->renderer2DData.commandPool, textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
+        copyBufferToImage(renderer->deviceData.logicalDevice, renderer->renderer2DData.commandPool,
+            renderer->deviceData.graphicsQueue, bufferData.buffer, textureImage,
+            static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+        if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
+            renderer->renderer2DData.commandPool, textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) != Status::SUCCESS) {
+            return Status::INITIALIZATION_FAILURE;
+        }
 
         PONG_INFO("SUCCESSFULLY LOADED IMAGE!");
 
