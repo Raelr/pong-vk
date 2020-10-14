@@ -116,6 +116,8 @@ namespace Renderer {
     VkCommandBuffer beginSingleTimeCommands(VkDevice, VkCommandPool);
     void endSingleTimeCommands(VkDevice, VkCommandBuffer&, VkQueue&, VkCommandPool);
     void copyBuffer(VkQueue, VkDevice, VkCommandPool, VkDeviceSize, VkBuffer, VkBuffer);
+    void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkImage image, VkFormat format,
+        VkImageLayout oldLayout, VkImageLayout newLayout);
 }
 
 #endif
