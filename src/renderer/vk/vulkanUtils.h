@@ -118,6 +118,7 @@ namespace Renderer {
     void copyBuffer(VkQueue, VkDevice, VkCommandPool, VkDeviceSize, VkBuffer, VkBuffer);
     void transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkImage image, VkFormat format,
         VkImageLayout oldLayout, VkImageLayout newLayout);
+    void copyBufferToImage(VkDevice, VkCommandPool, VkQueue, VkBuffer, VkImage, uint32_t, uint32_t);
 }
 
 #endif
