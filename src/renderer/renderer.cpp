@@ -6,6 +6,7 @@
 #include <glm/gtx/string_cast.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include "vk/texture2d.h"
 
 namespace Renderer {
 
@@ -521,7 +522,7 @@ namespace Renderer {
         return Status::SUCCESS;
     }
 
-    Status loadImage(Renderer* renderer, char const* imagePath) {
+    Status loadImage(Renderer* renderer, char const* imagePath, Texture2D& texture) {
 
         int width, height, channels = 0;
 
@@ -556,9 +557,6 @@ namespace Renderer {
 
         stbi_image_free(pixels);
 
-        VkImage textureImage;
-        VkDeviceMemory textureImageMemory;
-
         createImage(
             &renderer->deviceData,
             width, 
@@ -567,23 +565,26 @@ namespace Renderer {
             VK_IMAGE_TILING_OPTIMAL, 
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-            textureImage, 
-            textureImageMemory
+            texture.image,
+            texture.memory
         );
 
         if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
-            renderer->renderer2DData.commandPool, textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+            renderer->renderer2DData.commandPool, texture.image, VK_FORMAT_R8G8B8A8_SRGB,
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
         copyBufferToImage(renderer->deviceData.logicalDevice, renderer->renderer2DData.commandPool,
-            renderer->deviceData.graphicsQueue, bufferData.buffer, textureImage,
+            renderer->deviceData.graphicsQueue, bufferData.buffer, texture.image,
             static_cast<uint32_t>(width), static_cast<uint32_t>(height));
         if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
-            renderer->renderer2DData.commandPool, textureImage, VK_FORMAT_R8G8B8A8_SRGB,
+            renderer->renderer2DData.commandPool, texture.image, VK_FORMAT_R8G8B8A8_SRGB,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
+
+        vkDestroyBuffer(renderer->deviceData.logicalDevice, bufferData.buffer, nullptr);
+        vkFreeMemory(renderer->deviceData.logicalDevice, bufferData.bufferMemory, nullptr);
 
         PONG_INFO("SUCCESSFULLY LOADED IMAGE!");
 

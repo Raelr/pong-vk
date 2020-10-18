@@ -7,6 +7,7 @@
 #include "renderer2D.h"
 #include "core.h"
 #include "vk/initialisers.h"
+#include "vk/texture2d.h"
 
 namespace Renderer {
 
@@ -56,7 +57,7 @@ namespace Renderer {
     VkResult recreateSwapchain(Renderer* pRenderer);
     void flushRenderer(Renderer* pRenderer);
 
-    Status loadImage(Renderer*, char const*);
+    Status loadImage(Renderer*, char const*, Texture2D&);
     Status createImage(VulkanDeviceData*, uint32_t,
         uint32_t, VkFormat, VkImageTiling, VkImageUsageFlags,
         VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);

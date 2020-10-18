@@ -67,7 +67,9 @@ int main() {
         PONG_FATAL_ERROR("Failed to initialise renderer!");
     }
 
-    Renderer::loadImage(&renderer, "assets/WhiteDefault.png");
+    Renderer::Texture2D texture;
+
+    Renderer::loadImage(&renderer, "assets/WhiteDefault.png", texture);
 
     // ------------------------ SCENE SETUP -----------------------------
 
@@ -270,6 +272,7 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
 
+    Renderer::destroyTexture2D(renderer.deviceData.logicalDevice, texture);
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
 
     // GLFW cleanup
