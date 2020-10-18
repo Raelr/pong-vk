@@ -69,7 +69,7 @@ int main() {
 
     Renderer::Texture2D texture;
 
-    Renderer::loadImage(&renderer, "assets/WhiteDefault.png", texture);
+    Renderer::loadImage(&renderer, "assets/awesomeface.png", texture);
 
     // ------------------------ SCENE SETUP -----------------------------
 

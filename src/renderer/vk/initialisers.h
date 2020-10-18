@@ -16,6 +16,7 @@ namespace Renderer {
     VkApplicationInfo initialiseVulkanApplicationInfo(const char*, const char*, uint32_t, uint32_t, uint32_t);
     VkResult createSwapchain(SwapchainData*, VulkanDeviceData*);
     VkResult createImageViews(VkDevice, SwapchainData*);
+    Status createImageView(VkDevice, VkImage, VkFormat, VkImageView&);
     Status initialiseVulkanInstance(VulkanDeviceData*, bool, const char*, const char*);
     Status createVulkanDeviceData(VulkanDeviceData*, GLFWwindow*, bool);
     VkDescriptorPoolSize initialisePoolSize(VkDescriptorType, uint32_t);
@@ -25,6 +26,7 @@ namespace Renderer {
         VkDescriptorBufferInfo*, uint32_t);
     VkPipelineShaderStageCreateInfo initialisePipelineShaderStageCreateInfo(
         VkShaderStageFlagBits shaderStage, VkShaderModule shaderModule, const char* pName);
+
 }
 
 #endif //PONG_VK_INITIALISERS_H

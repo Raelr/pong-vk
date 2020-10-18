@@ -204,44 +204,53 @@ namespace Renderer {
         VkImageView* imageViews = new VkImageView[data->imageCount];
 
         for (size_t i = 0; i < data->imageCount; i++) {
-            // We need to create a view for every image that we stored for
-            // the swapChain.
-            VkImageViewCreateInfo imageViewCreateInfo{};
-            imageViewCreateInfo.sType
-                    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            imageViewCreateInfo.image = data->pImages[i];
-            // Allows you to specify whether the image will be viewed as a
-            // 1D, 2D, or 3D texture.
-            imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            imageViewCreateInfo.format = data->swapchainFormat;
-            // Components field allow us to swizzle values around (force
-            // them to assume certain
-            // values).
-            // In this case we'll set the components to their default values.
-            imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-            // The subresourceRange field describes an image's purpose.
-            // In our case our images will be used as color targets with no
-            // mipmapping levels
-            // or layers.·
-            imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-            imageViewCreateInfo.subresourceRange.levelCount = 1;
-            imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-            imageViewCreateInfo.subresourceRange.layerCount = 1;
-            // Create the image view and store it in the
-            // swapChainImageViews array.
-            if (vkCreateImageView(device, &imageViewCreateInfo, nullptr,
-                &imageViews[i]) != VK_SUCCESS) {
-
+            if (createImageView(device, data->pImages[i], data->swapchainFormat, imageViews[i])
+                != Status::SUCCESS) {
                 return VK_ERROR_INITIALIZATION_FAILED;
             }
         }
 
         data->pImageViews = imageViews;
         return VK_SUCCESS;
+    }
+
+    Status createImageView(VkDevice device, VkImage image, VkFormat format, VkImageView& imageView) {
+
+        // We need to create a view for every image that we stored for
+        // the swapChain.
+        VkImageViewCreateInfo imageViewCreateInfo{};
+        imageViewCreateInfo.sType
+                = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        imageViewCreateInfo.image = image;
+        // Allows you to specify whether the image will be viewed as a
+        // 1D, 2D, or 3D texture.
+        imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        imageViewCreateInfo.format = format;
+        // Components field allow us to swizzle values around (force
+        // them to assume certain
+        // values).
+        // In this case we'll set the components to their default values.
+        imageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        imageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        // The subresourceRange field describes an image's purpose.
+        // In our case our images will be used as color targets with no
+        // mipmapping levels
+        // or layers.·
+        imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+        imageViewCreateInfo.subresourceRange.levelCount = 1;
+        imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        imageViewCreateInfo.subresourceRange.layerCount = 1;
+        // Create the image view and store it in the
+        // swapChainImageViews array.
+        if (vkCreateImageView(device, &imageViewCreateInfo, nullptr,
+                              &imageView) != VK_SUCCESS) {
+            return Renderer::INITIALIZATION_FAILURE;
+        }
+
+        return Renderer::SUCCESS;
     }
 
     Status initialiseVulkanInstance(VulkanDeviceData* pDeviceData, bool enableValidationLayers,
