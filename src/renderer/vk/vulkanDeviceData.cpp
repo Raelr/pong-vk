@@ -242,13 +242,18 @@ namespace Renderer {
                 cleanupSwapchainSupportDetails(&supportDetails);
             }
 
+            VkPhysicalDeviceFeatures supportedFeatures;
+            vkGetPhysicalDeviceFeatures(devices[i], &supportedFeatures);
+
             bool is_supported = (
                 indices.graphicsFamily.has_value()
                 && indices.presentFamily.has_value())
                 // If all available extensions were 'ticked off' the set then we know we have all
                 // required extensions.
                 && extensionsSupported
-                && swapchainAdequate;
+                && swapchainAdequate
+                && supportedFeatures.samplerAnisotropy;
+
 
             // If the device has all our required extensions and has a valid swap-chain and has our
             // required queue families, then we can use that device for rendering!
@@ -297,6 +302,7 @@ namespace Renderer {
 
         // Leave this empty for now - can add things later when we need.
         VkPhysicalDeviceFeatures deviceFeatures{};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         // Now we need to actually configure the logical device (note that it uses the queue info
         // and the device features we defined earlier).
