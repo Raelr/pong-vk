@@ -887,7 +887,7 @@ namespace Renderer {
     }
 
     Status transitionImageLayout(VkDevice device, VkQueue queue, VkCommandPool commandPool, VkImage image, VkFormat format,
-        VkImageLayout oldLayout, VkImageLayout newLayout) {
+        VkImageLayout& oldLayout, VkImageLayout newLayout) {
 
         VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
 
@@ -925,6 +925,8 @@ namespace Renderer {
             PONG_ERROR("FAILED DUE TO UNSUPPORTED LAYOUT TRANSITION!");
             return Status::INITIALIZATION_FAILURE;
         }
+
+        oldLayout = newLayout;
 
         vkCmdPipelineBarrier(
                 commandBuffer,

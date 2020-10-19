@@ -9,7 +9,8 @@ namespace Renderer {
     struct Texture2D {
         VkImage image               {VK_NULL_HANDLE};
         VkDeviceMemory memory       {VK_NULL_HANDLE};
-        VkImageLayout layout        {};
+        VkImageLayout layout        {VK_IMAGE_LAYOUT_UNDEFINED};
+        VkImageView view            {VK_NULL_HANDLE};
     };
 
     void destroyTexture2D(VkDevice, Texture2D&);

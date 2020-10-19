@@ -571,20 +571,23 @@ namespace Renderer {
 
         if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
             renderer->renderer2DData.commandPool, texture.image, VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) != Status::SUCCESS) {
+            texture.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
+        texture.layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         copyBufferToImage(renderer->deviceData.logicalDevice, renderer->renderer2DData.commandPool,
             renderer->deviceData.graphicsQueue, bufferData.buffer, texture.image,
             static_cast<uint32_t>(width), static_cast<uint32_t>(height));
         if (transitionImageLayout(renderer->deviceData.logicalDevice, renderer->deviceData.graphicsQueue,
             renderer->renderer2DData.commandPool, texture.image, VK_FORMAT_R8G8B8A8_SRGB,
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) != Status::SUCCESS) {
+            texture.layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) != Status::SUCCESS) {
             return Status::INITIALIZATION_FAILURE;
         }
 
         vkDestroyBuffer(renderer->deviceData.logicalDevice, bufferData.buffer, nullptr);
         vkFreeMemory(renderer->deviceData.logicalDevice, bufferData.bufferMemory, nullptr);
+
+        createImageView(renderer->deviceData.logicalDevice, texture.image, VK_FORMAT_R8G8B8A8_SRGB, texture.view);
 
         PONG_INFO("SUCCESSFULLY LOADED IMAGE!");
 
