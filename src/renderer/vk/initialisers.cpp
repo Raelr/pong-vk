@@ -417,4 +417,37 @@ namespace Renderer {
 
         return vertShaderStageInfo;
     }
+
+    VkSampler initialiseSampler(VkDevice device, VkFilter mag, VkFilter min, VkSamplerAddressMode addressMode,
+                                VkBorderColor borderColor, VkCompareOp compareOp, VkSamplerMipmapMode mipmapMode,
+                                VkBool32 compareEnable, VkBool32 anistropy,
+                                VkBool32 unnormalisedCoordinates) {
+
+        VkSampler sampler {VK_NULL_HANDLE};
+
+        VkSamplerCreateInfo samplerInfo{};
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        samplerInfo.magFilter = mag;
+        samplerInfo.minFilter = min;
+        samplerInfo.addressModeU = addressMode;
+        samplerInfo.addressModeV = addressMode;
+        samplerInfo.addressModeW = addressMode;
+        samplerInfo.anisotropyEnable = anistropy;
+        samplerInfo.maxAnisotropy = 16.0f;
+        samplerInfo.borderColor = borderColor;
+        samplerInfo.unnormalizedCoordinates = unnormalisedCoordinates;
+        samplerInfo.compareEnable = compareEnable;
+        samplerInfo.compareOp = compareOp;
+        samplerInfo.mipmapMode = mipmapMode;
+        samplerInfo.mipLodBias = 0.0f;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = 0.0f;
+
+        if (vkCreateSampler(device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+            PONG_ERROR("Failed to create Sampler!");
+            sampler = VK_NULL_HANDLE;
+        }
+
+        return sampler;
+    }
 }

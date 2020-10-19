@@ -70,6 +70,14 @@ int main() {
     Renderer::Texture2D texture;
 
     Renderer::loadImage(&renderer, "assets/awesomeface.png", texture);
+    VkSampler textureSampler = Renderer::initialiseSampler(
+        renderer.deviceData.logicalDevice,
+        VK_FILTER_LINEAR, VK_FILTER_LINEAR,
+        VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        VK_COMPARE_OP_ALWAYS,
+        VK_SAMPLER_MIPMAP_MODE_LINEAR
+    );
 
     // ------------------------ SCENE SETUP -----------------------------
 
@@ -272,6 +280,7 @@ int main() {
     
     // --------------------------- CLEANUP ------------------------------
 
+    vkDestroySampler(renderer.deviceData.logicalDevice, textureSampler, nullptr);
     Renderer::destroyTexture2D(renderer.deviceData.logicalDevice, texture);
     Renderer::cleanupRenderer(&renderer, enableValidationLayers);
 

@@ -25,7 +25,13 @@ namespace Renderer {
     VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet, VkDescriptorType, uint32_t,
         VkDescriptorBufferInfo*, uint32_t);
     VkPipelineShaderStageCreateInfo initialisePipelineShaderStageCreateInfo(
-        VkShaderStageFlagBits shaderStage, VkShaderModule shaderModule, const char* pName);
+        VkShaderStageFlagBits, VkShaderModule, const char*);
+    VkSampler initialiseSampler(
+        VkDevice, VkFilter, VkFilter, VkSamplerAddressMode,
+        VkBorderColor, VkCompareOp, VkSamplerMipmapMode,
+        VkBool32 = VK_FALSE, VkBool32 = VK_TRUE,
+        VkBool32 = VK_FALSE
+    );
 
 }
 
