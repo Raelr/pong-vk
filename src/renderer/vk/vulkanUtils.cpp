@@ -1,6 +1,7 @@
 #include "vulkanUtils.h"
 #include "buffers.h"
 #include "initialisers.h"
+#include "texture2d.h"
 
 namespace Renderer {
 
@@ -810,7 +811,7 @@ namespace Renderer {
             VulkanDeviceData* deviceData,
             VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
             VkDescriptorPool* pool, uint32_t imageCount,
-            Buffers::BufferData* uBuffers, uint32_t bufferSize) {
+            Buffers::BufferData* uBuffers, uint32_t bufferSize, Texture2D& texture) {
 
         std::vector<VkDescriptorSetLayout> layouts(imageCount, *layout);
 
@@ -833,11 +834,17 @@ namespace Renderer {
             bufferInfo.offset = 0;
             bufferInfo.range = VK_WHOLE_SIZE;
 
-            VkWriteDescriptorSet descriptorWrite =
-                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &bufferInfo, 1);
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = texture.view;
+            imageInfo.sampler = texture.sampler;
 
-            vkUpdateDescriptorSets(deviceData->logicalDevice, 1, &descriptorWrite,
-0, nullptr);
+            VkWriteDescriptorSet descriptorSets[] = {
+                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 0, 1, &bufferInfo),
+                    initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, 1, nullptr, &imageInfo)
+            };
+
+            vkUpdateDescriptorSets(deviceData->logicalDevice, 2, descriptorSets, 0, nullptr);
         }
 
         return VK_SUCCESS;

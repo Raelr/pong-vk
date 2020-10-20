@@ -23,7 +23,7 @@ namespace Renderer {
     VkDescriptorSetLayoutBinding initiialiseDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t,
         VkShaderStageFlags);
     VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet, VkDescriptorType, uint32_t,
-        VkDescriptorBufferInfo*, uint32_t);
+        uint32_t, VkDescriptorBufferInfo* = nullptr, VkDescriptorImageInfo* = nullptr);
     VkPipelineShaderStageCreateInfo initialisePipelineShaderStageCreateInfo(
         VkShaderStageFlagBits, VkShaderModule, const char*);
     VkSampler initialiseSampler(

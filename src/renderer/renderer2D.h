@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include "vk/vulkanDeviceData.h"
 #include "core.h"
+#include "vk/texture2d.h"
 
 namespace Renderer2D {
 
@@ -32,7 +33,7 @@ namespace Renderer2D {
         VkCommandBuffer* commandBuffers                         {nullptr};
     };
 
-    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData);
+    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData, Renderer::Texture2D&);
     void cleanupRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*);
     bool recreateRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* renderer2D,
         Renderer::SwapchainData swapchain);

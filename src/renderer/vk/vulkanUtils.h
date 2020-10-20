@@ -8,6 +8,7 @@
 #include "buffers.h"
 #include "vulkanDeviceData.h"
 #include "swapchainData.h"
+#include "texture2d.h"
 
 namespace Renderer {
 
@@ -110,7 +111,7 @@ namespace Renderer {
         VulkanDeviceData* deviceData,
         VkDescriptorSet* sets, VkDescriptorSetLayout* layout,
         VkDescriptorPool* pool, uint32_t imageCount,
-        Buffers::BufferData* uBuffers, uint32_t bufferSize
+        Buffers::BufferData* uBuffers, uint32_t bufferSize, Texture2D& texture
     );
 
     VkCommandBuffer beginSingleTimeCommands(VkDevice, VkCommandPool);

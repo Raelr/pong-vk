@@ -391,7 +391,7 @@ namespace Renderer {
     }
 
     VkWriteDescriptorSet initialiseWriteDescriptorSet(VkDescriptorSet set, VkDescriptorType type, uint32_t binding,
-        VkDescriptorBufferInfo* bufferInfo, uint32_t descriptorCount) {
+        uint32_t descriptorCount, VkDescriptorBufferInfo* bufferInfo, VkDescriptorImageInfo* imageInfo) {
 
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -401,6 +401,7 @@ namespace Renderer {
         descriptorWrite.descriptorType = type;
         descriptorWrite.descriptorCount = descriptorCount;
         descriptorWrite.pBufferInfo = bufferInfo;
+        descriptorWrite.pImageInfo = imageInfo;
 
         return descriptorWrite;
     }

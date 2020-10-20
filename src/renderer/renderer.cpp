@@ -43,12 +43,49 @@ namespace Renderer {
             return Status::FAILURE;
         }
 
+        // ========================= COMMAND POOL CREATION =========================
+
+        // In vulkan, all steps and operations that happen are not handled via
+        // function calls. Rather, these steps are recorded in a CommandBuffer
+        // object which are then executed later in runtime. As such, commands
+        // allow us to set everything up in advance and in multiple threads if
+        // need be. These commands are then handled by Vulkan in the main loop.
+
+        // Command buffers are generally executed by submitting them to one of the
+        // device queues (such as the graphics and presentation queues we set earlier).
+        // Command pools can only submit buffers to a single type of queue. Since
+        // we're going to be submitting data for drawing, we'll use the graphics
+        // queue.
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = renderer->deviceData.indices.graphicsFamily.value();
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // optional
+
+        // Create the command pool
+        if (vkCreateCommandPool(renderer->deviceData.logicalDevice, &poolInfo, nullptr,
+                                &renderer->renderer2DData.commandPool) != VK_SUCCESS) {
+            PONG_ERROR("Failed to create command pool!");
+            return Status::INITIALIZATION_FAILURE;
+        }
+
         PONG_INFO("Initialised Swapchain");
+
+        Texture2D texture;
+        loadImage(renderer, "assets/awesomeface.png", texture);
+        texture.sampler = initialiseSampler(
+                renderer->deviceData.logicalDevice,
+                VK_FILTER_LINEAR, VK_FILTER_LINEAR,
+                VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+                VK_COMPARE_OP_ALWAYS,
+                VK_SAMPLER_MIPMAP_MODE_LINEAR
+        );
 
         // ================================= RENDERER 2D ====================================
 
         if (!Renderer2D::initialiseRenderer2D(&renderer->deviceData,
-            &renderer->renderer2DData, renderer->swapchainData)) {
+            &renderer->renderer2DData, renderer->swapchainData, texture)) {
             PONG_ERROR("Failed to create renderer2D");
             return Status::INITIALIZATION_FAILURE;
         }

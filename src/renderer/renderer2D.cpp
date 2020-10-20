@@ -1,5 +1,6 @@
 #include "renderer2D.h"
 #include "vk/initialisers.h"
+#include "vk/texture2d.h"
 
 
 namespace Renderer2D {
@@ -17,7 +18,7 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(Renderer::VulkanDeviceData* deviceData,
-        Renderer2DData* renderer2D, Renderer::SwapchainData swapchain) {
+        Renderer2DData* renderer2D, Renderer::SwapchainData swapchain, Renderer::Texture2D& texture) {
 
         // ================================== RENDER PASS ====================================
 
@@ -29,12 +30,20 @@ namespace Renderer2D {
 
         // ============================== DESCRIPTOR SET LAYOUT ==============================
 
+        VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+        samplerLayoutBinding.binding = 1;
+        samplerLayoutBinding.descriptorCount = 1;
+        samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        samplerLayoutBinding.pImmutableSamplers = nullptr;
+        samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
         VkDescriptorSetLayoutBinding layoutBindings[] {
-            Renderer::initiialiseDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT)
+            Renderer::initiialiseDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT),
+            Renderer::initiialiseDescriptorSetLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT)
         };
 
         if (Renderer::createDescriptorSetLayout(deviceData->logicalDevice,
-            &renderer2D->quadData.descriptorSetLayout, layoutBindings, 1) != VK_SUCCESS) {
+            &renderer2D->quadData.descriptorSetLayout, layoutBindings, 2) != VK_SUCCESS) {
             PONG_ERROR("Failed to create descriptor set layout!");
             return false;
         }
@@ -72,32 +81,6 @@ namespace Renderer2D {
             return false;
         }
 
-        // ========================= COMMAND POOL CREATION =========================
-
-        // In vulkan, all steps and operations that happen are not handled via
-        // function calls. Rather, these steps are recorded in a CommandBuffer
-        // object which are then executed later in runtime. As such, commands
-        // allow us to set everything up in advance and in multiple threads if
-        // need be. These commands are then handled by Vulkan in the main loop.
-
-        // Command buffers are generally executed by submitting them to one of the
-        // device queues (such as the graphics and presentation queues we set earlier).
-        // Command pools can only submit buffers to a single type of queue. Since
-        // we're going to be submitting data for drawing, we'll use the graphics
-        // queue.
-
-        VkCommandPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = deviceData->indices.graphicsFamily.value();
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // optional
-
-        // Create the command pool
-        if (vkCreateCommandPool(deviceData->logicalDevice, &poolInfo, nullptr,
-            &renderer2D->commandPool) != VK_SUCCESS) {
-            PONG_ERROR("Failed to create command pool!");
-            return false;
-        }
-
         // ======================= VERTEX + INDEX BUFFER CREATION ========================
 
         renderer2D->quadData.vertexBuffer.vertices = quadVertices;
@@ -121,13 +104,14 @@ namespace Renderer2D {
         }
 
         VkDescriptorPoolSize poolSizes[] = {
-                Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, swapchain.imageCount)
+                Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, swapchain.imageCount),
+                Renderer::initialisePoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, swapchain.imageCount)
         };
 
         if (Renderer::createDescriptorPool(
                 deviceData->logicalDevice,
                 swapchain.imageCount, &renderer2D->descriptorPool, poolSizes,
-                1) != VK_SUCCESS) {
+                2) != VK_SUCCESS) {
 
             PONG_ERROR("Failed to create descriptor pool.");
             return false;
@@ -165,7 +149,7 @@ namespace Renderer2D {
             &renderer2D->descriptorPool,
             swapchain.imageCount,
             &renderer2D->quadData.dynamicData.buffer,
-            renderer2D->quadData.dynamicData.bufferSize) != VK_SUCCESS) {
+            renderer2D->quadData.dynamicData.bufferSize, texture) != VK_SUCCESS) {
 
             PONG_ERROR("Failed to create descriptor sets!");
             return false;

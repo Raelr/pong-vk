@@ -11,6 +11,7 @@ namespace Renderer {
         VkDeviceMemory memory       {VK_NULL_HANDLE};
         VkImageLayout layout        {VK_IMAGE_LAYOUT_UNDEFINED};
         VkImageView view            {VK_NULL_HANDLE};
+        VkSampler sampler           {VK_NULL_HANDLE};
     };
 
     void destroyTexture2D(VkDevice, Texture2D&);
