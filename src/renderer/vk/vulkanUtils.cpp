@@ -829,15 +829,10 @@ namespace Renderer {
 
         for (size_t i = 0; i < imageCount; i++) {
 
-            VkDescriptorBufferInfo bufferInfo;
-            bufferInfo.buffer = uBuffers->buffer;
-            bufferInfo.offset = 0;
-            bufferInfo.range = VK_WHOLE_SIZE;
+            VkDescriptorBufferInfo bufferInfo = initialiseDescriptorBufferInfo(uBuffers->buffer, 0, VK_WHOLE_SIZE);
 
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = texture.view;
-            imageInfo.sampler = texture.sampler;
+            VkDescriptorImageInfo imageInfo = initialiseDescriptorImageInfo(
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, texture.view, texture.sampler);
 
             VkWriteDescriptorSet descriptorSets[] = {
                     initialiseWriteDescriptorSet(sets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 0, 1, &bufferInfo),

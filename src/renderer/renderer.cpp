@@ -82,10 +82,11 @@ namespace Renderer {
                 VK_SAMPLER_MIPMAP_MODE_LINEAR
         );
 
+        renderer->renderer2DData.quadData.texture = texture;
+
         // ================================= RENDERER 2D ====================================
 
-        if (!Renderer2D::initialiseRenderer2D(&renderer->deviceData,
-            &renderer->renderer2DData, renderer->swapchainData, texture)) {
+        if (!Renderer2D::initialiseRenderer2D(&renderer->deviceData, &renderer->renderer2DData, renderer->swapchainData)) {
             PONG_ERROR("Failed to create renderer2D");
             return Status::INITIALIZATION_FAILURE;
         }

@@ -22,6 +22,7 @@ namespace Renderer2D {
         Buffers::IndexBuffer indexBuffer                            {nullptr};
         Buffers::DynamicUniformBuffer<QuadProperties> dynamicData   {0};
         VkDescriptorSet* dynamicDescriptorSets                      {nullptr};
+        Renderer::Texture2D texture                                 {0};
     };
 
     struct Renderer2DData {
@@ -33,7 +34,7 @@ namespace Renderer2D {
         VkCommandBuffer* commandBuffers                         {nullptr};
     };
 
-    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData, Renderer::Texture2D&);
+    bool initialiseRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*, Renderer::SwapchainData);
     void cleanupRenderer2D(Renderer::VulkanDeviceData*, Renderer2DData*);
     bool recreateRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* renderer2D,
         Renderer::SwapchainData swapchain);

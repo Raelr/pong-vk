@@ -451,4 +451,11 @@ namespace Renderer {
 
         return sampler;
     }
+
+    VkDescriptorBufferInfo initialiseDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range) {
+        return {buffer, offset, range};
+    }
+    VkDescriptorImageInfo initialiseDescriptorImageInfo(VkImageLayout imageLayout, VkImageView imageView, VkSampler imageSampler) {
+        return {imageSampler, imageView, imageLayout};
+    }
 }

@@ -32,7 +32,8 @@ namespace Renderer {
         VkBool32 = VK_FALSE, VkBool32 = VK_TRUE,
         VkBool32 = VK_FALSE
     );
-
+    VkDescriptorBufferInfo initialiseDescriptorBufferInfo(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range);
+    VkDescriptorImageInfo initialiseDescriptorImageInfo(VkImageLayout imageLayout, VkImageView imageView, VkSampler imageSampler);
 }
 
 #endif //PONG_VK_INITIALISERS_H

@@ -18,7 +18,7 @@ namespace Renderer2D {
     };
 
     bool initialiseRenderer2D(Renderer::VulkanDeviceData* deviceData,
-        Renderer2DData* renderer2D, Renderer::SwapchainData swapchain, Renderer::Texture2D& texture) {
+        Renderer2DData* renderer2D, Renderer::SwapchainData swapchain) {
 
         // ================================== RENDER PASS ====================================
 
@@ -149,7 +149,8 @@ namespace Renderer2D {
             &renderer2D->descriptorPool,
             swapchain.imageCount,
             &renderer2D->quadData.dynamicData.buffer,
-            renderer2D->quadData.dynamicData.bufferSize, texture) != VK_SUCCESS) {
+            renderer2D->quadData.dynamicData.bufferSize,
+            renderer2D->quadData.texture) != VK_SUCCESS) {
 
             PONG_ERROR("Failed to create descriptor sets!");
             return false;
@@ -284,7 +285,8 @@ namespace Renderer2D {
                 &renderer2D->descriptorPool,
                 swapchain.imageCount,
                 &renderer2D->quadData.dynamicData.buffer,
-                renderer2D->quadData.dynamicData.bufferSize) != VK_SUCCESS) {
+                renderer2D->quadData.dynamicData.bufferSize,
+                renderer2D->quadData.texture) != VK_SUCCESS) {
 
             PONG_ERROR("Failed to create descriptor sets!");
             return false;
