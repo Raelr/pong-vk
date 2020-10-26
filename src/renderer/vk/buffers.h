@@ -31,8 +31,7 @@ namespace Buffers {
     struct Vertex {
         // position vector
         glm::vec2 pos;
-        // Color vector
-        glm::vec3 color;
+        glm::vec2 texCoord;
     };
 
     // Data necessary to store a vertex buffer

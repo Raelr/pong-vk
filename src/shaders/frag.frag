@@ -6,9 +6,10 @@ layout(location = 0) out vec4 outColor;
 // Define the variable that will be passed in (from 
 // the vertex shader)
 layout(location = 0) in vec3 fragColor;
+layout(location = 1) in vec2 fragTexCoord;
 
 void main() {
     // Define the color as being that of the fragColor
     // variable
-    outColor = vec4(fragColor, 1.0);
+    outColor = vec4(fragTexCoord, 0.0, 1.0);
 }
