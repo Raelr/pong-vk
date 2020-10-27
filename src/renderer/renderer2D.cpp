@@ -215,6 +215,8 @@ namespace Renderer2D {
 
         Buffers::alignedFree(pRenderer->quadData.dynamicData.data);
         free(pRenderer->commandBuffers);
+
+        Renderer::destroyTexture2D(deviceData->logicalDevice, pRenderer->quadData.texture);
     }
 
     bool recreateRenderer2D(Renderer::VulkanDeviceData* deviceData, Renderer2DData* renderer2D,
