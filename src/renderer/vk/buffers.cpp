@@ -147,13 +147,9 @@ namespace Buffers {
 		// Defines the byte size of the data in the vertex. 
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
-        // Color input vector
         attributeDescriptions[1].binding = 0;
-        // Location in the shader
-        attributeDescriptions[1].location = 2;
-        // Same as above, but with 3 dimensions
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        // Defines the byte size of the data in the vertex.
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
         attributeDescriptions[1].offset = offsetof(Vertex, texCoord);
 
 		return attributeDescriptions;

@@ -1,8 +1,7 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 // Layout the struct for handling a model-view projection
-layout (binding = 1) uniform UniformBufferObject {
+layout (binding = 0) uniform UniformBufferObject {
     mat4 mvp;
     vec3 color;
 } ubo;

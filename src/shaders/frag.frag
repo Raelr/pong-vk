@@ -1,6 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+layout(binding = 1) uniform sampler2D texSampler;
 // Define a variable for the color of each vertex
 layout(location = 0) out vec4 outColor;
 // Define the variable that will be passed in (from 

@@ -400,7 +400,9 @@ namespace Renderer {
         descriptorWrite.dstArrayElement = 0;
         descriptorWrite.descriptorType = type;
         descriptorWrite.descriptorCount = descriptorCount;
-        descriptorWrite.pBufferInfo = bufferInfo;
+        if (bufferInfo) {
+            descriptorWrite.pBufferInfo = bufferInfo;
+        }
         descriptorWrite.pImageInfo = imageInfo;
 
         return descriptorWrite;

@@ -269,14 +269,12 @@ namespace Renderer {
         // how what happens once the fragment shader returns a color. 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
         // Defines how th color will be formatted
-        colorBlendAttachment.colorWriteMask = 
-                VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT 
-                | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+            | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachment.blendEnable = VK_FALSE; 
         // Now we need to actually build the createInfo struct.·
         VkPipelineColorBlendStateCreateInfo colorBlending{};
-        colorBlending.sType = 
-                VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         // Set this to VK_TRUE to enable bitwise blending.
         colorBlending.logicOpEnable = VK_FALSE;
         colorBlending.attachmentCount = 1;
