@@ -8,13 +8,9 @@ This repo will primarily follow the Vulkan tutorials by [Alexander Overvoorde](h
 
 ## Progress
 
-So far, we've succeeded in getting multiple objects rendering to screen.
-
 <img src="https://github.com/Raelr/pong-vk/blob/master/assets/Pong.gif" alt="Pong process" width="400" height="300">
 
-We've built a simple API for rendering objects to the screen. The renderer currently allocates a new uniform buffer and descriptor set for all new objects on the screen. The API currently works as follows:
-
-We now have basic gameplay logic! The collision system is in place and is able to process collisions between the ball and the paddles. 
+We've also managed to load in a texture and apply it to a descriptor set. Now we need to work out how to enable multiple textures to be added and loaded during runtime. 
 
 ### Next Steps:
 
